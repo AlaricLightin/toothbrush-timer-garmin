@@ -1,0 +1,14 @@
+# Build artifacts
+bin/
+build/
+.build/
+*.prg
+*.iq
+
+# Developer signing keys
+*.der
+*.pem
+
+# OS files
+.DS_Store
+Thumbs.db
