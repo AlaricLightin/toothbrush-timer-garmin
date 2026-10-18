@@ -1,0 +1,140 @@
+# Toothbrush Timer
+
+A Garmin Connect IQ watch app for Vivoactive 6. Step 1 provides the starter UI
+and build setup; the brushing timer is not implemented yet. See the
+[requirements](doc/product-requirements.md), [design](doc/technical-design.md),
+and [implementation plan](doc/implementation-plan.md).
+
+## Setup
+
+Run commands from the repository root in **Bash on Ubuntu Linux**. Builds and
+`monkeydo` run on the host; the simulator can run natively or in Distrobox.
+Other operating systems need their corresponding SDK launchers and shell syntax.
+
+- Install the [official Connect IQ SDK](https://developer.garmin.com/connect-iq/sdk/)
+  through SDK Manager, including the Vivoactive 6 device package and fonts,
+  discoverable by the user running builds.
+- Put a compatible Java runtime on `PATH` (Java 11+ for SDK 9.2.0).
+- Install OpenSSL if creating a signing key. Simulator use also needs a graphical
+  desktop and the SDK's native libraries; compilation does not need a display.
+
+Set these in your shell or CI configuration, using your own absolute paths:
+
+```bash
+export CIQ_SDK="/absolute/path/to/connectiq-sdk"
+export CIQ_KEY="/absolute/path/to/private/developer-key.der"
+```
+
+`CIQ_SDK` contains `bin/monkeyc`. Keep the signing key outside the checkout and
+retain it for published updates. Do not commit keys or local configuration.
+Paths containing spaces are supported.
+
+If you need a new key, this creates an RSA 4096-bit, unencrypted PKCS#8 DER key
+using Garmin's [documented format](https://developer.garmin.com/connect-iq/reference-guides/monkey-c-command-line-setup/)
+and refuses to overwrite an existing file:
+
+```bash
+(
+    set -euo pipefail
+    : "${CIQ_KEY:?Set CIQ_KEY to the new signing-key path}"
+    if [[ -e "$CIQ_KEY" ]]; then
+        echo "Error: CIQ_KEY already exists; use it or choose a new path." >&2
+        exit 1
+    fi
+    umask 077
+    mkdir -p "$(dirname "$CIQ_KEY")"
+    openssl genrsa 4096 | openssl pkcs8 -topk8 -inform PEM -outform DER \
+        -out "$CIQ_KEY" -nocrypt
+)
+```
+
+## Build
+
+```bash
+"$CIQ_SDK/bin/monkeyc" --version
+bash scripts/build.sh debug
+bash scripts/build.sh release
+```
+
+Outputs are `build/ToothbrushTimer.prg` and `build/ToothbrushTimer-release.prg`;
+release strips debug information. Omitting the mode builds debug. Both target
+`vivoactive6` with warnings enabled and Strict checking in `monkey.jungle`.
+Do not also pass `-l 3`, which causes a duplicate-setting warning.
+
+The wrapper checks prerequisites and preserves compiler failures. Install missing
+device packages through SDK Manager. It scopes Java AWT headless mode to compilation;
+`base.sourcePath = source` excludes generated copies from source discovery.
+Outputs are ignored by Git; use them only after a successful build, since failures
+can leave older artifacts. There are no unit tests yet; step 2 adds the harness.
+
+## Simulator
+
+Use a graphical desktop terminal. If the simulator is already running, skip to
+[running the app](#run-the-app-from-the-host).
+
+### Native launch
+
+Check dependencies, resolve any `not found` libraries, then launch:
+
+```bash
+ldd "$CIQ_SDK/bin/simulator"
+"$CIQ_SDK/bin/connectiq"
+```
+
+If the required libraries are unavailable in your host release, use Distrobox.
+
+### Distrobox launch
+
+Install [Distrobox and a supported container engine](https://distrobox.it/#installation).
+Reuse a compatible container, or create one. This example uses Ubuntu 22.04 for
+SDKs requiring [WebKitGTK 4.0](https://packages.ubuntu.com/jammy/libwebkit2gtk-4.0-37):
+
+```bash
+export CIQ_BOX="your-simulator-container"
+distrobox create --name "$CIQ_BOX" --image docker.io/library/ubuntu:22.04
+distrobox enter --name "$CIQ_BOX" -- sudo apt-get update
+distrobox enter --name "$CIQ_BOX" -- sudo apt-get install \
+    libwebkit2gtk-4.0-37 libusb-1.0-0 libudev1 libsm6 libxxf86vm1
+```
+
+Package installation runs inside the container; adjust packages for your SDK.
+Retain Distrobox's shared files, desktop integration, and host networking.
+The same SDK path, device package, and fonts must be accessible inside the
+container; custom homes/storage may require mounts and resource configuration.
+If SDK Manager also lacks native libraries, run it in the compatible environment.
+
+From a host terminal, check dependencies and resolve any `not found` libraries
+inside the container before launching:
+
+```bash
+: "${CIQ_SDK:?Set CIQ_SDK to the shared SDK root}"
+: "${CIQ_BOX:?Set CIQ_BOX to the simulator container name}"
+distrobox enter --name "$CIQ_BOX" -- ldd "$CIQ_SDK/bin/simulator"
+distrobox enter --name "$CIQ_BOX" -- "$CIQ_SDK/bin/connectiq"
+```
+
+### Run the app from the host
+
+Wait for the simulator window, then run in a second host terminal with `CIQ_SDK`
+set, from the repository root:
+
+```bash
+"$CIQ_SDK/bin/monkeydo" build/ToothbrushTimer.prg vivoactive6
+```
+
+The baseline check is the template monkey image and prompt rendering without a
+runtime error. Sample-menu and Back/exit checks remain pending; see
+[verification](doc/verification.md) and the implementation plan's acceptance matrices.
+
+For connection/display failures, check simulator readiness, the shared SDK,
+host networking, and desktop integration. If GTK/GIO errors reference host-only
+module paths, relaunch with this scoped workaround in an X11/XWayland session:
+
+```bash
+distrobox enter --name "$CIQ_BOX" -- env \
+    -u GDK_PIXBUF_MODULE_FILE -u GDK_PIXBUF_MODULEDIR \
+    -u GTK_IM_MODULE_FILE -u GTK_PATH \
+    -u GIO_MODULE_DIR -u GIO_EXTRA_MODULES \
+    -u GTK_IM_MODULE -u GSETTINGS_SCHEMA_DIR \
+    GDK_BACKEND=x11 "$CIQ_SDK/bin/connectiq"
+```

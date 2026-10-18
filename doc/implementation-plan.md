@@ -4,13 +4,13 @@
 
 Implement the MVP in [product-requirements.md](product-requirements.md) using [technical-design.md](technical-design.md) and the workflow rules in [AGENTS.md](../AGENTS.md). Those documents remain authoritative for behavior, architecture, and development policy.
 
-All implementation steps below are pending. Candidate commands are not build/test results; simulator and hardware acceptance remain unverified.
+Step 1 is complete: Strict debug and release builds pass without warnings after fixing the template language declaration and launcher icon dimensions. The current debug artifact was rerun through host `monkeydo` on the Vivoactive 6 simulator running in Distrobox; the template image and prompt render without app runtime errors after the resource fixes. See [verification.md](verification.md). Steps 2–9 and full simulator/hardware acceptance remain pending.
 
-## 2. Starting point
+## 2. Original starting point
 
-The repository contains the standard application/view/delegate scaffold and sample menu, image, strings, and layout. No timer, tests, README, or build scripts exist yet. Replace template behavior incrementally.
+Before step 1, the repository contained the standard application/view/delegate scaffold and sample menu, image, strings, and layout. No timer, tests, README, or build scripts existed. Replace template behavior incrementally.
 
-`manifest.xml` targets `vivoactive6`, uses entry class `ToothbrushTimerApp`, and requests API `3.2.0`; permissions, languages, and barrels are empty. Preserve application identity and target, and audit the API minimum against actual usage. `monkey.jungle` currently contains only `project.manifest = manifest.xml`.
+`manifest.xml` targets `vivoactive6`, uses entry class `ToothbrushTimerApp`, and requests API `3.2.0`; permissions, languages, and barrels were initially empty. English is now declared; permissions and barrels remain empty. Preserve application identity and target, and audit the API minimum against actual usage. Initially, `monkey.jungle` contained only `project.manifest = manifest.xml`.
 
 ## 3. Platform pitfalls and open checks
 
@@ -34,38 +34,11 @@ Resolve the following checks at the indicated implementation steps:
 
 Hardware unavailability leaves the relevant checks open; it does not establish that the proposed behavior works.
 
-## 4. Candidate build and test workflow
+## 4. Build and test workflow
 
-These command forms come from the previously inspected SDK compiler help and Linux launcher; they have **not** been validated by building or running this app. Run from the repository root in Bash with the SDK's Unix launchers. Other hosts/shells must use their native launcher syntax and verified flags.
+Use [README.md](../README.md) for prerequisites, signing-key provisioning, verified debug/release build commands, and the simulator launch procedure. Strict checking is configured in `monkey.jungle`; do not also pass `-l 3`. Build and simulator-launch results are recorded in [verification.md](verification.md).
 
-Set `CIQ_SDK` to the official SDK root and `CIQ_KEY` to a readable developer signing-key file through the developer environment or CI secrets. Provision a compatible Java runtime and an SDK-discoverable Vivoactive 6 device package. Simulator runs additionally need a supported graphical/display session and a running SDK simulator.
-
-```bash
-: "${CIQ_SDK:?Set CIQ_SDK to the SDK root in the environment}"
-: "${CIQ_KEY:?Set CIQ_KEY to the signing-key file in the environment}"
-mkdir -p build
-
-# Normal simulator build, with Strict type checking and warnings enabled.
-"$CIQ_SDK/bin/monkeyc" -f monkey.jungle -d vivoactive6 \
-  -o build/ToothbrushTimer.prg -y "$CIQ_KEY" -l 3 -w
-
-# Launch the SDK simulator in a graphical session, then run the app.
-"$CIQ_SDK/bin/connectiq"
-"$CIQ_SDK/bin/monkeydo" build/ToothbrushTimer.prg vivoactive6
-
-# After step 2 adds annotated tests and configures their source path.
-"$CIQ_SDK/bin/monkeyc" -f monkey.jungle -d vivoactive6 \
-  -o build/ToothbrushTimer-tests.prg -y "$CIQ_KEY" -l 3 -w -t
-"$CIQ_SDK/bin/monkeydo" build/ToothbrushTimer-tests.prg vivoactive6 -t
-
-# Final device artifact; tests must not be included.
-"$CIQ_SDK/bin/monkeyc" -f monkey.jungle -d vivoactive6 \
-  -o build/ToothbrushTimer-release.prg -y "$CIQ_KEY" -l 3 -w -r
-```
-
-Launch `connectiq` separately if it occupies the terminal; wait for the simulator to be ready before `monkeydo`. The inspected Unix launcher accepts `-t testFunctionName` for a focused test; verify the selected host's help before using other variants such as `/t`.
-
-Once verified, put reusable commands and setup instructions in `README.md` and replace this section's command examples with a link there. Propose recording stable commands in `AGENTS.md`. Small wrappers under `scripts/` are optional when they provide concrete value, such as consistent flags or reliable failure reporting. Any wrapper must report missing prerequisites, quote paths, and preserve failures. Check test results rather than assuming the launcher's exit status proves a pass.
+Step 2 will add and validate test compilation with `-t` and execution using the SDK's `monkeydo` test mode, then document the verified commands in README. The inspected Unix launcher accepts `-t testFunctionName` for a focused test; verify the selected host's help before using other variants such as `/t`. Check test results rather than assuming the launcher's exit status proves a pass.
 
 ## 5. Implementation steps
 
@@ -74,6 +47,8 @@ Each increment must build for Vivoactive 6 with Strict checking and no new warni
 ### Step 1 — Establish the baseline build
 
 **Dependencies:** none.
+
+**Status:** complete. Debug/release builds pass, including paths containing spaces. Host `monkeydo` launches the starter in the Distrobox simulator; the template screen renders. Source discovery is restricted to `source/` so generated verification copies cannot enter normal builds. See [verification.md](verification.md).
 
 - Build the untouched starter first to identify existing warnings. Make only the template typing/configuration adjustments needed for Strict checking.
 - Establish debug and release CLI builds using §4 and launch the starter in the simulator.
