@@ -30,6 +30,14 @@ Before implementation, locate and read `doc/product-requirements.md` and `doc/te
 - Before using an unfamiliar Connect IQ API, verify availability at the selected minimum API level and on Vivoactive 6, especially for haptics, backlight, input, and lifecycle behavior. Select the lowest API level supporting the target and all APIs actually used.
 - When multiple approaches are available, prioritize correctness, Vivoactive 6 compatibility, simplicity, portability to other devices, then micro-optimizations, in that order.
 
+## Development environment portability
+
+- Keep all development code, configuration, commands, and documentation portable across developer machines and future CI environments. Do not embed usernames, home directories, checkout locations, SDK installation paths, signing-key paths, or other machine-specific environment values in repository files.
+- Use repository-relative paths for project files. Resolve external tools and credentials through documented environment variables, such as `CIQ_SDK` for the SDK root and `CIQ_KEY` for the developer signing-key file, or explicitly documented `PATH` lookup. Supply their values through the developer environment or CI configuration; do not commit keys or local environment configuration.
+- State the working directory, shell/OS requirements, and SDK/device-package prerequisites for commands. Quote path variables, support paths containing spaces, and report missing prerequisites clearly. Do not assume an IDE, a particular SDK Manager installation layout, or a preconfigured simulator/display session.
+- Keep recorded commands reusable by retaining environment-variable references and repository-relative paths. Tool/firmware versions may be recorded as verification evidence, without treating one machine's installed versions or packages as universal prerequisites.
+- Add only the build tooling needed for the authorized task. Portability alone is not a reason to introduce build frameworks, CI configuration, or wrapper scripts before they are needed.
+
 ## Code and resources
 
 - Prefer simple code over speculative abstractions. Introduce helpers, services, or interfaces when they serve a concrete responsibility, reuse, or testing need; retain the components already required by the design.
