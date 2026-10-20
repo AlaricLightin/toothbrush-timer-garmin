@@ -24,7 +24,7 @@ Before implementation, locate and read `doc/product-requirements.md` and `doc/te
 
 - Use the official Garmin Connect IQ SDK and Monkey C. Builds and tests must work through SDK tools without depending on a particular IDE.
 - Follow official Connect IQ project-template conventions for source and resource organization, while preserving the logical component boundaries in the design. Its example filenames and directory layout are not contractual.
-- Build and test commands are not established yet. Determine actual commands from the project's configuration, scripts, README, and official SDK documentation; do not invent commands or report unexecuted commands as checks. Once commands are stable, propose recording them here.
+- Use the established commands and prerequisites in [README setup](README.md#setup), [build](README.md#build), [unit tests](README.md#unit-tests), and [simulator](README.md#simulator). Confirm test success from the printed summary as documented there, not the process exit status. Do not invent commands or report unexecuted commands as checks.
 - Use standard Connect IQ APIs and SDK facilities. Add third-party dependencies only for a substantial reason and after explicit approval.
 - For unclear Garmin behavior, consult current official Garmin documentation rather than guessing. Third-party material may supplement it.
 - Before using an unfamiliar Connect IQ API, verify availability at the selected minimum API level and on Vivoactive 6, especially for haptics, backlight, input, and lifecycle behavior. Select the lowest API level supporting the target and all APIs actually used.
