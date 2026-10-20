@@ -7,14 +7,15 @@ fail() {
 }
 
 if [[ $# -gt 1 ]]; then
-    fail "Usage: bash scripts/build.sh [debug|release]"
+    fail "Usage: bash scripts/build.sh [debug|release|test]"
 fi
 
 mode="${1:-debug}"
 case "$mode" in
     debug) output="build/ToothbrushTimer.prg"; flags=() ;;
     release) output="build/ToothbrushTimer-release.prg"; flags=(-r) ;;
-    *) fail "Usage: bash scripts/build.sh [debug|release]" ;;
+    test) output="build/ToothbrushTimer-test.prg"; flags=(-t) ;;
+    *) fail "Usage: bash scripts/build.sh [debug|release|test]" ;;
 esac
 
 [[ -f monkey.jungle && -f manifest.xml ]] || fail "Run from the repository root."

@@ -1,7 +1,8 @@
 # Toothbrush Timer
 
-A Garmin Connect IQ watch app for Vivoactive 6. Step 1 provides the starter UI
-and build setup; the brushing timer is not implemented yet. See the
+A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–2 provide the starter UI,
+build setup, timing configuration, clock, and test harness; the brushing timer is
+not implemented yet. See the
 [requirements](doc/product-requirements.md), [design](doc/technical-design.md),
 and [implementation plan](doc/implementation-plan.md).
 
@@ -54,18 +55,41 @@ and refuses to overwrite an existing file:
 "$CIQ_SDK/bin/monkeyc" --version
 bash scripts/build.sh debug
 bash scripts/build.sh release
+bash scripts/build.sh test
 ```
 
-Outputs are `build/ToothbrushTimer.prg` and `build/ToothbrushTimer-release.prg`;
-release strips debug information. Omitting the mode builds debug. Both target
+Outputs are `build/ToothbrushTimer.prg`, `build/ToothbrushTimer-release.prg`, and
+`build/ToothbrushTimer-test.prg`; release strips debug information and test enables
+unit-test compilation with `-t`. Omitting the mode builds debug. All modes target
 `vivoactive6` with warnings enabled and Strict checking in `monkey.jungle`.
 Do not also pass `-l 3`, which causes a duplicate-setting warning.
 
 The wrapper checks prerequisites and preserves compiler failures. Install missing
 device packages through SDK Manager. It scopes Java AWT headless mode to compilation;
-`base.sourcePath = source` excludes generated copies from source discovery.
+`base.sourcePath = source;tests` excludes generated copies from source discovery.
 Outputs are ignored by Git; use them only after a successful build, since failures
-can leave older artifacts. There are no unit tests yet; step 2 adds the harness.
+can leave older artifacts. Test functions and the fake clock use `:test` annotations
+and are excluded from normal debug and release artifacts.
+
+## Unit tests
+
+Build the test artifact using the command above, then start the simulator using
+the [simulator instructions](#simulator). Run on the host from the repository root:
+
+```bash
+"$CIQ_SDK/bin/monkeydo" build/ToothbrushTimer-test.prg vivoactive6 -t
+```
+
+The Unix launcher also accepts a function name for a focused test:
+
+```bash
+"$CIQ_SDK/bin/monkeydo" build/ToothbrushTimer-test.prg vivoactive6 -t defaultTimerConfig
+```
+
+Confirm the expected tests ran and the printed summary reports `PASSED`, with
+zero failures and errors. Do not infer success from the process exit status:
+the verified SDK 9.2.0 launcher returned 1 for both passing and deliberately
+failing runs. A missing summary does not establish a pass.
 
 ## Simulator
 

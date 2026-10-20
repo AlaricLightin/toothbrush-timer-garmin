@@ -61,3 +61,34 @@ in this rerun. No Monkey C unit tests exist at this step.
   Follow the [implementation plan's acceptance matrices](implementation-plan.md).
 - Proposed `AGENTS.md` update: record the README's debug/release build commands
   as stable. Add test commands after step 2 validates the harness.
+
+## Step 2 — Configuration, clock, and test harness (2026-10-20)
+
+Verified with Connect IQ SDK 9.2.0, OpenJDK 21.0.12.1, and the Vivoactive 6
+device package. The simulator ran in Ubuntu 22.04 Distrobox using the README's
+GTK/X11 workaround. Reusable commands are in [README.md](../README.md#unit-tests).
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Strict debug/release/test builds | Pass | `BUILD SUCCESSFUL`; no compiler/analyzer warnings |
+| Full Monkey C suite | Pass | `PASSED (passed=8, failed=0, errors=0)`; configuration variants, deterministic fake time, raw rollover, and production clock sampling; no sleeps |
+| Failure reporting | Pass | Temporary probe: `FAILED (passed=0, failed=1, errors=0)`; removed before final rebuild and passing suite |
+| Focused test | Pass | `defaultTimerConfig`: `PASSED (passed=1, failed=0, errors=0)` |
+| Test-code exclusion | Pass | Eight test symbols and `FakeClock` present in test PRG/debug metadata, absent from debug/release PRGs and metadata |
+| Static checks | Pass | `bash -n scripts/build.sh`, `git diff --check`, and source/diff review |
+
+`monkeydo` returned **1** for passing and deliberately failing runs; results above
+use printed summaries. Optional GTK/accessibility diagnostics were environmental.
+Local logs are ignored under `build/verification/stage2/`, unavailable in a fresh checkout.
+
+[`System.getTimer()`](https://developer.garmin.com/connect-iq/api-docs/Toybox/System.html#getTimer-instance_function)
+requires API 1.0.0, adding no requirement above the current manifest's 3.2.0.
+The project-wide minimum-API audit remains open.
+
+Stage 2 checks are complete. Fake-clock wraparound is verified; rollover-safe
+session-duration arithmetic remains for step 3. Full application simulator and
+physical Vivoactive 6 acceptance remain pending; see the
+[acceptance matrices](implementation-plan.md#7-manual-acceptance-matrix).
+
+Proposed `AGENTS.md` update: record the README build/test commands as stable,
+retaining their prerequisites and printed-summary check.

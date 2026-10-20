@@ -4,7 +4,7 @@
 
 Implement the MVP in [product-requirements.md](product-requirements.md) using [technical-design.md](technical-design.md) and the workflow rules in [AGENTS.md](../AGENTS.md). Those documents remain authoritative for behavior, architecture, and development policy.
 
-Step 1 is complete: Strict debug and release builds pass without warnings after fixing the template language declaration and launcher icon dimensions. The current debug artifact was rerun through host `monkeydo` on the Vivoactive 6 simulator running in Distrobox; the template image and prompt render without app runtime errors after the resource fixes. See [verification.md](verification.md). Steps 2–9 and full simulator/hardware acceptance remain pending.
+Steps 1–2 are complete; see [verification.md](verification.md). Steps 3–9 and full simulator/hardware acceptance remain pending.
 
 ## 2. Original starting point
 
@@ -36,9 +36,7 @@ Hardware unavailability leaves the relevant checks open; it does not establish t
 
 ## 4. Build and test workflow
 
-Use [README.md](../README.md) for prerequisites, signing-key provisioning, verified debug/release build commands, and the simulator launch procedure. Strict checking is configured in `monkey.jungle`; do not also pass `-l 3`. Build and simulator-launch results are recorded in [verification.md](verification.md).
-
-Step 2 will add and validate test compilation with `-t` and execution using the SDK's `monkeydo` test mode, then document the verified commands in README. The inspected Unix launcher accepts `-t testFunctionName` for a focused test; verify the selected host's help before using other variants such as `/t`. Check test results rather than assuming the launcher's exit status proves a pass.
+Use [README.md](../README.md) for prerequisites, signing-key provisioning, build commands, simulator setup, and full-suite/focused-test commands, including how to interpret test results. Record verification evidence in [verification.md](verification.md).
 
 ## 5. Implementation steps
 
@@ -59,6 +57,8 @@ Each increment must build for Vivoactive 6 with Strict checking and no new warni
 ### Step 2 — Add configuration, clock, and test harness
 
 **Dependencies:** step 1.
+
+**Status:** complete; see [verification.md](verification.md#step-2--configuration-clock-and-test-harness-2026-10-20).
 
 - Add typed `TimerConfig`, deriving stage count from positive, evenly divisible durations.
 - Add the production clock around `System.getTimer()` and a fake clock using a simple typed dependency.
