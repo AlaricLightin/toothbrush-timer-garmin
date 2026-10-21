@@ -92,3 +92,36 @@ physical Vivoactive 6 acceptance remain pending; see the
 
 Proposed `AGENTS.md` update: record the README build/test commands as stable,
 retaining their prerequisites and printed-summary check.
+
+## Step 3 — Session model and cue detection (2026-10-21)
+
+Step 3 is implemented and its required domain checks pass. Verified with Connect
+IQ SDK 9.2.0, OpenJDK 21.0.12.1, and the Vivoactive 6 device package. The simulator
+ran in the existing Ubuntu 22.04 Distrobox with the README's GTK/X11 workaround.
+Commands and prerequisites remain in [README.md](../README.md#build) and
+[unit tests](../README.md#unit-tests).
+
+### Results
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Strict debug/test/release builds | Pass | `BUILD SUCCESSFUL`, no compiler/analyzer warnings |
+| Full Monkey C suite in Vivoactive 6 simulator | Pass | `PASSED (passed=27, failed=0, errors=0)`; all 19 new domain tests and 8 existing tests ran |
+| Domain coverage | Pass | All Step 3 cases in the [automated test matrix](implementation-plan.md#6-minimum-automated-test-matrix), plus input cue propagation, single-sample actions, and getters without clock reads or cue consumption |
+| Test-code exclusion | Pass | 19 new test function symbols, assertion class, and fake clock present in test PRG/metadata and absent from normal debug/release PRGs/metadata |
+| Static checks and code review | Pass | Shell syntax, tracked/new-file whitespace checks, actual diffs and surrounding configuration/clock code reviewed; no unresolved actionable defects |
+| Interactive simulator acceptance | Not run | This increment adds only domain logic; the starter UI does not use it yet. Applicable domain checks executed through the simulator test runner |
+| Physical Vivoactive 6 | Not run | No connected hardware used; vibration, touch/readability, screen restrictions, hardware controls, and real exit/lifecycle checks remain pending for later steps |
+
+The launcher returned 1 for the passing run; the result above uses its printed
+summary. Optional GTK/accessibility diagnostics were environmental. Local logs
+are ignored under `build/verification/stage3/`, unavailable in a fresh checkout;
+`*-build-final.log` and `tests-final.log` record the final checks.
+
+The model adds no device API calls. Its clock dependency retains the existing
+[`System.getTimer()`](https://developer.garmin.com/connect-iq/api-docs/Toybox/System.html#getTimer-instance_function)
+contract. Duration subtraction uses rolling 32-bit
+[`Number`](https://developer.garmin.com/connect-iq/api-docs/Toybox/Lang/Number.html)
+arithmetic, verified at both wrap edges for normal running periods. `toFloat()`
+requires API 1.0.0, so this step adds no requirement above the current manifest's
+3.2.0; the project-wide minimum-API audit remains open.

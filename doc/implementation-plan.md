@@ -4,7 +4,7 @@
 
 Implement the MVP in [product-requirements.md](product-requirements.md) using [technical-design.md](technical-design.md) and the workflow rules in [AGENTS.md](../AGENTS.md). Those documents remain authoritative for behavior, architecture, and development policy.
 
-Steps 1–2 are complete; see [verification.md](verification.md). Steps 3–9 and full simulator/hardware acceptance remain pending.
+Steps 1–3 are complete; see [verification.md](verification.md). Steps 4–9 and full simulator/hardware acceptance remain pending.
 
 ## 2. Original starting point
 
@@ -69,6 +69,8 @@ Each increment must build for Vivoactive 6 with Strict checking and no new warni
 ### Step 3 — Implement the session model and cue detection
 
 **Dependencies:** step 2.
+
+**Status:** complete; see [verification.md](verification.md#step-3--session-model-and-cue-detection-2026-10-21).
 
 - Implement `BrushingTimer` state, accumulated running time, rollover-safe deltas, and derived remaining time/progress/stage according to design §§5–7.
 - Use one clock sample per synchronization/action. Keep synchronized values readable by the view without advancing time or consuming events during drawing.

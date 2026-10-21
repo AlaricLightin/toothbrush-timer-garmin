@@ -1,8 +1,8 @@
 # Toothbrush Timer
 
-A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–2 provide the starter UI,
-build setup, timing configuration, clock, and test harness; the brushing timer is
-not implemented yet. See the
+A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–3 provide the starter UI,
+build setup, timing configuration, clock, test harness, and session model with cue
+detection. The model is not yet connected to the UI or device controls. See the
 [requirements](doc/product-requirements.md), [design](doc/technical-design.md),
 and [implementation plan](doc/implementation-plan.md).
 
