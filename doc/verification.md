@@ -125,3 +125,46 @@ contract. Duration subtraction uses rolling 32-bit
 arithmetic, verified at both wrap edges for normal running periods. `toFloat()`
 requires API 1.0.0, so this step adds no requirement above the current manifest's
 3.2.0; the project-wide minimum-API audit remains open.
+
+## Step 4 — Presentation and shared layout (2026-10-21)
+
+Step 4 is implemented. Verified with Connect IQ SDK 9.2.0, OpenJDK 21.0.12.1,
+and the Vivoactive 6 package in the Ubuntu 22.04 Distrobox simulator using the
+README's GTK/X11 workaround. Build and suite commands remain in
+[README.md](../README.md#build) and [unit tests](../README.md#unit-tests).
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Strict debug/release/test builds | Pass | README build commands report `BUILD SUCCESSFUL`; no compiler/analyzer warnings |
+| Full Monkey C suite | Pass | `PASSED (passed=31, failed=0, errors=0)`; all 27 existing and 4 new tests ran |
+| New presentation tests | Pass | Ceiling formatting at initial, fractional-second, minute, near-completion, and zero values; model-driven labels/reset/pause; dynamic six-stage resource formatting |
+| Shared geometry tests | Pass | Centers, corners, and immediately outside each control; separate active-control regions at three display sizes. These exercise bounds, not pixels or platform input dispatch |
+| Simulator state previews | Pass | READY; RUNNING at 0, 1, 15000, 30000, 50000, 60000, 90000, and 119999 ms; PAUSED at 50000 ms; alternate six-stage configuration |
+| Visual review | Pass | Full toothbrush, readable countdown/stage/control labels, Resume fits its border; circular layout stays inside display; zero/tiny progress does not draw a full foreground circle; partial arcs and stage separators follow configuration; `0:01` remains near completion |
+| Production debug launch | Pass | README `monkeydo` command loads the final artifact in READY with toothbrush, `2:00`, and Start; no automatic countdown or runtime errors; `production-ready.png` |
+| Test/fixture exclusion | Pass | New test functions and fake clock absent from normal debug/release symbol metadata, present in test metadata; preview app absent from all main-project artifacts |
+| Static checks and code review | Pass | Shell syntax, tracked/new-file whitespace, Git diff and surrounding code reviewed; no unresolved actionable defects |
+| Physical Vivoactive 6 | Not run | No hardware used; readability and touch ergonomics still require on-watch acceptance |
+
+State previews use the production view and fake-clock models in an isolated,
+test-only project under `build/verification/stage4/preview/`. Captures and the
+preview log are in `build/verification/stage4/final-previews/`; build logs and
+`tests-final.log` are in `build/verification/stage4/`. These ignored artifacts
+are unavailable in a fresh checkout. The passing launcher returned 1; the
+printed summary establishes the test result.
+
+The official [arc contract](https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/Dc.html#drawArc-instance_function)
+(API 1.2.0) requires skipping equal angles at zero/tiny progress; full progress
+uses a circle separately. Basic drawing/fonts, Math, and
+[resource substitution](https://developer.garmin.com/connect-iq/api-docs/Toybox/Lang.html#format-instance_function)
+use API 1.0.0 facilities. The cached bitmap accepts both legacy resources and
+modern references, as documented by
+[`loadResource`](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi.html#loadResource-instance_function);
+the reference path executed on the Vivoactive 6 simulator (API 6.0.3).
+Manifest 3.2.0 remains unchanged; the project-wide minimum-API audit remains open
+for the later platform integrations and step 8.
+
+Live touch/Enter/Back routing, periodic redraws, session effects, and lifecycle
+acceptance remain for steps 5–8. Physical readability, ergonomics, vibration,
+screen restrictions, hardware controls, and real exit/lifecycle behavior remain
+outstanding under the [manual acceptance matrix](implementation-plan.md#7-manual-acceptance-matrix).

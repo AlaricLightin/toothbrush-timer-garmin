@@ -4,7 +4,7 @@
 
 Implement the MVP in [product-requirements.md](product-requirements.md) using [technical-design.md](technical-design.md) and the workflow rules in [AGENTS.md](../AGENTS.md). Those documents remain authoritative for behavior, architecture, and development policy.
 
-Steps 1–3 are complete; see [verification.md](verification.md). Steps 4–9 and full simulator/hardware acceptance remain pending.
+Steps 1–4 are complete; see [verification.md](verification.md). Steps 5–9 and full simulator/hardware acceptance remain pending.
 
 ## 2. Original starting point
 
@@ -82,6 +82,8 @@ Each increment must build for Vivoactive 6 with Strict checking and no new warni
 ### Step 4 — Replace the template UI and share layout geometry
 
 **Dependencies:** step 3.
+
+**Status:** complete; see [verification.md](verification.md#step-4--presentation-and-shared-layout-2026-10-21). State previews use an isolated test fixture; live input and callbacks remain for step 6.
 
 - Wire one model, view, and delegate with clear ownership. Build READY first, then extend the same view for RUNNING/PAUSED.
 - Add English resources, including `Stage $1$/$2$`, and a small static toothbrush asset and launcher resource. Remove unreferenced sample menu/code/resources.

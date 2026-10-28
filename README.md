@@ -1,8 +1,9 @@
 # Toothbrush Timer
 
-A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–3 provide the starter UI,
-build setup, timing configuration, clock, test harness, and session model with cue
-detection. The model is not yet connected to the UI or device controls. See the
+A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–4 provide the build setup,
+timing configuration, clock, test harness, session model with cue detection, and
+READY/RUNNING/PAUSED presentation with shared control geometry. Launch shows the
+READY screen; live input and periodic updates are planned for step 6. See the
 [requirements](doc/product-requirements.md), [design](doc/technical-design.md),
 and [implementation plan](doc/implementation-plan.md).
 
@@ -146,8 +147,9 @@ set, from the repository root:
 "$CIQ_SDK/bin/monkeydo" build/ToothbrushTimer.prg vivoactive6
 ```
 
-The baseline check is the template monkey image and prompt rendering without a
-runtime error. Sample-menu and Back/exit checks remain pending; see
+The current launch check is the toothbrush icon, `2:00`, and Start rendering
+without a runtime error or automatic countdown. Controls are not yet bound;
+input and Back/exit checks remain for step 6. See
 [verification](doc/verification.md) and the implementation plan's acceptance matrices.
 
 For connection/display failures, check simulator readiness, the shared SDK,

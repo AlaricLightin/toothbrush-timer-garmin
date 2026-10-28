@@ -18,7 +18,10 @@ class ToothbrushTimerApp extends Application.AppBase {
 
     // Return the initial view of your application here
     function getInitialView() as [Views] or [Views, InputDelegates] {
-        return [ new ToothbrushTimerView(), new ToothbrushTimerDelegate() ];
+        var config = TimerConfig.createDefault();
+        var timer = new BrushingTimer(config, new SystemClock());
+        var view = new ToothbrushTimerView(timer, config);
+        return [view, new ToothbrushTimerDelegate(timer, view)];
     }
 
 }

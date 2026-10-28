@@ -2,14 +2,13 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 class ToothbrushTimerDelegate extends WatchUi.BehaviorDelegate {
+    protected var _timer as BrushingTimer;
+    protected var _view as ToothbrushTimerView;
 
-    function initialize() {
+    function initialize(timer as BrushingTimer, view as ToothbrushTimerView) {
         BehaviorDelegate.initialize();
-    }
-
-    function onMenu() as Boolean {
-        WatchUi.pushView(new Rez.Menus.MainMenu(), new ToothbrushTimerMenuDelegate(), WatchUi.SLIDE_UP);
-        return true;
+        _timer = timer;
+        _view = view;
     }
 
 }
