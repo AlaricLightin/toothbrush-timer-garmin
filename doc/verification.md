@@ -168,3 +168,69 @@ Live touch/Enter/Back routing, periodic redraws, session effects, and lifecycle
 acceptance remain for steps 5–8. Physical readability, ergonomics, vibration,
 screen restrictions, hardware controls, and real exit/lifecycle behavior remain
 outstanding under the [manual acceptance matrix](implementation-plan.md#7-manual-acceptance-matrix).
+
+## Step 5 — Haptics and completion/exit probe (2026-10-28)
+
+Step 5 implementation is complete; physical acceptance remains pending. Verified
+with Connect IQ SDK 9.2.0 and the Vivoactive 6 simulator (API 6.0.3) in the
+existing Ubuntu 22.04 Distrobox. Commands and prerequisites remain in
+[README build](../README.md#build), [unit tests](../README.md#unit-tests), and
+[simulator](../README.md#simulator). Builds and the expanded test suite were
+reverified on 2026-10-29.
+
+`HapticsService` provides interval and completion cues as single pulses at 100%
+duty cycle, lasting 250 ms and 1,000 ms respectively. It checks capability,
+vibration enablement, and available DND state on every request. Capability/settings
+reads, profile construction, and vibration calls share a nonfatal exception
+boundary. The service has no timer/session or exit dependency; controller
+orchestration and its exactly-once call-count tests remain for step 6.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Strict debug/test/release builds | Pass | All three README build commands report `BUILD SUCCESSFUL`; no compiler/analyzer warnings |
+| Full Monkey C suite | Pass | Printed summary: `PASSED (passed=38, failed=0, errors=0)`; 31 existing tests and seven haptics tests |
+| Haptics automated coverage | Pass | Production settings logic suppresses both cues when vibration is disabled or DND is enabled, reevaluates settings after re-enablement, and handles absent DND; settings-read and vibration exceptions are nonfatal and allow later cues |
+| Actual simulator vibration calls | Pass | Smoke test uses production capability/settings checks and vibration API; completion counters advance only after the API returns without an exception |
+| Completion followed immediately by exit | Pass in simulator | Isolated fixture logs completion cue, successful vibration API return, immediate `System.exit()`, then `onStop()`; launcher returns 0 without a runtime error |
+| Test/probe exclusion | Pass | Seven haptics test functions and four test helpers appear only in test symbol metadata; isolated probe app absent from every main-project artifact |
+| Static checks | Pass | Whitespace checks pass |
+| Physical vibration/exit | Not run | No physical Vivoactive 6 available; perceptibility, equal interval feel, final distinctness, and motor continuation through immediate exit remain open |
+| Physical system settings | Not run | Normal, vibration-disabled, DND, and sleep behavior still need on-watch verification; simulator settings flags cannot establish firmware behavior |
+
+The simulator probe observed `vibrateOn=true` and `doNotDisturb=false`. Automated
+suppression tests supply fake settings to the production decision logic; they do
+not establish firmware behavior. Interactive simulator settings changes remain
+unverified. Run the full suite with vibration enabled and DND disabled for its
+real API smoke check.
+
+Local build/test logs and the isolated probe are ignored under
+`build/verification/stage5/` and unavailable in a fresh checkout.
+
+The isolated probe has its own manifest entry and Jungle source path, referencing
+the production source directory. Its view's `onShow()` calls
+`HapticsService.completionCue()` and immediately calls `System.exit()`; its
+`onStop()` logs cleanup. A service subclass logs only after the real vibration
+API returns. The fixture is outside normal source discovery and adds no wait,
+completion screen, or live application integration.
+
+Official API checks:
+
+- [`Attention.vibrate`](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#vibrate-instance_function)
+  and [`VibeProfile`](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention/VibeProfile.html)
+  support Vivoactive 6 at API 1.0.0; arrays allow one to eight profiles, duty
+  cycle is 0–100%, and lengths are milliseconds. Both cues use one profile.
+- [`System.getDeviceSettings`](https://developer.garmin.com/connect-iq/api-docs/Toybox/System.html#getDeviceSettings-instance_function)
+  and [`vibrateOn`](https://developer.garmin.com/connect-iq/api-docs/Toybox/System/DeviceSettings.html#vibrateOn-var)
+  require API 1.0.0;
+  [`doNotDisturb`](https://developer.garmin.com/connect-iq/api-docs/Toybox/System/DeviceSettings.html#doNotDisturb-var)
+  requires 2.1.0 and is capability-guarded. The service only reads these settings.
+- [`System.exit`](https://developer.garmin.com/connect-iq/api-docs/Toybox/System.html#exit-instance_function)
+  requires API 1.0.0 and is used only by the isolated probe in this step.
+
+This step adds no production API requirement above manifest 3.2.0. The final
+project-wide minimum-API audit remains open for the later integrations and step 8.
+No known requirements contradiction was found. If hardware shows truncated
+completion vibration or conflicting system-settings behavior, follow the
+[plan's platform checks](implementation-plan.md#3-platform-pitfalls-and-open-checks)
+before changing exit timing or accepting haptic behavior. Step 5 is not fully
+verified until the physical checks pass.

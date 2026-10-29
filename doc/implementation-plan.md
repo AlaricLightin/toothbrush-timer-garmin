@@ -4,7 +4,7 @@
 
 Implement the MVP in [product-requirements.md](product-requirements.md) using [technical-design.md](technical-design.md) and the workflow rules in [AGENTS.md](../AGENTS.md). Those documents remain authoritative for behavior, architecture, and development policy.
 
-Steps 1–4 are complete; see [verification.md](verification.md). Steps 5–9 and full simulator/hardware acceptance remain pending.
+Steps 1–4 are complete. Step 5 is implemented and simulator-verified, with physical haptic acceptance still open; see [verification.md](verification.md). Steps 6–9 and full simulator/hardware acceptance remain pending.
 
 ## 2. Original starting point
 
@@ -95,6 +95,8 @@ Each increment must build for Vivoactive 6 with Strict checking and no new warni
 ### Step 5 — Add haptics and probe completion/exit
 
 **Dependencies:** steps 1–2. This work can proceed alongside steps 3–4, especially when hardware is available early.
+
+**Status:** implemented; Strict builds, automated tests, and simulator completion/exit probe pass. Physical perceptibility, completion survival through exit, and system-settings acceptance remain open; see [verification.md](verification.md#step-5--haptics-and-completionexit-probe-2026-10-28).
 
 - Implement typed `HapticsService` with interval and completion operations and profiles within documented API limits.
 - Use capability checks and handle recoverable failures without changing session state or preventing exit.

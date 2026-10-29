@@ -1,9 +1,10 @@
 # Toothbrush Timer
 
-A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–4 provide the build setup,
+A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–5 provide the build setup,
 timing configuration, clock, test harness, session model with cue detection, and
-READY/RUNNING/PAUSED presentation with shared control geometry. Launch shows the
-READY screen; live input and periodic updates are planned for step 6. See the
+READY/RUNNING/PAUSED presentation with shared control geometry, plus a standalone
+haptics service. Launch shows the READY screen; live input, periodic updates,
+and haptics orchestration are planned for step 6. See the
 [requirements](doc/product-requirements.md), [design](doc/technical-design.md),
 and [implementation plan](doc/implementation-plan.md).
 
@@ -91,6 +92,10 @@ Confirm the expected tests ran and the printed summary reports `PASSED`, with
 zero failures and errors. Do not infer success from the process exit status:
 the verified SDK 9.2.0 launcher returned 1 for both passing and deliberately
 failing runs. A missing summary does not establish a pass.
+
+The haptics simulator smoke test requires vibration enabled and Do Not Disturb
+disabled in the simulator settings. It verifies that both real vibration API
+calls return without an exception; it cannot establish physical motor behavior.
 
 ## Simulator
 
