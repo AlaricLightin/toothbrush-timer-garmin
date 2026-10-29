@@ -4,7 +4,7 @@
 
 Implement the MVP in [product-requirements.md](product-requirements.md) using [technical-design.md](technical-design.md) and the workflow rules in [AGENTS.md](../AGENTS.md). Those documents remain authoritative for behavior, architecture, and development policy.
 
-Steps 1–4 are complete. Steps 5–7 are implemented and simulator-verified for their recorded checks, with physical acceptance still open; see [verification.md](verification.md). Steps 8–9 and full simulator/hardware acceptance remain pending.
+Steps 1–8 are implemented; verification results and simulator limitations are recorded in [verification.md](verification.md). Step 9 and physical acceptance remain pending.
 
 ## 2. Original starting point
 
@@ -132,6 +132,8 @@ Each increment must build for Vivoactive 6 with Strict checking and no new warni
 ### Step 8 — Run complete simulator regression
 
 **Dependencies:** steps 1–7.
+
+**Status:** simulator regression completed with [recorded results and limitations](verification.md#step-8--complete-simulator-regression-2026-10-29). Physical acceptance remains for step 9.
 
 - Run the full Monkey C suite and Strict debug, test, and release builds, then all simulator scenarios in §7, including a real-duration session.
 - Re-audit actual API usage/minimum level, resource-based strings, permissions, imports, and excluded features. Remove probes/fixtures from production artifacts.

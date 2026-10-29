@@ -340,3 +340,64 @@ Local logs, captures, and the isolated probe are ignored under
 `build/verification/stage7/` and unavailable in a fresh checkout. `tests.log`
 contains the final passing summary; `screen-probe.log` contains the real API and
 lifecycle trace. No probe is included in production source discovery.
+
+## Step 8 — Complete simulator regression (2026-10-29)
+
+Verified with SDK/compiler 9.2.0, OpenJDK 21.0.12.1, and the Vivoactive 6
+simulator (API 6.0.3) in Ubuntu 22.04 Distrobox. Commands and prerequisites are
+in [README](../README.md#build).
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Final Strict debug/test/release builds | Pass | `BUILD SUCCESSFUL`; no compiler/analyzer warnings |
+| Final full test suite | Pass | 52 existing tests; `PASSED (passed=52, failed=0, errors=0)`. Covers domain boundaries/rollover, presentation, input, completion priority, cleanup, and platform failures. Launcher returned 1; the printed summary establishes success |
+| Input and session controls | Pass | Touch centers/edges, 14 outside-control taps without action, upper-button Start/Pause/Resume, lower-button Back, long-pause freeze, Stop from RUNNING/PAUSED, and fresh READY launches; release controls/exit also checked |
+| Two-minute session | Pass | Continuous progress and all stages; `0:01` visible near completion. Interval requests at 30001, 60000, and 90000 ms; completion once at 120000 ms. Four real vibration API returns; updates stop before completion vibration, then exit and cleanup |
+| Completion/input boundary | Pass | Eight simulator cases: touch Pause/Stop and on-screen Enter/Back buttons at 119999 and 120000 ms. Before completion, Pause/Enter preserve PAUSED at `0:01`, Stop resets READY, and Back exits without a completion cue. At completion, all four inputs stop updates, emit one completion vibration, exit once, and invoke cleanup once; no extra interval cue or pause/reset transition |
+| Repeated use and memory | Pass | Twelve touch Start/Pause/Resume/Stop cycles return to 15240 bytes at every reset; active snapshots 15336 bytes. Suite also verifies release after 40 real SDK timer cycles. Below the package's 786432-byte watch-app limit |
+| Final drawable rendering | Pass | `WatchUi.Bitmap` icon size/placement checked in READY, RUNNING, PAUSED, and after Stop; Start/Pause/Back work without runtime errors. Displayed heap approximately 13.1–13.2 KB |
+| Artifact and scope audit | Pass | 52 test functions and 11 helpers excluded from debug/release; probes excluded from all main artifacts. Strings/configuration centralized; permissions/barrels empty; no sound, settings, persistence, background service, or networking |
+| Review and static checks | Pass | Actual diff and surrounding code reviewed; shell syntax and whitespace checks pass; no unresolved defects |
+
+The full-session trace used an isolated diagnostic app with production components,
+normal timing, real SDK calls, and added event/memory logging. Full-session,
+repeated-use, release-input, and artifact checks preceded the final drawable
+refactor. Builds, all tests, and rendering/input checks were rerun afterward;
+the unchanged timing code's two-minute trace was not repeated.
+
+The completion/input follow-up uses the final production model, view, delegate,
+and haptics in an isolated probe. An injected clock advances through the three
+interval boundaries to 119750 ms, then to 119999 or 120000 ms when a real simulator
+input arrives, before forwarding it to the production handler. SDK timers,
+vibration, and exit remain real. This deterministic exercise complements the
+real-duration session above. Both Strict probe builds passed without warnings;
+the full suite was rerun: `PASSED (passed=52, failed=0, errors=0)`.
+
+API audit: production calls fit the manifest's API 3.2.0 compatibility range.
+[`WatchUi.Bitmap`](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Bitmap.html)
+resource-ID construction, dimensions, drawing, and inherited
+[`setLocation()`](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Drawable.html#setLocation-instance_function)
+are API 1.0.0 operations; the platform handles the underlying bitmap type.
+Other API checks are recorded in steps 4–7. Testing on the API 6.0.3 simulator
+does not certify older devices.
+
+Outstanding acceptance and environment limits:
+
+- Hardware was unavailable. All [physical acceptance checks](implementation-plan.md#7-manual-acceptance-matrix)
+  remain open, particularly completion vibration surviving exit and system haptic restrictions.
+- Automated tests cover DND/vibration suppression and backlight refusal.
+  Interactive DND/sleep toggles were not tested; no actual burn-in refusal was
+  reproduced. The Simulation menu exposes no watch-app suspension action;
+  stop/resume handling is covered by automated tests.
+- Stalled simulator launches required restarting with the
+  [README Distrobox workaround](../README.md#simulator). Hardware-input checks
+  used on-screen buttons because injected keyboard Return was unreliable.
+
+Local evidence is ignored under `build/verification/stage8/` and unavailable in a
+fresh checkout: `regression-final.log`, `trace-full-*.png`, `trace-paused*.png`,
+`release-*.png`, and `exclusion.log`. Final builds, `tests.log`, and drawable
+captures are in its `bitmap/` subdirectory.
+Completion/input probe sources, driver, eight case logs/captures, build logs,
+`at-summary.log`, `before-summary.log`, and the rerun `tests.log` are in
+`completion-input/`. Each case needed a fresh simulator and a wait for device
+layout before input; probe symbols are absent from all main-project artifacts.

@@ -7,7 +7,7 @@ class ToothbrushTimerView extends WatchUi.View {
     private var _timer as BrushingTimer;
     private var _config as TimerConfig;
     private var _layout as TimerLayout?;
-    private var _toothbrush as WatchUi.BitmapResource or Graphics.BitmapReference;
+    private var _toothbrush as WatchUi.Bitmap;
     private var _start as String;
     private var _pause as String;
     private var _resume as String;
@@ -19,8 +19,8 @@ class ToothbrushTimerView extends WatchUi.View {
         View.initialize();
         _timer = timer;
         _config = config;
-        // Resource IDs determine these types; modern devices return a reference.
-        _toothbrush = WatchUi.loadResource(Rez.Drawables.Toothbrush) as WatchUi.BitmapResource or Graphics.BitmapReference;
+        // Let the drawable handle the platform's underlying bitmap resource type.
+        _toothbrush = new WatchUi.Bitmap({:rezId => Rez.Drawables.Toothbrush});
         _start = WatchUi.loadResource(Rez.Strings.Start) as String;
         _pause = WatchUi.loadResource(Rez.Strings.Pause) as String;
         _resume = WatchUi.loadResource(Rez.Strings.Resume) as String;
@@ -30,7 +30,11 @@ class ToothbrushTimerView extends WatchUi.View {
     }
 
     function onLayout(dc as Dc) as Void {
-        _layout = new TimerLayout(dc.getWidth(), dc.getHeight());
+        var layout = new TimerLayout(dc.getWidth(), dc.getHeight());
+        _layout = layout;
+        var dimensions = _toothbrush.getDimensions();
+        _toothbrush.setLocation(layout.centerX - dimensions[0] / 2,
+            layout.iconY - dimensions[1] / 2);
     }
 
     // Null only before the platform supplies the display dimensions.
@@ -68,8 +72,7 @@ class ToothbrushTimerView extends WatchUi.View {
         if (_timer.getState() != BrushingTimer.READY) {
             drawProgress(dc, layout);
         }
-        dc.drawBitmap(layout.centerX - _toothbrush.getWidth() / 2,
-            layout.iconY - _toothbrush.getHeight() / 2, _toothbrush);
+        _toothbrush.draw(dc);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(layout.centerX, layout.timeY, Graphics.FONT_NUMBER_HOT,
             formatRemainingTime(_timer.getRemainingMs()),
