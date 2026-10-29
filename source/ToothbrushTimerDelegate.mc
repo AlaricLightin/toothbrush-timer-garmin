@@ -1,3 +1,4 @@
+import Toybox.Attention;
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.Timer;
@@ -83,6 +84,7 @@ class ToothbrushTimerDelegate extends WatchUi.BehaviorDelegate {
         }
         if (_timer.getState() == BrushingTimer.RUNNING) {
             startUpdates();
+            activateBacklight();
         } else {
             stopUpdates();
         }
@@ -137,6 +139,26 @@ class ToothbrushTimerDelegate extends WatchUi.BehaviorDelegate {
         var updateTimer = new Timer.Timer();
         _updateTimer = updateTimer;
         updateTimer.start(method(:onTimer), 250, true);
+    }
+
+    private function activateBacklight() as Void {
+        // Start/Resume only: let system timeout and burn-in protection prevail.
+        // There is no renewal to cancel on Pause, Stop, or application cleanup.
+        try {
+            if (canRequestBacklight()) {
+                requestBacklight();
+            }
+        } catch (exception instanceof Lang.Exception) {
+            System.println("Backlight unavailable: " + exception.getErrorMessage());
+        }
+    }
+
+    protected function canRequestBacklight() as Boolean {
+        return Attention has :backlight;
+    }
+
+    protected function requestBacklight() as Void {
+        Attention.backlight(true);
     }
 
     protected function stopUpdates() as Void {

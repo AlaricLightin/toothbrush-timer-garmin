@@ -39,6 +39,10 @@ class TestTimerDelegate extends ToothbrushTimerDelegate {
     var stops as Number = 0;
     var redraws as Number = 0;
     var updating as Boolean = false;
+    var backlightAvailable as Boolean = true;
+    var failBacklight as Boolean = false;
+    var backlightChecks as Number = 0;
+    var backlightRequests as Number = 0;
     var effects as Array<String>;
 
     function initialize(timer as BrushingTimer, view as ToothbrushTimerView,
@@ -63,6 +67,18 @@ class TestTimerDelegate extends ToothbrushTimerDelegate {
 
     protected function requestRedraw() as Void {
         redraws += 1;
+    }
+
+    protected function canRequestBacklight() as Boolean {
+        backlightChecks += 1;
+        return backlightAvailable;
+    }
+
+    protected function requestBacklight() as Void {
+        backlightRequests += 1;
+        if (failBacklight) {
+            throw new Lang.OperationNotAllowedException("Test backlight refusal");
+        }
     }
 
     protected function exitApplication() as Void {
@@ -333,5 +349,153 @@ function applicationStopAndResumeDiscardSession(logger as Test.Logger) as Boolea
     Test.assertEqual(freshView.getPrimaryLabel(), "Start");
     Test.assertEqual(freshView.getStageLabel(), "Stage 1/4");
     app.onStop(null);
+    return true;
+}
+
+(:test)
+function delegateBacklightTransitionPolicy(logger as Test.Logger) as Boolean {
+    var f = new DelegateFixture();
+    f.delegate.onTimer();
+    Test.assertEqual(f.delegate.backlightChecks, 0);
+    f.tap(f.view.layout.start);
+    Test.assertEqual(f.delegate.backlightRequests, 1);
+    // Even delayed updates must not renew the request.
+    f.clock.advance(60200);
+    f.delegate.onTimer();
+    f.delegate.onTimer();
+    Test.assertEqual(f.delegate.backlightChecks, 1);
+    f.tap(f.view.layout.primary);
+    f.clock.advance(100000);
+    f.delegate.onTimer();
+    Test.assertEqual(f.delegate.backlightChecks, 1);
+    Test.assertEqual(f.timer.getElapsedMs(), 60200);
+    f.tap(f.view.layout.primary);
+    Test.assertEqual(f.delegate.backlightRequests, 2);
+    f.tap(f.view.layout.stop);
+    f.delegate.onTimer();
+    Test.assertEqual(f.delegate.backlightChecks, 2);
+    Test.assertEqual(f.timer.getState(), BrushingTimer.READY);
+    f.tap(f.view.layout.start);
+    Test.assertEqual(f.delegate.backlightRequests, 3);
+    f.tap(f.view.layout.primary);
+    f.tap(f.view.layout.stop);
+    f.delegate.onBack();
+    f.delegate.cleanup();
+    f.delegate.onTimer();
+    f.delegate.handleKey(WatchUi.KEY_ENTER);
+    Test.assertEqual(f.delegate.backlightChecks, 3);
+    return true;
+}
+
+(:test)
+function delegateBacklightUnavailableAndRefused(logger as Test.Logger) as Boolean {
+    for (var failure = 0; failure < 2; failure += 1) {
+        var f = new DelegateFixture();
+        f.delegate.backlightAvailable = failure != 0;
+        f.delegate.failBacklight = failure == 1;
+        f.tap(f.view.layout.start);
+        Test.assertEqual(f.delegate.backlightChecks, 1);
+        Test.assertEqual(f.delegate.backlightRequests, failure);
+        Test.assert(f.delegate.updating);
+        f.clock.advance(12345);
+        f.delegate.onTimer();
+        f.tap(f.view.layout.primary);
+        Test.assertEqual(f.timer.getState(), BrushingTimer.PAUSED);
+        Test.assertEqual(f.timer.getElapsedMs(), 12345);
+        f.clock.advance(100000);
+        f.delegate.onTimer();
+        Test.assertEqual(f.delegate.backlightChecks, 1);
+        // A new running period can make a fresh request after platform recovery.
+        f.delegate.backlightAvailable = true;
+        f.delegate.failBacklight = false;
+        f.tap(f.view.layout.primary);
+        Test.assertEqual(f.delegate.backlightRequests, failure + 1);
+        Test.assertEqual(f.timer.getElapsedMs(), 12345);
+        f.clock.advance(107655);
+        f.delegate.onTimer();
+        Test.assertEqual(f.timer.getState(), BrushingTimer.COMPLETED);
+        Test.assertEqual(f.effects[f.effects.size() - 1], "exit");
+        f.delegate.onTimer();
+        f.delegate.cleanup();
+        Test.assertEqual(f.delegate.backlightChecks, 2);
+    }
+    return true;
+}
+
+(:test)
+function delegateBacklightFailureThroughExit(logger as Test.Logger) as Boolean {
+    for (var action = 0; action < 4; action += 1) {
+        var f = new DelegateFixture();
+        f.delegate.failBacklight = true;
+        f.tap(f.view.layout.start);
+        f.clock.advance(120000);
+        if (action == 0) {
+            f.tap(f.view.layout.primary);
+        } else if (action == 1) {
+            f.tap(f.view.layout.stop);
+        } else if (action == 2) {
+            f.delegate.onBack();
+        } else {
+            f.delegate.cleanup();
+        }
+        f.delegate.onTimer();
+        f.delegate.cleanup();
+        Test.assertEqual(f.delegate.backlightChecks, 1);
+        Test.assertEqual(f.delegate.backlightRequests, 1);
+        Test.assert(!f.delegate.updating);
+        if (action < 3) {
+            Test.assertEqual(f.timer.getState(), BrushingTimer.COMPLETED);
+            Test.assertEqual(f.effects.size(), 3);
+            Test.assertEqual(f.effects[1], "completion");
+            Test.assertEqual(f.effects[2], "exit");
+        } else {
+            // External cleanup discards rather than synchronizes the session.
+            Test.assertEqual(f.effects.size(), 1);
+        }
+    }
+    return true;
+}
+
+// Exercise real SDK timer ownership while muting redraw and backlight effects.
+(:test)
+class OwnershipTestDelegate extends ToothbrushTimerDelegate {
+    function initialize(timer as BrushingTimer, view as ToothbrushTimerView) {
+        ToothbrushTimerDelegate.initialize(timer, view, new HapticsService());
+    }
+
+    protected function requestBacklight() as Void {
+    }
+
+    protected function requestRedraw() as Void {
+    }
+
+    static function exerciseOwnership() as Array<WeakReference> {
+        var config = TimerConfig.createDefault();
+        var timer = new BrushingTimer(config, new FakeClock(0));
+        var view = new DelegateTestView(timer, config);
+        var delegate = new OwnershipTestDelegate(timer, view);
+        for (var session = 0; session < 40; session += 1) {
+            delegate.handleKey(WatchUi.KEY_ENTER);
+            delegate.handleKey(WatchUi.KEY_ENTER);
+            delegate.handleKey(WatchUi.KEY_ENTER);
+            delegate.handleTap(view.layout.stop.x, view.layout.stop.y);
+            Test.assertEqual(timer.getState(), BrushingTimer.READY);
+        }
+        // Also release a running timer from cleanup, including a repeated cleanup.
+        delegate.handleKey(WatchUi.KEY_ENTER);
+        delegate.cleanup();
+        delegate.cleanup();
+        return [delegate.weak(), view.weak(), timer.weak()];
+    }
+}
+
+(:test)
+function delegateTimerOwnershipReleased(logger as Test.Logger) as Boolean {
+    var references = OwnershipTestDelegate.exerciseOwnership();
+    // The helper's locals have gone out of scope. A retained timer callback
+    // cycle would keep the delegate and everything it owns alive here.
+    for (var index = 0; index < references.size(); index += 1) {
+        Test.assert(!references[index].stillAlive());
+    }
     return true;
 }

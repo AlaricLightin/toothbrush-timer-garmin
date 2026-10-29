@@ -4,7 +4,7 @@
 
 Implement the MVP in [product-requirements.md](product-requirements.md) using [technical-design.md](technical-design.md) and the workflow rules in [AGENTS.md](../AGENTS.md). Those documents remain authoritative for behavior, architecture, and development policy.
 
-Steps 1–4 are complete. Steps 5–6 are implemented and simulator-verified, with physical acceptance still open; see [verification.md](verification.md). Steps 7–9 and full simulator/hardware acceptance remain pending.
+Steps 1–4 are complete. Steps 5–7 are implemented and simulator-verified for their recorded checks, with physical acceptance still open; see [verification.md](verification.md). Steps 8–9 and full simulator/hardware acceptance remain pending.
 
 ## 2. Original starting point
 
@@ -120,6 +120,8 @@ Each increment must build for Vivoactive 6 with Strict checking and no new warni
 ### Step 7 — Add screen behavior and review ownership
 
 **Dependencies:** step 6.
+
+**Status:** implemented; Strict debug/test/release builds, 52 automated tests, and the simulator screen/lifecycle probe pass. Timer ownership is verified with repeated real SDK timers and weak references. Physical screen restrictions and any evidence for coarse renewal remain open; see [verification.md](verification.md#step-7--screen-behavior-and-ownership-review-2026-10-29).
 
 - Request Boolean backlight activation on Start/Resume. Stop requests on Pause, Stop, Back, completion, and application cleanup; allow normal dimming while paused.
 - If the §3 hardware check justifies renewal, use the existing callback/clock with a separate coarse renewal timestamp. Stop renewal after platform refusal for that running period.

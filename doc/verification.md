@@ -281,3 +281,62 @@ Official platform checks:
 This integration introduces no API requirement above manifest 3.2.0; the final
 minimum-API audit remains for step 8. Full simulator regression and physical
 acceptance remain for steps 7–9.
+
+## Step 7 — Screen behavior and ownership review (2026-10-29)
+
+Step 7 implementation is complete; physical screen acceptance remains pending.
+Verified with Connect IQ SDK/compiler 9.2.0 and the Vivoactive 6 simulator
+(API 6.0.3) in Ubuntu 22.04 Distrobox. Commands follow the
+[README build](../README.md#build), [unit-test](../README.md#unit-tests), and
+[simulator](../README.md#simulator) instructions.
+
+The delegate makes one Boolean backlight activation request on Start and Resume.
+Capability checks and platform exceptions are contained at that boundary. There
+is no periodic renewal, so Pause, Stop, Back, completion, and application cleanup
+cannot leave future requests scheduled. Pause allows normal system timeout
+rather than forcibly disabling the backlight. Hardware evidence is required by
+the plan before adding coarse renewal; none is available.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Strict debug/test/release builds | Pass | All three README build commands report `BUILD SUCCESSFUL`; no compiler/analyzer warnings |
+| Full Monkey C suite | Pass | Printed summary: `PASSED (passed=52, failed=0, errors=0)`; 48 existing and four new tests |
+| Screen policy and failure coverage | Pass | Start/Resume request counts; no requests on regular/delayed/stale callbacks, pause, stop, terminal input, Back, or repeated/external cleanup; unsupported API and thrown refusal preserve active time, pause/resume, completion priority, and exactly-once exit |
+| Real SDK timer ownership | Pass | Forty Start/Pause/Resume/Stop cycles, followed by running-state cleanup, without timer exhaustion; weak references confirm delegate, view, and model are released after the helper returns |
+| Simulator screen/lifecycle probe | Pass | Isolated 8000/2000 ms configuration with production controller/view/model/haptics; three real backlight calls return on Start, Resume, and restart; no requests during a 15-second pause; Stop returns READY; completion stops updates, exits, and invokes application cleanup without runtime errors |
+| Additional production input smoke | Unverified | Production artifact renders READY, but synthetic mouse/Enter input did not produce reliable visible state transitions. Captures are not counted as an input pass; complete manual simulator regression remains for step 8 |
+| Simulator memory observation | Recorded | Probe READY uses 14920 bytes, Stop/reset uses 14928 bytes; these snapshots alone do not establish a memory trend. Repeated timer release is established by the ownership test |
+| Test/probe exclusion | Pass | All five new test/helper symbols are absent from debug/release metadata and present in test metadata; isolated screen probe is absent from every main-project artifact |
+| Static checks and code review | Pass | Actual diff and surrounding application/model/view/haptics reviewed; whitespace checks pass; no unresolved actionable defects |
+| Physical Vivoactive 6 | Not run | Hardware unavailable; wrist-down timeout, long pause/dimming, Resume, gesture/settings interaction, power modes, burn-in refusal, and real interruption/exit behavior remain open |
+
+The simulator required the [documented Distrobox workaround](../README.md#simulator).
+
+Ownership review: application and platform own the delegate; the delegate owns
+the view, model, haptics, and active update timer. The view/model/haptics hold no
+reference back to the delegate. The timer's bound callback points to the
+delegate; stopping updates and clearing `_updateTimer` breaks that cycle even if
+`Timer.stop()` retains its callback. Application cleanup clears its delegate
+reference. The weak-reference test exercises these real SDK timer operations;
+no additional ownership abstraction or production change is needed.
+
+Official API checks:
+
+- [`Attention.backlight`](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#backlight-instance_function)
+  lists Vivoactive 6 and supports Boolean activation at API 1.0.0. The request
+  respects system timeout; gesture behavior and burn-in protection still apply.
+  Float brightness requires 3.2.1 and is unused. The boundary catches
+  `Lang.Exception`, including the platform's backlight protection exception,
+  without naming a newer exception type or retrying during the running period.
+- [`Timer.start/stop`](https://developer.garmin.com/connect-iq/api-docs/Toybox/Timer/Timer.html)
+  are API 1.0.0. Timer exhaustion and reference retention are tested using real
+  timers rather than inferred from mocks or undocumented callback-release behavior.
+
+No production API requirement above manifest 3.2.0 is introduced. The final
+minimum-API audit and complete real-duration simulator regression remain for
+step 8. Step 7 is not fully verified until physical screen checks pass.
+
+Local logs, captures, and the isolated probe are ignored under
+`build/verification/stage7/` and unavailable in a fresh checkout. `tests.log`
+contains the final passing summary; `screen-probe.log` contains the real API and
+lifecycle trace. No probe is included in production source discovery.

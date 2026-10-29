@@ -1,12 +1,14 @@
 # Toothbrush Timer
 
-A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–6 provide the build setup,
+A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–7 provide the build setup,
 timing configuration, clock, test harness, session model with cue detection, and
 READY/RUNNING/PAUSED presentation with shared control geometry, plus a standalone
 haptics service, live touch/Enter/Back controls, periodic updates, and lifecycle
 cleanup. Launch starts in READY; Start begins the session, Pause/Resume preserves
-active time, Stop resets, and completion exits. Screen/backlight requests remain
-for step 7. See the
+active time, Stop resets, and completion exits. Start/Resume make a best-effort
+backlight request; system timeout and burn-in restrictions still apply. Requests
+are not renewed during countdown or pause. Physical screen acceptance remains
+open. See the
 [requirements](doc/product-requirements.md), [design](doc/technical-design.md),
 and [implementation plan](doc/implementation-plan.md).
 
