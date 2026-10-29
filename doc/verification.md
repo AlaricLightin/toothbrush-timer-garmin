@@ -234,3 +234,50 @@ completion vibration or conflicting system-settings behavior, follow the
 [plan's platform checks](implementation-plan.md#3-platform-pitfalls-and-open-checks)
 before changing exit timing or accepting haptic behavior. Step 5 is not fully
 verified until the physical checks pass.
+
+## Step 6 — Inputs, periodic updates, and lifecycle cleanup (2026-10-29)
+
+Step 6 implementation is complete; physical acceptance remains pending. Verified
+with Connect IQ SDK/compiler 9.2.0 and the Vivoactive 6 simulator (API 6.0.3) in
+Ubuntu 22.04 Distrobox. Build, suite, and simulator commands are the commands in
+[README](../README.md#build). Screen/backlight policy remains for step 7.
+
+The delegate integrates touch/Enter/Back input, 250 ms updates, and exactly-once
+completion effects. Application cleanup stops and releases updates; each launch,
+including a reported resume, creates a fresh READY session.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Strict debug/test/release builds | Pass | All three README build commands report `BUILD SUCCESSFUL`; no compiler/analyzer warnings |
+| Full Monkey C suite | Pass | Printed summary: `PASSED (passed=48, failed=0, errors=0)`; 38 existing and ten new controller/application tests |
+| New automated coverage | Pass | Visible/hidden control hit testing, edges/outside taps, Enter, fractional pause/resume, delayed/duplicate callbacks, Stop/reset/restart, completion priority over touch/Enter/Back, exactly-once effects, callback-stop-haptic-exit order, READY/PAUSED/terminal callbacks, repeated/external cleanup, nonfatal haptics failure, and application stop/reported-resume freshness |
+| Input-routing probe | Pass | Returning false from Select delivers exactly one coordinate tap or raw Enter (`KEY_ENTER=4`); standard Back reaches `onBack`. Inside and outside taps observed before binding final inputs |
+| Production input/rendering | Pass | READY/outside tap, Start, advancing time/ring, frozen time/ring on Pause, Enter Resume, Stop from RUNNING and PAUSED, restart, and hardware Back/normal exit |
+| Controller completion fixture | Pass | Production controller/view/services with test-only 8000/2000 ms configuration: three interval requests, one completion request, four real vibration API returns, callback stop before completion, immediate exit, then application cleanup; no runtime errors |
+| Cleanup and relaunch | Pass for covered paths | Actual Back exits; fresh production launch shows READY. Automated app test calls repeated `onStop`, rejects stale input/callback effects, then starts with reported resume and obtains fresh READY |
+| Additional real-duration production run | Unverified | Simulator launches stalled at the idle logo, so full real-duration regression remains for step 8 |
+| Test/fixture exclusion | Pass | Debug/release symbol metadata excludes new tests/helpers; test metadata includes them. Both isolated probe apps are absent from every main-project artifact |
+| Static checks and code review | Pass | Actual Git diff, new tests, and surrounding model/view/haptics reviewed; no unresolved actionable defects |
+| Physical Vivoactive 6 | Not run | Hardware unavailable; real controls, ergonomics, screen readability, vibration settings/feel/survival through exit, and real system interruption/suspension/resume behavior remain open |
+
+Local logs, final captures, and isolated fixtures are ignored under
+`build/verification/stage6/` and unavailable in a fresh checkout. `tests-final.log`
+contains the passing summary; `live.log` records the shortened completion trace.
+
+Official platform checks:
+
+- [`BehaviorDelegate`](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/BehaviorDelegate.html)
+  consumes raw input only when its behavior returns true. `onSelect` is API
+  1.2.0; standard Back is API 1.0.0. The Vivoactive 6 simulator confirms the
+  plan's Select-false/raw-tap/raw-Enter strategy.
+- [`ClickEvent.getCoordinates`](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/ClickEvent.html#getCoordinates-instance_function),
+  [`KeyEvent.getKey`](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/KeyEvent.html#getKey-instance_function),
+  [`Timer.Timer.start/stop`](https://developer.garmin.com/connect-iq/api-docs/Toybox/Timer/Timer.html),
+  [`AppBase.onStart/onStop`](https://developer.garmin.com/connect-iq/api-docs/Toybox/Application/AppBase.html),
+  and [`System.exit`](https://developer.garmin.com/connect-iq/api-docs/Toybox/System.html#exit-instance_function)
+  are API 1.0.0 facilities. Timer callbacks may be skipped, so elapsed time
+  continues to come exclusively from the injected clock/model.
+
+This integration introduces no API requirement above manifest 3.2.0; the final
+minimum-API audit remains for step 8. Full simulator regression and physical
+acceptance remain for steps 7–9.

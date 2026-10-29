@@ -4,7 +4,7 @@
 
 Implement the MVP in [product-requirements.md](product-requirements.md) using [technical-design.md](technical-design.md) and the workflow rules in [AGENTS.md](../AGENTS.md). Those documents remain authoritative for behavior, architecture, and development policy.
 
-Steps 1–4 are complete. Step 5 is implemented and simulator-verified, with physical haptic acceptance still open; see [verification.md](verification.md). Steps 6–9 and full simulator/hardware acceptance remain pending.
+Steps 1–4 are complete. Steps 5–6 are implemented and simulator-verified, with physical acceptance still open; see [verification.md](verification.md). Steps 7–9 and full simulator/hardware acceptance remain pending.
 
 ## 2. Original starting point
 
@@ -107,6 +107,8 @@ Each increment must build for Vivoactive 6 with Strict checking and no new warni
 ### Step 6 — Integrate inputs, periodic updates, and lifecycle cleanup
 
 **Dependencies:** steps 3–5; physical haptic acceptance may remain pending.
+
+**Status:** implemented; Strict debug/test/release builds, 48 automated tests, and simulator input/completion checks pass. Physical controls and real suspension/exit acceptance remain open; see [verification.md](verification.md#step-6--inputs-periodic-updates-and-lifecycle-cleanup-2026-10-29).
 
 - Verify the §3 input-routing probe, then bind touch controls through shared geometry and Enter through the shared Start/Pause/Resume action. Preserve standard Back behavior.
 - Introduce one repeating timer while RUNNING, initially around 250 ms. Synchronize on callbacks and before running-state user actions; consume at most one event and return after completion before processing further input or redraws.

@@ -1,10 +1,12 @@
 # Toothbrush Timer
 
-A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–5 provide the build setup,
+A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–6 provide the build setup,
 timing configuration, clock, test harness, session model with cue detection, and
 READY/RUNNING/PAUSED presentation with shared control geometry, plus a standalone
-haptics service. Launch shows the READY screen; live input, periodic updates,
-and haptics orchestration are planned for step 6. See the
+haptics service, live touch/Enter/Back controls, periodic updates, and lifecycle
+cleanup. Launch starts in READY; Start begins the session, Pause/Resume preserves
+active time, Stop resets, and completion exits. Screen/backlight requests remain
+for step 7. See the
 [requirements](doc/product-requirements.md), [design](doc/technical-design.md),
 and [implementation plan](doc/implementation-plan.md).
 
@@ -152,9 +154,12 @@ set, from the repository root:
 "$CIQ_SDK/bin/monkeydo" build/ToothbrushTimer.prg vivoactive6
 ```
 
-The current launch check is the toothbrush icon, `2:00`, and Start rendering
-without a runtime error or automatic countdown. Controls are not yet bound;
-input and Back/exit checks remain for step 6. See
+The launch check is the toothbrush icon, `2:00`, and Start rendering without a
+runtime error or automatic countdown. Tap Start or press the simulator's upper
+hardware button (Enter) to start; tap Pause/Resume or press Enter to toggle.
+Stop resets from RUNNING or PAUSED. The lower hardware button (Back) exits;
+completion also exits automatically. Taps outside the visible controls do nothing.
+Relaunch always starts a fresh READY session. See
 [verification](doc/verification.md) and the implementation plan's acceptance matrices.
 
 For connection/display failures, check simulator readiness, the shared SDK,
