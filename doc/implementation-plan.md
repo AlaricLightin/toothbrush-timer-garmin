@@ -4,7 +4,7 @@
 
 Implement the MVP in [product-requirements.md](product-requirements.md) using [technical-design.md](technical-design.md) and the workflow rules in [AGENTS.md](../AGENTS.md). Those documents remain authoritative for behavior, architecture, and development policy.
 
-Steps 1–8 are implemented; verification results and simulator limitations are recorded in [verification.md](verification.md). Step 9 and physical acceptance remain pending.
+Steps 1–9 are complete. Simulator regression and user-reported physical acceptance on Vivoactive 6 firmware 18.32 are recorded in [verification.md](verification.md), including the tested artifact/settings and verification limits.
 
 ## 2. Original starting point
 
@@ -133,7 +133,7 @@ Each increment must build for Vivoactive 6 with Strict checking and no new warni
 
 **Dependencies:** steps 1–7.
 
-**Status:** simulator regression completed with [recorded results and limitations](verification.md#step-8--complete-simulator-regression-2026-10-29). Physical acceptance remains for step 9.
+**Status:** simulator regression completed with [recorded results and limitations](verification.md#step-8--complete-simulator-regression-2026-10-29). Physical acceptance is recorded under step 9.
 
 - Run the full Monkey C suite and Strict debug, test, and release builds, then all simulator scenarios in §7, including a real-duration session.
 - Re-audit actual API usage/minimum level, resource-based strings, permissions, imports, and excluded features. Remove probes/fixtures from production artifacts.
@@ -144,6 +144,8 @@ Each increment must build for Vivoactive 6 with Strict checking and no new warni
 ### Step 9 — Validate physical Vivoactive 6 and hand off
 
 **Dependencies:** step 8; earlier hardware findings feed this step.
+
+**Status:** completed for the tested Vivoactive 6 firmware 18.32 and settings through guided, user-reported physical checks. The [verification record](verification.md#step-9--physical-vivoactive-6-acceptance-2026-11-03) includes release-build/transfer evidence, all manual scenario results, and verification limits. No production changes were required.
 
 - Build and sideload the release `.prg` into `GARMIN/APPS` using Garmin's supported transfer procedure; document the host procedure without assuming a mount path.
 - Run physical scenarios in §7 over complete and interrupted sessions. Record firmware, relevant settings, artifact, results, and outstanding checks in `doc/verification.md`.

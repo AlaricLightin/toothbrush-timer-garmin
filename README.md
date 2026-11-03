@@ -1,14 +1,19 @@
 # Toothbrush Timer
 
-A Garmin Connect IQ watch app for Vivoactive 6. Steps 1–7 provide the build setup,
-timing configuration, clock, test harness, session model with cue detection, and
-READY/RUNNING/PAUSED presentation with shared control geometry, plus a standalone
-haptics service, live touch/Enter/Back controls, periodic updates, and lifecycle
-cleanup. Launch starts in READY; Start begins the session, Pause/Resume preserves
-active time, Stop resets, and completion exits. Start/Resume make a best-effort
-backlight request; system timeout and burn-in restrictions still apply. Requests
-are not renewed during countdown or pause. Physical screen acceptance remains
-open. See the
+A Garmin Connect IQ watch app for Vivoactive 6. A two-minute countdown shows
+continuous progress through four stages, with short cues at 30, 60, and 90
+seconds and a longer completion cue. Touch and the upper hardware button provide
+Start/Pause/Resume; touch Stop resets the session. The lower button exits, and
+completion exits automatically. Every launch starts fresh at `2:00`.
+
+Start/Resume make a best-effort backlight request; system timeout, gesture,
+power, and burn-in restrictions still apply. Requests are not renewed during
+countdown or pause.
+
+Steps 1–9 are complete, including simulator regression and user-reported
+physical acceptance on Vivoactive 6 firmware 18.32. The
+[verification record](doc/verification.md#step-9--physical-vivoactive-6-acceptance-2026-11-03)
+identifies the tested release, settings, results, and verification limits. See the
 [requirements](doc/product-requirements.md), [design](doc/technical-design.md),
 and [implementation plan](doc/implementation-plan.md).
 
@@ -176,3 +181,67 @@ distrobox enter --name "$CIQ_BOX" -- env \
     -u GTK_IM_MODULE -u GSETTINGS_SCHEMA_DIR \
     GDK_BACKEND=x11 "$CIQ_SDK/bin/connectiq"
 ```
+
+## Physical-device installation and acceptance
+
+Use the release artifact for Vivoactive 6 hardware checks. From the repository
+root, with the [setup](#setup) prerequisites configured:
+
+```bash
+bash scripts/build.sh release
+sha256sum build/ToothbrushTimer-release.prg
+```
+
+Connect the watch with a USB data cable and open it in Ubuntu Files. Use
+`Internal Storage/GARMIN/Apps` on the watch; do not assume a local mount path.
+Copy `build/ToothbrushTimer-release.prg` into that folder, following Garmin's
+[sideloading procedure](https://developer.garmin.com/connect-iq/connect-iq-basics/your-first-app/).
+The watch's [USB Mode setting](https://www8.garmin.com/manuals/webhelp/GUID-8C2C402F-55AC-431F-9CF2-1442B89CE149/EN-US/GUID-67C130E2-B01F-4253-8810-4762AB9DEB1D.html)
+supports MTP for file transfer.
+
+For a first installation through the command line, Ubuntu's desktop session
+must have working GVfs MTP support and the watch must already be mounted in
+Files. Discover its actual `mtp://.../` URI:
+
+```bash
+env -u GIO_MODULE_DIR -u GIO_EXTRA_MODULES gio mount -l
+```
+
+Set `CIQ_WATCH_URI` in your shell to that watch's root URI, then copy:
+
+```bash
+: "${CIQ_WATCH_URI:?Set CIQ_WATCH_URI to the connected watch MTP root URI}"
+env -u GIO_MODULE_DIR -u GIO_EXTRA_MODULES gio copy -i \
+    build/ToothbrushTimer-release.prg \
+    "${CIQ_WATCH_URI%/}/Internal Storage/GARMIN/Apps/ToothbrushTimer-release.prg" \
+    < /dev/null
+```
+
+This first-install command declines overwrite prompts; it does not update an
+existing copy. For later replacements, use Files and confirm replacement of
+only this app's PRG. Unsetting the two GIO module variables is scoped to each
+command; an inherited Snap module path prevented MTP access during verification.
+Ordinary filesystem copying through the GVfs mount returned `Operation not
+supported`; the GIO MTP transfer succeeded.
+
+Wait for transfer completion, read the copied file back to compare its SHA-256
+with the local artifact, and eject/unmount the watch in Files before unplugging.
+Open Toothbrush Timer from the watch's apps list. First verify a readable
+toothbrush icon, `2:00`, and Start, with no automatic countdown.
+
+Work through the [manual acceptance matrix](doc/implementation-plan.md#7-manual-acceptance-matrix)
+and record the artifact hash, watch firmware, relevant display/haptic/power
+settings, observations, and outstanding checks in [verification](doc/verification.md).
+Copying a PRG does not establish successful on-watch launch or physical acceptance.
+
+On the tested Vivoactive 6 firmware 18.32, **Alert vibration** controls the app's
+cues: turning it off suppresses cues with System vibration either on or off.
+Turning System vibration off alone leaves app cues enabled when Alert vibration
+is on. DND also suppresses cues. Countdown and automatic exit continue with
+feedback suppressed. See the step 9 verification record for tested combinations
+and verification limits; other firmware/settings require verification.
+
+With the tested sleep and battery-saver configurations, the app still completed
+normally, while the display dimmed and gesture wake was unavailable. Sleep mode
+with Alert vibration on and the usual DND switch off still allowed cues. Account
+for the active focus mode's settings when checking haptics or display behavior.

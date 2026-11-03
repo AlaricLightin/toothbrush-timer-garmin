@@ -1,5 +1,11 @@
 # Verification
 
+Current handoff: steps 1–9 are complete for the tested Vivoactive 6 firmware
+18.32 and settings. See [step 9](#step-9--physical-vivoactive-6-acceptance-2026-11-03)
+for user-reported hardware acceptance and verification limits. Earlier sections
+are dated snapshots; hardware checks marked pending there were addressed in
+step 9 to the extent described in its results and limits.
+
 ## Step 1 — Baseline build (2026-10-18)
 
 Step 1 is complete. Strict debug/release builds pass without warnings. The current
@@ -401,3 +407,229 @@ Completion/input probe sources, driver, eight case logs/captures, build logs,
 `at-summary.log`, `before-summary.log`, and the rerun `tests.log` are in
 `completion-input/`. Each case needed a fresh simulator and a wait for device
 layout before input; probe symbols are absent from all main-project artifacts.
+
+## Step 9 — Physical Vivoactive 6 acceptance (2026-11-03)
+
+Hardware was connected to the Ubuntu host for transfer. The user reported no
+previous installation of Toothbrush Timer. Observations below distinguish host
+checks from user-reported physical results. Step 9 is complete for the tested
+firmware/settings and scenarios, with verification limits listed at handoff.
+
+### Artifact and environment
+
+- Source revision: `bc52569b65dde6ec85b9519ba41547e3f4a1c133`; working tree clean
+  before preparation. Documentation changes follow the build; production source
+  is unchanged.
+- Official SDK/compiler: 9.2.0; OpenJDK 21.0.12.1.
+- Artifact: `build/ToothbrushTimer-release.prg`, release build for `vivoactive6`,
+  17,276 bytes.
+- SHA-256: `149b311586fad419f283f46650e5f117c0a84998058ea7bd4be61785542afdef`.
+- Device description read from `GarminDevice.xml`: `vívoactive 6`.
+  Raw `SoftwareVersion`: `1832`; user confirmed on-watch firmware **18.32**.
+- User-reported display timeout: **8 seconds**; always-on display: **off**.
+  Gesture wake restores the view in normal use; the gesture setting itself was
+  not separately reported.
+- User confirmed the baseline requested for the full session: vibration on;
+  DND, sleep mode, and battery saver off; display settings unchanged.
+
+### Results
+
+| Check | Result | Evidence / remaining work |
+| --- | --- | --- |
+| Release build | Pass | `bash scripts/build.sh release`: `BUILD SUCCESSFUL`, no compiler/analyzer warnings |
+| Sideload transfer | Pass | GIO MTP copy into `Internal Storage/GARMIN/Apps/ToothbrushTimer-release.prg`; read-back SHA-256 matches local artifact |
+| App discovery and fresh launch | Pass (user reported) | App appears in the list; expected initial screen is visible with no errors or readability problems. Idle screen dims, then blanks; touch restores the app view |
+| Full session, timing, progress, haptics, and automatic exit | Pass (user reported) | Three similar short cues and expected countdown/ring/stages; final cue at expected time, distinct and without cutoff; exit to app list, then quickly to watch face; no sound or errors. Individual stopwatch timestamps were not supplied |
+| Long pause/resume | Pass (user reported) | Fresh launch at `2:00`; paused at `1:35` remaining for 60 seconds; time/ring/stage frozen, Resume label shown, no paused cues; first cue about 5 seconds after Resume; display, remaining cues, completion, and exit as expected; no errors |
+| Stop/restart | Pass (user reported) | Stop resets correctly from RUNNING and PAUSED; restarted session's first cue around 30 seconds; no leftover cues during the requested 35-second wait after Stop; no errors |
+| Touch ergonomics and outside-control taps | Pass (user reported) | Controls comfortable and easy to distinguish; taps on the countdown/icon outside controls ignored. Physical edge taps not separately reported; simulator geometry coverage is recorded in step 8 |
+| Hardware controls | Pass (user reported) | Short upper-button presses Start/Pause/Resume, exactly one action per press; lower-button Back exits from RUNNING, PAUSED, and READY; no unexpected behavior |
+| Active display with baseline settings | Pass (user reported, system limits apply) | Dims after about 10–12 seconds; stays visible when horizontal, blanks when turned away, normally wakes when turned toward viewing position; countdown and completion remain correct |
+| DND suppression | Pass (user reported) | Run A: no interval or completion vibrations with DND on; countdown and automatic exit correct; no errors |
+| Vibration switches | Pass (user reported; switch behavior established) | With DND off: System off / Alert on permits cues (B); both off suppress all cues and still complete/exit (C); System on / Alert off suppresses the 30-second cue (D). Alert vibration controls app cues in these tested combinations |
+| Haptic recovery after settings restoration | Pass (user reported) | Run E: both vibration switches on, DND off; cue returns around 30 seconds; no errors |
+| Sleep mode | Pass (user reported, tested settings) | Alert vibration on; usual DND switch off, separate sleep DND setting not found. Cues, countdown, and automatic exit work; display dims and does not wake on gestures; no errors |
+| Battery saver | Pass (user reported, existing configuration) | App launches; cues, countdown, and automatic exit work. Display slightly darker, no gesture wake; no errors or restrictions reported. Detailed saver options not supplied |
+| Platform protection limits | Not induced | No actual burn-in refusal reproduced; automated backlight-refusal coverage is recorded in steps 7–8. No crash observed in baseline, long-pause, sleep, or saver sessions |
+| Back cancellation and fresh relaunch | Pass (user reported) | Back exits while running; no cues during the requested 35-second wait outside the app; relaunch shows fresh `2:00`. Back also exits from PAUSED and READY |
+| System alarm interruption | Pass (user reported, observed scenario) | Alarm appeared during the session; after dismissal the user reported normal screen/timer/state and continued normal operation. Exact timer values and lifecycle callbacks were not supplied |
+| Input near completion | Pass (user reported, pre-completion pause) | Upper-button press at `0:01` paused; no duplicate final cues, stuck screen, or errors reported; fresh relaunch works at `2:00`. Actual simultaneous completion/input on hardware was not established |
+| Repeated use | Pass (user reported) | Guided release-build checks include two completed sessions and three Stop/reset cycles; no errors or leftover cues reported across these checks |
+
+First physical observation (user reported): after the requested untouched
+10-second launch check, the watch dimmed and then showed a blank screen;
+touching the screen restored the application view. The user confirmed the
+expected initial screen and reported no errors or readability problems.
+No Start action was requested in this check. This established idle display
+behavior only; the subsequent full session checked the active countdown.
+Normal idle dimming is consistent with the design's Start/Resume backlight
+policy and does not by itself establish an active-display problem.
+
+Full-session observation (user reported): firmware 18.32, timeout 8 seconds,
+always-on display off, and the requested baseline settings confirmed. The user
+confirmed the three short cues' approximate timing and equal feel, expected
+countdown/ring/stages, and expected completion timing/distinctness without a
+cutoff. No individual measured timestamps were supplied, so this is qualitative
+acceptance rather than a quantitative latency/drift measurement. Automatic exit
+returned to the application list, then very quickly to the main watch screen.
+No sound or errors were reported. This closes the baseline physical check that
+the completion vibration survives immediate exit for this firmware/settings.
+
+During the active session, the screen dimmed after about 10–12 seconds. It did
+not blank while horizontal, blanked when turned away, and normally restored the
+view on a viewing gesture. This is consistent with the best-effort display
+policy in requirements §10/design §11:
+[Garmin's backlight API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#backlight-instance_function)
+respects device timeout/settings, and the
+[Vivoactive 6 manual](https://www8.garmin.com/manuals/webhelp/GUID-8C2C402F-55AC-431F-9CF2-1442B89CE149/EN-US/vivoactive_6_OM_EN-US.pdf)
+documents timeout and gesture wake. No production change or backlight renewal
+is indicated by these observations alone. The subsequent long-pause check
+reports expected paused/resumed display behavior. Subsequent sleep and battery
+saver sessions below exercise additional system restrictions; actual burn-in
+refusal was not induced.
+
+Long-pause observation (user reported): a fresh launch showed `2:00`. The user
+confirmed pausing at `1:35` remaining for `1:00` of wall-clock time; time, ring,
+and stage remained frozen for those 60 seconds. Resume was displayed, and no
+cues occurred while paused. Display behavior while
+paused and after resuming, remaining cues, completion, and automatic exit were
+reported as expected; no errors were reported. The subsequent Stop/touch check
+confirmed comfortable, distinguishable controls.
+
+The first cue was reported about 5 seconds after Resume, as expected from
+`1:35` remaining. The user's correction clarified that the initially supplied
+`1:00` referred to the pause duration. The timing discrepancy is resolved;
+the long-pause/resume scenario passes without a production change.
+
+Stop/restart and touch observation (user reported): Stop reset the session
+correctly both while running after the first interval cue and while paused.
+The next restarted session's first cue occurred around 30 seconds after Start.
+After stopping that session, no leftover cues occurred during the requested
+35-second wait. Taps on the countdown/icon outside controls were ignored.
+Controls were comfortable and easy to distinguish; no errors were reported.
+These repeated complete/interrupted release sessions also satisfy the baseline
+physical repeated-use check. The subsequent hardware check confirmed button
+input and cleanup on Back; the final alarm check exercised a system interruption.
+
+Hardware-controls observation (user reported): short upper-button presses
+correctly started, paused, and resumed the session, with one action per press.
+The lower button exited while running, while paused, and from the initial
+screen. No cues occurred during the requested 35-second wait after the running
+exit; reopening showed a fresh `2:00` session. No unexpected behavior was
+reported. This confirms normal Back cancellation and fresh relaunch on physical
+hardware; it does not establish behavior under a separate system interruption
+or an input at the completion boundary. The final batch below separately
+exercised an alarm and input near completion.
+
+Haptic-settings observation (user reported): Run A produced no interval or
+completion vibrations with DND on, and countdown/automatic exit worked. In
+Run B, DND was off and the user disabled **System vibration**, leaving **Alert
+vibration** on. Vibrations still occurred; the report does not separately
+identify which interval/completion cues occurred. Countdown and automatic exit
+worked, with no other errors. The user deferred the restoration/recovery check
+because of this unexpected result.
+
+The original Run B instruction assumed that System vibration alone disabled
+app cues. This mapping was not established. The
+[watch manual](https://www8.garmin.com/manuals/webhelp/GUID-8C2C402F-55AC-431F-9CF2-1442B89CE149/EN-US/GUID-F262E210-94DD-4A28-90ED-07830979D19B.html)
+lists System and Alert vibration separately, while
+[`DeviceSettings.vibrateOn`](https://developer.garmin.com/connect-iq/api-docs/Toybox/System/DeviceSettings.html#vibrateOn-var)
+only describes a Boolean vibration-enabled setting, without specifying the
+mapping to these two controls on Vivoactive 6. The production haptics service
+checks this flag and DND for every cue. Simulator tests using a false flag do
+not establish the physical switches' mapping. The subsequent C–E checks below
+resolve Run B's unexpected result as an incorrect test expectation about the
+System switch. No production or normative-document change is required by these
+observations.
+
+Independent-switch and recovery observations (user reported), with DND, sleep,
+and battery saver off:
+
+| Run | System vibration | Alert vibration | Observation |
+| --- | --- | --- | --- |
+| B | Off | On | Vibrations occurred; countdown and automatic exit worked |
+| C | Off | Off | No interval or completion vibrations through the full session; countdown and automatic exit worked |
+| D | On | Off | No vibration around 30 seconds in the requested 35-second run |
+| E | On | On | Vibration around 30 seconds returned in the requested 35-second run |
+
+No errors were reported for C–E. These physical observations establish that
+Alert vibration controls the app's cues in the tested combinations on firmware
+18.32; System vibration off alone does not suppress them. This satisfies the
+physical vibration-disable/recovery check for the effective alert setting.
+The watch's actual `vibrateOn` value was not directly sampled, so the results
+do not establish whether suppression occurs in the settings flag, inside the
+vibration API, or both. Sleep-specific behavior was subsequently checked below.
+
+Sleep-mode observation (user reported): Alert vibration was on. A separate
+sleep-specific DND setting was not found; the usual DND switch was off. Cues,
+countdown, and automatic exit worked. The display dimmed and did not respond
+to wrist gestures. No errors or other restrictions were reported. This accepts
+the observed sleep configuration without assuming that sleep alone silences
+alerts or that a separate sleep DND state was directly verified.
+
+Battery-saver observation (user reported): the app launched under the requested
+existing saver configuration, with sleep off and baseline haptics requested.
+Cues, countdown, and automatic exit worked. The display was slightly darker than
+usual and did not respond to wrist gestures. No errors or other restrictions
+were reported. Individual saver options were not supplied, so acceptance is
+limited to the configuration tested. These observations are consistent with
+respecting system display restrictions; no backlight-policy change is indicated.
+
+Final interruption/completion-input observations (user reported): a watch alarm
+appeared during the session. After dismissal, the screen, timer value, and
+running/paused/reset state were described as normal/as expected, and subsequent
+session behavior was normal. The user did not supply exact before/after timer
+values or distinguish an overlay from actual platform suspension. Pressing the
+upper button at `0:01` paused the session. No duplicate final cues, stuck screen,
+or errors were reported. Fresh relaunch at `2:00` worked as usual. This accepts
+the observed alarm scenario and pre-completion input path without claiming that
+actual simultaneous completion/input or forced suspension occurred on hardware.
+
+The watch was already mounted through the desktop's GVfs MTP backend. Inherited
+`GIO_MODULE_DIR` pointed to Snap-specific modules and prevented system `gio`
+from accessing MTP. Scoping `env -u GIO_MODULE_DIR -u GIO_EXTRA_MODULES` to the
+transfer command resolved this. Python exclusive-create and ordinary filesystem
+copy attempts returned `Operation not supported` and created no destination
+file; the subsequent GIO copy succeeded. No global environment changes or
+additional packages were needed. The reusable host procedure is in
+[README](../README.md#physical-device-installation-and-acceptance).
+
+### Handoff and verification limits
+
+- Implementation: steps 1–8 remain unchanged; step 9 required release installation,
+  guided physical verification, and documentation only. No production defect or
+  unresolved contradiction with requirements/design was identified. No code
+  correction iterations or new/modified automated tests were needed.
+- Build and static checks: the release build passed without warnings; transfer
+  matched the artifact hash above; final documentation whitespace, all 13 README
+  Bash examples' syntax, and 50 local Markdown link targets/anchors passed.
+  Syntax checking does not execute the examples. The artifact hash was rechecked
+  at handoff.
+- Automated/simulator evidence: step 8 records Strict debug/test/release builds,
+  52 passing tests (`passed=52, failed=0, errors=0`), and simulator regression.
+  These were not rerun in step 9 because production source is unchanged.
+- Physical acceptance: all manual scenario rows have user-reported coverage on
+  firmware 18.32 and the settings described above. Required guided runs are
+  complete; no further manual run is requested for this handoff.
+- Limits: exact stopwatch timestamps were not supplied; timing observations are
+  qualitative. The alarm test did not instrument lifecycle callbacks or prove
+  a forced suspend/terminate/resume sequence. The hardware completion-input test
+  exercised Pause before completion, not a proven simultaneous event; the eight
+  deterministic simulator cases and automated tests remain the evidence for
+  exact completion priority. No actual burn-in refusal was induced. Physical
+  edge taps and detailed battery-saver options were not separately reported.
+  These unobserved cases are not claimed as physically verified. Other devices,
+  firmware versions, and settings combinations require separate verification.
+- Review: the final documentation diff was reviewed against requirements/design
+  and reported observations. The System/Alert switch discrepancy was resolved
+  by independent physical checks and documented; no application fix was needed.
+  One documentation correction removed an unmatched apostrophe from the new
+  MTP URI prerequisite diagnostic; Bash syntax and local link checks passed
+  afterward.
+
+Proposed stable commands for AGENTS.md are `bash scripts/build.sh release`,
+`sha256sum build/ToothbrushTimer-release.prg`, and `git diff --check`, with README
+remaining authoritative for prerequisites and transfer steps. AGENTS.md already
+requires using README commands, so no duplicate command block or root-instruction
+edit is needed. The MTP recipe stays in README with a caller-supplied watch URI;
+no host mount path, USB identifier, SDK path, or signing key is embedded.
