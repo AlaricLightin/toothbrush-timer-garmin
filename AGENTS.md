@@ -24,7 +24,7 @@ Before implementation, locate and read `doc/product-requirements.md` and `doc/te
 
 - Use the official Garmin Connect IQ SDK and Monkey C. Builds and tests must work through SDK tools without depending on a particular IDE.
 - Follow official Connect IQ project-template conventions for source and resource organization, while preserving the logical component boundaries in the design. Its example filenames and directory layout are not contractual.
-- Use the established commands and prerequisites in [README setup](README.md#setup), [build](README.md#build), [unit tests](README.md#unit-tests), and [simulator](README.md#simulator). Confirm test success from the printed summary as documented there, not the process exit status. Do not invent commands or report unexecuted commands as checks.
+- Use the established commands and prerequisites in [README setup](README.md#setup), [build](README.md#build), [unit tests](README.md#unit-tests), and [simulator](README.md#simulator), with detailed environment and transfer procedures in [development.md](doc/development.md). Confirm test success from the printed summary as documented there, not the process exit status. Do not invent commands or report unexecuted commands as checks.
 - Use standard Connect IQ APIs and SDK facilities. Add third-party dependencies only for a substantial reason and after explicit approval.
 - For unclear Garmin behavior, consult current official Garmin documentation rather than guessing. Third-party material may supplement it.
 - Before using an unfamiliar Connect IQ API, verify availability at the selected minimum API level and on Vivoactive 6, especially for haptics, backlight, input, and lifecycle behavior. Select the lowest API level supporting the target and all APIs actually used.
@@ -54,6 +54,7 @@ Before implementation, locate and read `doc/product-requirements.md` and `doc/te
 
 ## Verification
 
+- Use [testing.md](doc/testing.md) for reusable regression checklists. Record dated results and limits in [verification.md](doc/verification.md); historical acceptance applies only to the tested revision and environment, not to subsequent changes.
 - After production-code changes, run relevant unit tests whenever the environment permits. Run the full unit-test suite when changes are broad enough to warrant it, and build for the primary target.
 - Add or update meaningful unit tests for nontrivial logic that can reasonably be tested automatically, especially timer/domain behavior. This rule applies to all such logic, not only a class named `BrushingTimer`.
 - Use the Connect IQ Monkey C test framework and a fake clock. For timer changes, cover the affected cases from the technical design: boundaries, pause/resume, reset, duplicate prevention, delayed callbacks, completion priority and exactly-once handling, and clock rollover.

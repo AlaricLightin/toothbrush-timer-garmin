@@ -10,12 +10,11 @@ Start/Resume make a best-effort backlight request; system timeout, gesture,
 power, and burn-in restrictions still apply. Requests are not renewed during
 countdown or pause.
 
-Steps 1–9 are complete, including simulator regression and user-reported
-physical acceptance on Vivoactive 6 firmware 18.32. The
-[verification record](doc/verification.md#step-9--physical-vivoactive-6-acceptance-2026-11-03)
-identifies the tested release, settings, results, and verification limits. See the
-[requirements](doc/product-requirements.md), [design](doc/technical-design.md),
-and [implementation plan](doc/implementation-plan.md).
+The MVP is complete, with simulator regression and user-reported physical
+acceptance on Vivoactive 6 firmware 18.32 recorded in the
+[verification baseline](doc/verification.md). See the [requirements](doc/product-requirements.md),
+[design](doc/technical-design.md), [regression checklists](doc/testing.md), and
+[completed plan](doc/implementation-plan.md).
 
 ## Setup
 
@@ -41,24 +40,7 @@ export CIQ_KEY="/absolute/path/to/private/developer-key.der"
 retain it for published updates. Do not commit keys or local configuration.
 Paths containing spaces are supported.
 
-If you need a new key, this creates an RSA 4096-bit, unencrypted PKCS#8 DER key
-using Garmin's [documented format](https://developer.garmin.com/connect-iq/reference-guides/monkey-c-command-line-setup/)
-and refuses to overwrite an existing file:
-
-```bash
-(
-    set -euo pipefail
-    : "${CIQ_KEY:?Set CIQ_KEY to the new signing-key path}"
-    if [[ -e "$CIQ_KEY" ]]; then
-        echo "Error: CIQ_KEY already exists; use it or choose a new path." >&2
-        exit 1
-    fi
-    umask 077
-    mkdir -p "$(dirname "$CIQ_KEY")"
-    openssl genrsa 4096 | openssl pkcs8 -topk8 -inform PEM -outform DER \
-        -out "$CIQ_KEY" -nocrypt
-)
-```
+For a new key, follow the [signing-key procedure](doc/development.md#signing-key).
 
 ## Build
 
@@ -120,37 +102,7 @@ ldd "$CIQ_SDK/bin/simulator"
 "$CIQ_SDK/bin/connectiq"
 ```
 
-If the required libraries are unavailable in your host release, use Distrobox.
-
-### Distrobox launch
-
-Install [Distrobox and a supported container engine](https://distrobox.it/#installation).
-Reuse a compatible container, or create one. This example uses Ubuntu 22.04 for
-SDKs requiring [WebKitGTK 4.0](https://packages.ubuntu.com/jammy/libwebkit2gtk-4.0-37):
-
-```bash
-export CIQ_BOX="your-simulator-container"
-distrobox create --name "$CIQ_BOX" --image docker.io/library/ubuntu:22.04
-distrobox enter --name "$CIQ_BOX" -- sudo apt-get update
-distrobox enter --name "$CIQ_BOX" -- sudo apt-get install \
-    libwebkit2gtk-4.0-37 libusb-1.0-0 libudev1 libsm6 libxxf86vm1
-```
-
-Package installation runs inside the container; adjust packages for your SDK.
-Retain Distrobox's shared files, desktop integration, and host networking.
-The same SDK path, device package, and fonts must be accessible inside the
-container; custom homes/storage may require mounts and resource configuration.
-If SDK Manager also lacks native libraries, run it in the compatible environment.
-
-From a host terminal, check dependencies and resolve any `not found` libraries
-inside the container before launching:
-
-```bash
-: "${CIQ_SDK:?Set CIQ_SDK to the shared SDK root}"
-: "${CIQ_BOX:?Set CIQ_BOX to the simulator container name}"
-distrobox enter --name "$CIQ_BOX" -- ldd "$CIQ_SDK/bin/simulator"
-distrobox enter --name "$CIQ_BOX" -- "$CIQ_SDK/bin/connectiq"
-```
+If native libraries are unavailable, use the [Distrobox setup](doc/development.md#distrobox-simulator).
 
 ### Run the app from the host
 
@@ -167,20 +119,9 @@ hardware button (Enter) to start; tap Pause/Resume or press Enter to toggle.
 Stop resets from RUNNING or PAUSED. The lower hardware button (Back) exits;
 completion also exits automatically. Taps outside the visible controls do nothing.
 Relaunch always starts a fresh READY session. See
-[verification](doc/verification.md) and the implementation plan's acceptance matrices.
+[regression checklists](doc/testing.md) for full coverage.
 
-For connection/display failures, check simulator readiness, the shared SDK,
-host networking, and desktop integration. If GTK/GIO errors reference host-only
-module paths, relaunch with this scoped workaround in an X11/XWayland session:
-
-```bash
-distrobox enter --name "$CIQ_BOX" -- env \
-    -u GDK_PIXBUF_MODULE_FILE -u GDK_PIXBUF_MODULEDIR \
-    -u GTK_IM_MODULE_FILE -u GTK_PATH \
-    -u GIO_MODULE_DIR -u GIO_EXTRA_MODULES \
-    -u GTK_IM_MODULE -u GSETTINGS_SCHEMA_DIR \
-    GDK_BACKEND=x11 "$CIQ_SDK/bin/connectiq"
-```
+For launch or connection errors, see [simulator troubleshooting](doc/development.md#simulator-troubleshooting).
 
 ## Physical-device installation and acceptance
 
@@ -199,49 +140,21 @@ Copy `build/ToothbrushTimer-release.prg` into that folder, following Garmin's
 The watch's [USB Mode setting](https://www8.garmin.com/manuals/webhelp/GUID-8C2C402F-55AC-431F-9CF2-1442B89CE149/EN-US/GUID-67C130E2-B01F-4253-8810-4762AB9DEB1D.html)
 supports MTP for file transfer.
 
-For a first installation through the command line, Ubuntu's desktop session
-must have working GVfs MTP support and the watch must already be mounted in
-Files. Discover its actual `mtp://.../` URI:
-
-```bash
-env -u GIO_MODULE_DIR -u GIO_EXTRA_MODULES gio mount -l
-```
-
-Set `CIQ_WATCH_URI` in your shell to that watch's root URI, then copy:
-
-```bash
-: "${CIQ_WATCH_URI:?Set CIQ_WATCH_URI to the connected watch MTP root URI}"
-env -u GIO_MODULE_DIR -u GIO_EXTRA_MODULES gio copy -i \
-    build/ToothbrushTimer-release.prg \
-    "${CIQ_WATCH_URI%/}/Internal Storage/GARMIN/Apps/ToothbrushTimer-release.prg" \
-    < /dev/null
-```
-
-This first-install command declines overwrite prompts; it does not update an
-existing copy. For later replacements, use Files and confirm replacement of
-only this app's PRG. Unsetting the two GIO module variables is scoped to each
-command; an inherited Snap module path prevented MTP access during verification.
-Ordinary filesystem copying through the GVfs mount returned `Operation not
-supported`; the GIO MTP transfer succeeded.
+For command-line installation, use the [MTP transfer procedure](doc/development.md#command-line-mtp-transfer).
+For updates through Files, confirm replacement of only this app’s PRG.
 
 Wait for transfer completion, read the copied file back to compare its SHA-256
 with the local artifact, and eject/unmount the watch in Files before unplugging.
 Open Toothbrush Timer from the watch's apps list. First verify a readable
 toothbrush icon, `2:00`, and Start, with no automatic countdown.
 
-Work through the [manual acceptance matrix](doc/implementation-plan.md#7-manual-acceptance-matrix)
+Work through the [manual acceptance matrix](doc/testing.md#manual-acceptance-matrix)
 and record the artifact hash, watch firmware, relevant display/haptic/power
 settings, observations, and outstanding checks in [verification](doc/verification.md).
 Copying a PRG does not establish successful on-watch launch or physical acceptance.
 
-On the tested Vivoactive 6 firmware 18.32, **Alert vibration** controls the app's
-cues: turning it off suppresses cues with System vibration either on or off.
-Turning System vibration off alone leaves app cues enabled when Alert vibration
-is on. DND also suppresses cues. Countdown and automatic exit continue with
-feedback suppressed. See the step 9 verification record for tested combinations
-and verification limits; other firmware/settings require verification.
-
-With the tested sleep and battery-saver configurations, the app still completed
-normally, while the display dimmed and gesture wake was unavailable. Sleep mode
-with Alert vibration on and the usual DND switch off still allowed cues. Account
-for the active focus mode's settings when checking haptics or display behavior.
+On tested firmware 18.32, **Alert vibration** controls app cues; System vibration
+alone does not disable them. DND suppresses cues, while countdown and exit
+continue. Sleep/power settings can limit display visibility and gesture wake.
+See the [physical results and limits](doc/verification.md#physical-acceptance-2026-11-03)
+for tested combinations; other firmware/settings require verification.
