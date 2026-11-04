@@ -9,6 +9,11 @@ Use [testing.md](testing.md) for regression coverage and recording future result
 use [README](../README.md) and [development.md](development.md) for commands.
 The [archived plan](archive/implementation-plan.md) preserves the completed sequence.
 
+Focused physical checks of the subsequent display and completion changes passed
+on 2026-11-04; see [results and remaining coverage](#focused-physical-verification-2026-11-04).
+Implementation entries below retain the evidence and pending checks from their
+original verification runs.
+
 ## Implementation history
 
 | Date | Completed scope | Recorded evidence |
@@ -292,6 +297,41 @@ product behavior and acceptance requirements are unchanged. Diff/consistency rev
 records, artifact hashes, and the archived plan were preserved. No application builds
 or runtime checks were run for this documentation-only change; hardware acceptance
 of the display and completion changes remains pending.
+
+## Focused physical verification (2026-11-04)
+
+Both subsequent changes passed the requested two-test physical check on Vivoactive 6.
+Results were reported by the user, not directly observed by the development agent;
+this was not a full regression or acceptance run.
+
+- Installed release SHA-256 reported by the user:
+  `b9b975584d5bb0b70396b66c5ef4ba1d3f47acdb93c083c2b30970da5e3a8c3d`.
+  This matches the release artifact in the
+  [three-pulse implementation record](#three-pulse-completion-implementation-2026-11-04),
+  which also records its source, SDK, build, unit-test, and simulator evidence.
+- Firmware: **18.32**. Display timeout: **8 seconds**. Always-on display: **off**.
+  The protocol requested Alert vibration enabled and DND, sleep, and battery saver
+  disabled; these switches and the exact brightness setting were not separately
+  restated in the results.
+
+| Check | Result | User-reported evidence |
+| --- | --- | --- |
+| Display-off full session | Pass | Display dimmed/turned off; interval cues occurred at roughly 30/60/90 seconds; completion time was `2:00` |
+| Three-pulse completion through exit | Pass | Three distinct final pulses, including a complete third pulse; automatic exit to the app list |
+| Brightness, sound, and errors | Pass | No unexpected brightness, sound, or errors in the full session; Start/Resume brightness behaved as expected |
+| Idle timeout and wake | Pass | Idle timeout behaved as expected; wake was by gesture |
+| Pause/resume | Pass | Remaining time stayed at `1:35` across the 45-second pause; first cue after Resume behaved as expected |
+| Stop reset | Pass | Stop returned the display to `2:00` |
+
+Remaining coverage: sleep and battery saver; DND and vibration-switch suppression
+and recovery with this artifact; touch/button wake delivery; broader lifecycle,
+hardware-control, and repeated-use regression. Detailed pulse-strength/spacing
+tuning and an explicit comparison with interval-cue feel were not separately
+reported. No failures were reported in the focused checks; earlier acceptance
+does not establish these untested cases for this artifact or other firmware/settings.
+
+This follow-up changes documentation only. No new application build, unit-test,
+or simulator run was performed when recording the user-reported results.
 
 ## Evidence availability
 

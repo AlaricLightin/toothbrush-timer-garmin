@@ -10,10 +10,13 @@ step to select; future changes need their own scope under [AGENTS.md](../AGENTS.
 
 ## Subsequent change: system-only display control (2026-11-04)
 
-Implemented: system-only display control. Physical acceptance pending; see
-[verification](verification.md#system-only-display-implementation-2026-11-04).
+Implemented: system-only display control. Focused physical checks passed on
+Vivoactive 6 firmware 18.32; see
+[results and remaining coverage](verification.md#focused-physical-verification-2026-11-04).
 
 ## Subsequent change: three-pulse completion signal (2026-11-04)
 
-Implemented: three-pulse completion in one vibration command. Physical acceptance
-pending; see [verification](verification.md#three-pulse-completion-implementation-2026-11-04).
+Implemented: three-pulse completion in one vibration command. Focused physical
+checks passed, including all three pulses through automatic exit, on Vivoactive 6
+firmware 18.32; see
+[results and remaining coverage](verification.md#focused-physical-verification-2026-11-04).
