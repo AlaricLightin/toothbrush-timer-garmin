@@ -2,9 +2,13 @@
 
 A Garmin Connect IQ watch app for Vivoactive 6. A two-minute countdown shows
 continuous progress through four stages, with short cues at 30, 60, and 90
-seconds and a longer completion cue. Touch and the upper hardware button provide
+seconds and a three-pulse completion cue. Touch and the upper hardware button provide
 Start/Pause/Resume; touch Stop resets the session. The lower button exits, and
 completion exits automatically. Every launch starts fresh at `2:00`.
+
+The three-pulse completion pattern is implemented; pulse feel and survival
+through immediate exit still need physical Vivoactive 6 acceptance. See the
+[implementation verification](doc/verification.md#three-pulse-completion-implementation-2026-11-04).
 
 The display policy revised on 2026-11-04 requires system-only wake, brightness,
 and timeout behavior, with no app backlight or keep-awake requests. The display

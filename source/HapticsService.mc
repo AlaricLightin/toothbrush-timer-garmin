@@ -11,19 +11,30 @@ class HapticsService {
     }
 
     function intervalCue() as Void {
-        playCue(250);
+        playCue(false);
     }
 
     function completionCue() as Void {
-        playCue(1000);
+        playCue(true);
     }
 
-    private function playCue(durationMs as Number) as Void {
+    private function playCue(completion as Boolean) as Void {
         // Keep capability/settings reads and profile creation inside the failure
         // boundary so a device refusal cannot interrupt completion and exit.
         try {
             if (canVibrate()) {
-                sendVibration([new Attention.VibeProfile(100, durationMs)]);
+                if (completion) {
+                    // Submit the whole pattern before immediate application exit.
+                    sendVibration([
+                        new Attention.VibeProfile(75, 170),
+                        new Attention.VibeProfile(0, 120),
+                        new Attention.VibeProfile(75, 170),
+                        new Attention.VibeProfile(0, 120),
+                        new Attention.VibeProfile(75, 170)
+                    ]);
+                } else {
+                    sendVibration([new Attention.VibeProfile(100, 250)]);
+                }
             }
         } catch (exception instanceof Lang.Exception) {
             System.println("Haptics unavailable: " + exception.getErrorMessage());

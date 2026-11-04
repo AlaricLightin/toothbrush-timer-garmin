@@ -279,6 +279,81 @@ backlight renewal.
 | Release | `f77a8a68f7f1e3f43c28be71db46a38e4fd355c3613eab52ff153a19f6315e80` |
 | Test | `d029b7d4b4a2d15ed21611d3d4c8555cf3bc04350e3f0d6bfaa5b6979eee13e7` |
 
+## Three-pulse completion implementation (2026-11-04)
+
+- Status: implementation complete; physical acceptance pending. Replaced the
+  single long completion vibration in `HapticsService.mc` with three 170 ms
+  pulses at 75% duty cycle and two 120 ms zero-duty pauses (750 ms total),
+  submitted together in one call. These are the design's initial tuning values;
+  physical feel has not been established. Interval cues remain one 250 ms pulse
+  at 100% duty cycle. Capability/settings checks, nonfatal failure handling,
+  timer/domain behavior, and immediate exit are unchanged.
+- Source: uncommitted changes on `54dea9bd0c1b4cf8347270ce891e32ef552fe28f`.
+  README and the active plan now describe the implementation and remaining
+  acceptance. Requirements, design, and reusable regression coverage already
+  specify this change and needed no updates.
+- API review: current official Garmin [vibration API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#vibrate-instance_function)
+  documents sequential playback of up to eight profiles and zero-duty pauses;
+  [VibeProfile](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention/VibeProfile.html)
+  documents API 1.0.0 availability and Vivoactive 6 support. No API or manifest
+  minimum change was needed; the existing minimum remains 3.2.0.
+- Environment: Ubuntu Linux host, official Connect IQ SDK 9.2.0, installed
+  Vivoactive 6 package, Strict checking; simulator API 6.0.3 in the existing
+  Distrobox container. Native simulator libraries were missing as in the prior
+  verification. Container/desktop access required execution outside the
+  sandbox. The existing simulator/test connection initially stalled without
+  a summary; restarting the simulator and retrying the documented launcher
+  produced the passing result below. GTK module/image-handler diagnostics
+  appeared during startup; they were not application errors.
+- Builds: README commands `bash scripts/build.sh debug`,
+  `bash scripts/build.sh release`, and `bash scripts/build.sh test` each printed
+  `BUILD SUCCESSFUL` without compiler/analyzer warnings.
+- Tests: README full-suite `monkeydo` command printed
+  `PASSED (passed=49, failed=0, errors=0)`. This includes real simulator vibration
+  API smoke calls, settings suppression/recovery, nonfatal haptic failures,
+  completion priority/exactly-once handling, and timer ownership. Existing tests
+  were retained unchanged; no vibration-profile unit tests were added, per
+  AGENTS.md. The changed pattern is checked through simulator tracing instead.
+- Simulator: the isolated trace app launched READY at `2:00`. Touch Start/Pause
+  froze the display at `1:58`; captures two seconds apart were identical.
+  The upper hardware control resumed, and touch Stop restored READY at `2:00`.
+  A subsequent full default-duration session showed `1:29` / Stage 2, `0:59` /
+  Stage 3, and `0:29` / Stage 4 with advancing progress. Trace recorded one
+  interval call at elapsed 30001, 60000, and 90005 ms, each with the unchanged
+  single-pulse profile. At 120000 ms, updates stopped, one completion call
+  submitted five profiles in order `(75,170), (0,120), (75,170), (0,120),
+  (75,170)` (duty %, duration ms), the real vibration API returned, and normal
+  exit/cleanup followed immediately. No extra completion/interval requests or
+  application runtime errors appeared. The capture at 123 seconds showed the
+  simulator's idle logo. This confirms request submission and automatic exit,
+  not physical pulse playback through exit.
+- Code review: reviewed the actual diff and surrounding haptics/delegate/domain
+  code against the selected work item, requirements, and design. No actionable
+  defects or unresolved contradictions found. Profile creation and submission
+  stay inside the existing failure boundary and follow fresh capability/settings
+  checks. Completion still stops updates, attempts the whole pattern once, and
+  exits immediately. No additional timers, waits, sound, or display-power calls.
+- Correction iterations: **0**. Simulator environment recovery required no
+  production-code changes.
+- Physical checks not run: three distinct, perceptible pulses with all three
+  surviving immediate exit; strength/pulse/pause tuning; interval contrast;
+  suppression and recovery under Alert/System vibration, DND, sleep, and power
+  settings; display-off countdown/cues/exit and real lifecycle behavior. No watch
+  was exercised. Historical acceptance of a single long completion cue does
+  not verify this pattern, and simulator traces cannot certify motor behavior.
+- Local evidence: ignored `build/verification/three-pulse-completion/` contains
+  build logs, `tests-retry.log`, simulator logs/captures, and an isolated trace
+  app using identical copies of current production components. Only its app
+  wiring and subclasses add tracing; it uses the production clock, default
+  timing configuration, real vibration API, periodic timer, and exit mechanism.
+  Artifacts:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Debug | `e07cc660938345143ecf2a1ca1eb26a7b1f4cf31cf4a9f2586550b4326ad772d` |
+| Release | `b9b975584d5bb0b70396b66c5ef4ba1d3f47acdb93c083c2b30970da5e3a8c3d` |
+| Test | `6ae1ef9070aa35935bb2ecc08896cdabffaee59774d15f2b4883bb5710257755` |
+
 ## Evidence availability
 
 Logs, captures, and isolated probes were local ignored artifacts under

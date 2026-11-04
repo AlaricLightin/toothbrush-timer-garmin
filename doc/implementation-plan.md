@@ -33,9 +33,12 @@ The requirements and design now specify three short completion vibrations with
 brief pauses, submitted as one vibration command. Exact strength and timing are
 tunable; the design records an illustrative starting pattern.
 
-Implementation is pending: replace the single long completion profile in
-`HapticsService`, preserve interval cues and nonfatal haptics handling, then
-build for Vivoactive 6 and run relevant automated and simulator regression
-checks. Verify three perceptible pulses and no truncation by immediate exit on
-the physical watch, including system haptic suppression and recovery. See
-[change status](verification.md#three-pulse-completion-signal-2026-11-04).
+Implementation is complete: `HapticsService` submits three 170 ms pulses at
+75% duty cycle separated by two 120 ms zero-duty pauses in one vibration call.
+Interval cues, nonfatal haptics handling, and immediate exit are preserved.
+Vivoactive 6 debug, release, and test builds pass without warnings; all 49 tests
+pass. Physical acceptance remains pending for three perceptible pulses without
+exit truncation, plus system haptic suppression and recovery. See
+[implementation verification](verification.md#three-pulse-completion-implementation-2026-11-04)
+for simulator results and limits; the earlier
+[policy change](verification.md#three-pulse-completion-signal-2026-11-04) remains historical.
