@@ -174,11 +174,11 @@ backlight renewal.
   keep-awake requests in any state. This supersedes the historical Start/Resume
   request policy, including archived step 7; earlier results above still
   describe the artifacts actually tested.
-- Scope: documentation only; production code and tests are unchanged.
-  `ToothbrushTimerDelegate` still calls `Attention.backlight(true)` on
-  Start/Resume, and `DelegateTests.mc` still tests that policy. Removal and
-  replacement verification are pending; the current implementation does not
-  yet satisfy the revised display requirements.
+- At the time of this policy update, scope was documentation only; production
+  code and tests were unchanged. `ToothbrushTimerDelegate` still called
+  `Attention.backlight(true)` on Start/Resume, and `DelegateTests.mc` tested
+  that policy. The subsequent removal is recorded under
+  [implementation verification](#system-only-display-implementation-2026-11-04).
 - Review basis: current delegate/timing code, previous physical observations,
   and Garmin's [backlight API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#backlight-instance_function).
   Garmin documents Boolean activation at the system backlight level and
@@ -214,6 +214,70 @@ backlight renewal.
   physical confirmation of three distinct pulses without exit truncation and
   correct suppression/recovery under system haptic settings. Historical
   acceptance of the single long cue does not verify the new pattern.
+
+## System-only display implementation (2026-11-04)
+
+- Status: implementation complete; physical acceptance pending. This implements
+  only the first subsequent work item. The three-pulse completion change remains
+  pending, so this artifact still has the existing single long completion cue.
+- Source: uncommitted changes on `f478f87456fce495c9c13fd31e419116824eeb7b`.
+  Removed Start/Resume backlight activation, capability checks, failure handling,
+  and the unused Attention import from `ToothbrushTimerDelegate.mc`. Removed
+  backlight fixtures and three obsolete cases from `DelegateTests.mc`; retained
+  input, pause/resume, cue/exit ordering, haptics failure, lifecycle, and real SDK
+  timer ownership coverage. README and the active plan now reflect this status.
+- Environment: Ubuntu Linux host, official Connect IQ SDK 9.2.0, installed
+  Vivoactive 6 package, Strict checking; simulator in the existing Distrobox
+  container. Native launch dependencies were missing (`libwebkit2gtk-4.0.so.37`
+  and `libjavascriptcoregtk-4.0.so.18`). Sandbox restrictions prevented container
+  access and the first test-runner connection; approved execution outside the
+  sandbox allowed both. Container startup emitted GTK module/image-handler
+  diagnostics; no application runtime errors were observed.
+- Builds: README commands `bash scripts/build.sh debug`,
+  `bash scripts/build.sh release`, and `bash scripts/build.sh test` all reported
+  `BUILD SUCCESSFUL`, with no compiler/analyzer warnings after correction.
+- Tests: the README full-suite `monkeydo` command printed
+  `PASSED (passed=49, failed=0, errors=0)`. The launcher returned 1; success is
+  established by the printed summary. The reduction from 52 is solely the three
+  obsolete backlight tests. No new domain logic or test cases were needed.
+- Simulator: fresh launch showed the icon, `2:00`, and Start. Touch Start and
+  Pause worked; the paused time/ring/stage remained unchanged across a three-second
+  observation at `1:57`. The upper hardware control resumed to `1:55` after two
+  seconds. Touch Stop from both RUNNING and PAUSED restored READY at `2:00`.
+  A subsequent uninterrupted session showed `1:29` / Stage 2, `0:58` / Stage 3,
+  and `0:27` / Stage 4 with advancing progress, then automatically exited by
+  the capture at 124 seconds. Cue counts/order remain covered by automated tests;
+  this production run did not instrument vibration calls or establish motor feel.
+  Reloading after automatic exit stalled in the simulator, as seen in earlier
+  local verification tooling. After restarting the simulator, fresh launch
+  showed READY at `2:00`; the upper hardware control started the session and the
+  lower hardware Back control exited. Same-process reload after automatic exit
+  was therefore not verified; application stop/resume reset coverage passed in
+  the unit suite. No application code was changed for the simulator issue.
+- Review: inspected the actual diff and surrounding domain, application, view,
+  and delegate code. No remaining actionable defects in the selected scope.
+  Source/test search found no remaining backlight/brightness/keep-awake code or
+  view-visibility lifecycle hooks. Periodic timing, redraws, haptics, and cleanup
+  are unchanged. Existing regression coverage independently exercises the timing
+  and exit assertions formerly repeated in the deleted backlight cases.
+- Correction iterations: **1**. Initial cleanup also removed `Toybox.Lang`,
+  causing unresolved Boolean/Number types. Restoring that required import fixed
+  compilation; all builds, the full suite, and review were repeated afterward.
+  Final whitespace and 31 local Markdown file/anchor links also passed checks.
+- Physical checks not run: normal timeout/wake and brightness on Start/Resume,
+  wake-touch/button delivery, full countdown/cues/exit with the display off,
+  long pause/resume, sleep and battery saver, and real exit/lifecycle behavior.
+  No physical watch was exercised in this change; historical acceptance does
+  not verify these new artifacts. Simulator observations cannot certify these
+  display and hardware behaviors.
+- Local evidence: ignored `build/verification/system-only-display/` contains
+  build logs, `tests.log`, `app.log`, and simulator captures. Artifacts:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Debug | `5da12c75c0c78c9375d5b634566fb6863ee245bfca7f7db11c04fb54c0ffb947` |
+| Release | `f77a8a68f7f1e3f43c28be71db46a38e4fd355c3613eab52ff153a19f6315e80` |
+| Test | `d029b7d4b4a2d15ed21611d3d4c8555cf3bc04350e3f0d6bfaa5b6979eee13e7` |
 
 ## Evidence availability
 

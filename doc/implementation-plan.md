@@ -17,12 +17,15 @@ The requirements and design now prohibit app backlight/keep-awake requests.
 This documentation change supersedes the archived step 7 screen policy;
 the original implementation history remains unchanged.
 
-Implementation is pending: remove Start/Resume backlight activation and its
-helpers from `ToothbrushTimerDelegate`, remove obsolete backlight test fixtures
-and cases while preserving independent regression coverage, then build for
-Vivoactive 6 and run the relevant tests and simulator checks. Physical acceptance
-must cover the updated system-controlled display scenario in [testing.md](testing.md).
-See [change status](verification.md#system-only-display-policy-2026-11-04).
+Implementation is complete: removed Start/Resume backlight activation and its
+helpers from `ToothbrushTimerDelegate`, along with obsolete backlight fixtures
+and three tests. Independent regression coverage is retained. Vivoactive 6
+debug, release, and test builds pass without warnings; all 49 remaining tests
+pass. Physical acceptance remains pending for the system-controlled display
+scenario in [testing.md](testing.md). See
+[implementation verification](verification.md#system-only-display-implementation-2026-11-04)
+for simulator results and limits; the earlier
+[policy change](verification.md#system-only-display-policy-2026-11-04) remains historical.
 
 ## Subsequent change: three-pulse completion signal (2026-11-04)
 

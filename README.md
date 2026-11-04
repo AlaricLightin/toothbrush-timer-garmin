@@ -9,8 +9,9 @@ completion exits automatically. Every launch starts fresh at `2:00`.
 The display policy revised on 2026-11-04 requires system-only wake, brightness,
 and timeout behavior, with no app backlight or keep-awake requests. The display
 may dim or turn off during brushing; normal watch wake mechanisms apply.
-Implementation is pending: the current source still requests backlight on
-Start/Resume. See the [change status](doc/verification.md#system-only-display-policy-2026-11-04).
+Implemented: Start/Resume and cleanup make no display-power requests.
+Physical acceptance of this change is pending. See the
+[change status](doc/verification.md#system-only-display-implementation-2026-11-04).
 
 The original MVP was completed, with simulator regression and user-reported physical
 acceptance on Vivoactive 6 firmware 18.32 recorded in the
