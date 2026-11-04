@@ -193,6 +193,28 @@ backlight renewal.
   battery-saver settings. Existing display observations are not acceptance of
   the revised implementation.
 
+## Three-pulse completion signal (2026-11-04)
+
+- User requested three short completion vibrations in one vibration command,
+  replacing the single long signal. Requirements, design, regression checks,
+  and the follow-up implementation plan now reflect this change.
+- Scope: documentation only; production code and tests are unchanged.
+  `HapticsService.completionCue()` still requests a single 1000 ms vibration;
+  implementation of the revised completion signal is pending.
+- Review basis: current haptics code and Garmin's
+  [vibration API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#vibrate-instance_function)
+  and [VibeProfile API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention/VibeProfile.html).
+  The suggested 170 ms pulses, 120 ms pauses, and 75% pulse duty cycle are
+  tuning candidates, not physically verified values.
+- Verification: documentation diff/whitespace and local Markdown file links
+  checked. No build, unit tests, simulator run, or new physical acceptance was
+  performed for this documentation-only change.
+- Pending after implementation: relevant tests and Vivoactive 6 build;
+  simulator confirmation of one completion API call and automatic exit;
+  physical confirmation of three distinct pulses without exit truncation and
+  correct suppression/recovery under system haptic settings. Historical
+  acceptance of the single long cue does not verify the new pattern.
+
 ## Evidence availability
 
 Logs, captures, and isolated probes were local ignored artifacts under

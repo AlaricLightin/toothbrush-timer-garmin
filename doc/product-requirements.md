@@ -7,7 +7,7 @@ Toothbrush Timer is a simple Garmin Connect IQ watch application intended to hel
 The application provides:
 - a two-minute countdown timer;
 - haptic feedback every 30 seconds;
-- a distinct longer haptic signal when the full two minutes have elapsed;
+- a distinct haptic signal of three short vibrations when the full two minutes have elapsed;
 - a visual indication of overall progress and the current 30-second stage;
 - simple pause, resume, and stop controls.
 
@@ -111,7 +111,7 @@ No confirmation dialog is required.
 
 At the end of two minutes:
 
-- the final, longer vibration signal is emitted;
+- the final signal of three short vibrations separated by brief pauses is emitted once;
 - the timer stops;
 - the session is considered complete;
 - the application automatically exits;
@@ -147,9 +147,9 @@ All three intermediate vibration signals use the same pattern.
 
 ### 5.3 Completion Signal
 
-At 120 seconds, the application produces a vibration that is clearly longer or otherwise more noticeable than the intermediate signals.
+At 120 seconds, the application produces one completion signal consisting of three short vibrations separated by brief pauses.
 
-The final signal should be distinguishable from the 30-second interval signals through duration/pattern rather than sound.
+The three-pulse pattern must be clearly distinguishable from the single short vibration at each 30-second interval. Exact pulse strength, pulse duration, and pause duration may be tuned on Vivoactive 6; no sound is used. All three pulses must remain perceptible through automatic application exit when system settings permit haptics.
 
 ### 5.4 System Haptic Restrictions
 
@@ -346,7 +346,7 @@ The MVP is considered functionally complete when all of the following are true:
 7. A short vibration occurs at 60 seconds.
 8. A short vibration occurs at 90 seconds.
 9. The three intermediate vibrations use the same pattern.
-10. A clearly longer/distinct vibration occurs at 120 seconds.
+10. One distinct completion signal of three short vibrations separated by brief pauses occurs at 120 seconds, with all three pulses perceptible when system settings permit haptics.
 11. The application exits automatically after the final signal.
 12. Pause freezes the countdown and preserves progress.
 13. Resume continues from the paused position.

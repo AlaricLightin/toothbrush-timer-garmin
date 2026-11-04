@@ -54,7 +54,7 @@ independent input, timing, haptics, completion, and timer-ownership coverage.
 | --- | --- | --- |
 | Fresh launch | READY layout, resource loading, no automatic countdown | App is discoverable; icon/time/Start readable at a glance |
 | Full session | Continuous ring, stages, countdown rounding; three interval requests and one completion request; automatic exit | Time against an independent stopwatch; cues at approximately 30/60/90 seconds of active time and completion at approximately 120 seconds, allowing callback/platform latency; no accumulated drift |
-| Vibration | Trace request order/count, inspect runtime errors | All interval cues feel the same; final cue is clearly distinct and not truncated by exit; no sound |
+| Vibration | Trace request order/count; confirm one completion API call with pulse/pause/pulse/pause/pulse profiles; inspect runtime errors | All interval cues feel the same; final cue has three distinct short pulses separated by brief pauses, with all three perceptible through exit; no sound |
 | Pause/resume | Freeze time/ring/stage, Resume label, exact continuation | Include a long pause; verify active-time cue schedule and screen dimming/resume behavior |
 | Stop/restart | RUNNING and PAUSED Stop reset all visible state immediately | Touch is reliable; no confirmation; subsequent session has normal cue sequence |
 | Touch geometry | Center/edge taps inside each region and outside all regions; no accidental Select fallback | Comfortable targets on wrist; Pause/Resume and Stop easy to distinguish |
@@ -80,7 +80,7 @@ Record **pass**, **fail**, or **not run**, with evidence and reason. Simulator r
 - Resources/API changes: check drawable loading, actual API minimum, and target
   support. The baseline uses `WatchUi.Bitmap` so the platform handles underlying
   bitmap types. Compilation and an API 6.0.3 simulator do not certify older devices.
-- Completion: recheck that the final vibration survives immediate exit after
+- Completion: recheck that all three final pulses survive immediate exit after
   haptics/lifecycle changes. If a conflict appears, follow AGENTS.md before
   changing exit timing; do not introduce a speculative delay or completion screen.
 - Display: the application must make no backlight or keep-awake requests.

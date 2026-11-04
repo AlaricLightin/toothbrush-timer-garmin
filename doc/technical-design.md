@@ -156,7 +156,11 @@ Hardware behavior:
 - interval cue;
 - completion cue.
 
-All intermediate cues share one vibration profile. Completion uses a clearly longer or otherwise more noticeable profile. Exact duty cycles/durations are selected during implementation and verified on Vivoactive 6.
+All intermediate cues share one single-pulse vibration profile. Completion uses three short pulses separated by two brief pauses, submitted in one `Attention.vibrate()` call with five `Attention.VibeProfile` entries in pulse/pause/pulse/pause/pulse order. Pause entries use zero duty cycle. Keep the pattern in `HapticsService`; do not schedule separate calls or add timers or blocking waits between pulses.
+
+An initial tuning candidate is 75% duty cycle for each 170 ms pulse and zero duty cycle for each 120 ms pause (750 ms total). These values are illustrative, not fixed product requirements; select and verify the final values on Vivoactive 6.
+
+Garmin's [vibration API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#vibrate-instance_function) accepts up to eight profiles and plays them in order; its on/off example uses zero-duty entries for pauses. The [VibeProfile API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention/VibeProfile.html) defines duty cycle and duration and lists Vivoactive 6 support.
 
 The service should use Garmin capability checks where required. Unsupported or restricted vibration must not corrupt timer state or prevent completion. No sound APIs are used.
 
@@ -186,8 +190,10 @@ Completion:
 
 1. `BrushingTimer` enters COMPLETED once;
 2. stop the periodic timer;
-3. emit the completion vibration once;
-4. exit cleanly.
+3. submit the entire three-pulse completion pattern once in a single vibration call, subject to system haptic restrictions;
+4. exit cleanly immediately after the submission attempt, including when haptics are unavailable or fail.
+
+Verify on Vivoactive 6 that all three pulses survive immediate exit. If exit truncates the pattern, follow the documentation-conflict process in AGENTS.md before changing exit timing; do not add a speculative delay or completion screen.
 
 The application never persists or restores an active session. If the platform suspends or terminates the app, the session is discarded. A later launch always starts in READY at `2:00`, including when the platform reports a resume. `AppBase.onStop()` performs cleanup only; no background timing mechanism is used.
 
@@ -244,7 +250,7 @@ Use the Connect IQ Simulator for normal navigation, touch behavior, countdown, s
 
 Verify on hardware:
 
-- interval vs completion vibration feel;
+- interval vs completion vibration feel, including three distinct completion pulses without truncation by exit;
 - touch ergonomics and display readability;
 - system-controlled display timeout/wake and brightness, including countdown/cues/completion with the display off;
 - hardware Back/Select behavior;

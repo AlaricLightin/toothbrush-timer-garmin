@@ -23,3 +23,16 @@ and cases while preserving independent regression coverage, then build for
 Vivoactive 6 and run the relevant tests and simulator checks. Physical acceptance
 must cover the updated system-controlled display scenario in [testing.md](testing.md).
 See [change status](verification.md#system-only-display-policy-2026-11-04).
+
+## Subsequent change: three-pulse completion signal (2026-11-04)
+
+The requirements and design now specify three short completion vibrations with
+brief pauses, submitted as one vibration command. Exact strength and timing are
+tunable; the design records an illustrative starting pattern.
+
+Implementation is pending: replace the single long completion profile in
+`HapticsService`, preserve interval cues and nonfatal haptics handling, then
+build for Vivoactive 6 and run relevant automated and simulator regression
+checks. Verify three perceptible pulses and no truncation by immediate exit on
+the physical watch, including system haptic suppression and recovery. See
+[change status](verification.md#three-pulse-completion-signal-2026-11-04).
