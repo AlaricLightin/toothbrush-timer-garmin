@@ -66,7 +66,7 @@ When the user selects Start:
 
 - the two-minute countdown begins;
 - the timer screen becomes active;
-- the display should remain awake during active countdown;
+- display wake, brightness, and timeout remain under system control;
 - the remaining time updates continuously;
 - visual progress through the four 30-second stages is shown;
 - Pause and Stop controls are available.
@@ -85,7 +85,7 @@ When the user selects Pause:
 When the user selects Resume:
 
 - countdown continues from the exact paused position;
-- the display should again remain awake during active countdown.
+- display wake, brightness, and timeout remain under system control.
 
 ### 4.4 Stopping
 
@@ -220,13 +220,11 @@ Stage changes occur at the same 30-second boundaries as the intermediate vibrati
 
 ## 10. Screen Behavior
 
-During active countdown:
+The application must not control the backlight or request that the display remain awake in any state, including on Start or Resume. Display wake, brightness, dimming, and timeout are controlled exclusively by Garmin system mechanisms and the user's watch settings.
 
-- the application should request that the display remain awake, subject to platform limitations and normal Garmin behavior.
+The display may dim or turn off during active countdown as well as while idle or paused. The user relies on the watch's normal wake mechanisms to view the timer; continuous visibility and gesture wake under all power/sleep settings are not guaranteed.
 
-During pause:
-
-- normal system dimming behavior is allowed.
+Display dimming or blanking alone must not pause or reset the session. While the application remains active, countdown, permitted haptic cues, and automatic completion/exit continue independently of display visibility. Actual application suspension or termination retains the existing session-discard behavior.
 
 The implementation should avoid unnecessary battery usage beyond what is required for a short two-minute active session.
 
@@ -354,8 +352,8 @@ The MVP is considered functionally complete when all of the following are true:
 13. Resume continues from the paused position.
 14. Stop immediately cancels the session and returns to the initial screen.
 15. Back/exit during a session cancels the session and exits the application.
-16. Active countdown keeps the display awake as far as supported by the platform.
-17. Paused state allows normal system dimming.
+16. The application makes no backlight, brightness, or keep-awake requests; display behavior uses only system mechanisms in every state.
+17. System dimming/blanking is allowed in every state and does not itself pause or reset an active countdown or prevent permitted cues and completion/exit.
 18. No sound is produced by the application.
 19. No user settings are required for MVP operation.
 20. User-visible strings are loaded from localization resources rather than hardcoded in application logic.

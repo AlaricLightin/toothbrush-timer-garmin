@@ -48,8 +48,8 @@ Before implementation, locate and read `doc/product-requirements.md` and `doc/te
 - Centralize timing configuration and derive stage count. Do not duplicate duration or stage-count literals across timer, UI, and haptics code.
 - Keep domain timing logic independent of drawing, vibration, and application-exit APIs. Preserve the single authoritative source of session state and elapsed time defined in the design.
 - Prefer relative layout and standard APIs over model-specific branches. Add device-specific code only when a verified requirement makes it necessary. Rendering and touch hit testing must share layout geometry.
-- Do not add defensive checks for states ruled out by established invariants. Handle actual limitations and failures at Garmin API, hardware-capability, and lifecycle boundaries; recoverable haptics or backlight failures must not corrupt timer state.
-- Respect watch memory and performance limits. Avoid clearly unnecessary allocations or work in frequent callbacks, but do not micro-optimize without a measurable reason. Do not request backlight control on every UI tick or log every tick.
+- Do not add defensive checks for states ruled out by established invariants. Handle actual limitations and failures at Garmin API, hardware-capability, and lifecycle boundaries; recoverable haptics failures must not corrupt timer state.
+- Respect watch memory and performance limits. Avoid clearly unnecessary allocations or work in frequent callbacks, but do not micro-optimize without a measurable reason. Do not log every tick. Leave backlight, brightness, and display wake entirely to system mechanisms as specified in the technical design.
 - Changes must not introduce compiler or analyzer warnings. Report unrelated existing warnings rather than automatically fixing them.
 
 ## Verification

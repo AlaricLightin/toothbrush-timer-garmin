@@ -165,6 +165,34 @@ backlight renewal.
   then-current Bash examples' syntax, and local Markdown links were checked;
   syntax checking did not execute the commands.
 
+## System-only display policy (2026-11-04)
+
+- User reported occasional stronger-than-usual illumination and requested that
+  the application leave backlight control entirely to system mechanisms. The
+  cause of the observed brightness change has not been established.
+- Documentation now specifies no application backlight, brightness, or
+  keep-awake requests in any state. This supersedes the historical Start/Resume
+  request policy, including archived step 7; earlier results above still
+  describe the artifacts actually tested.
+- Scope: documentation only; production code and tests are unchanged.
+  `ToothbrushTimerDelegate` still calls `Attention.backlight(true)` on
+  Start/Resume, and `DelegateTests.mc` still tests that policy. Removal and
+  replacement verification are pending; the current implementation does not
+  yet satisfy the revised display requirements.
+- Review basis: current delegate/timing code, previous physical observations,
+  and Garmin's [backlight API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#backlight-instance_function).
+  Garmin documents Boolean activation at the system backlight level and
+  suppression of gesture detection while active; this does not prove the cause
+  of the user's observation.
+- Verification: documentation diff/whitespace and local Markdown file links
+  checked. No build, unit tests, simulator run, or new physical acceptance was
+  performed for this documentation-only change.
+- Pending hardware checks after implementation: normal timeout and wake,
+  wake touch/button input delivery, brightness on Start/Resume, full countdown
+  with the display off, cues and automatic exit, long pause/resume, sleep and
+  battery-saver settings. Existing display observations are not acceptance of
+  the revised implementation.
+
 ## Evidence availability
 
 Logs, captures, and isolated probes were local ignored artifacts under

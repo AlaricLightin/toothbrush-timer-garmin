@@ -162,11 +162,11 @@ The service should use Garmin capability checks where required. Unsupported or r
 
 ## 11. Screen Behavior
 
-While RUNNING, the application makes a best-effort request to keep the display/backlight active using supported Connect IQ behavior. Garmin timeout, power, burn-in, and user-setting restrictions take precedence.
+The application delegates display wake, brightness, dimming, and timeout entirely to Garmin system mechanisms and user settings in every session state.
 
-Backlight control must not run on every UI tick. Start and Resume activate the behavior; if periodic renewal is needed on Vivoactive 6, use a much coarser cadence and respect platform limits. Unsupported behavior or a backlight-related exception degrades gracefully without affecting the timer.
+Do not call `Attention.backlight()` (including with `false`), set display brightness, or introduce keep-awake requests or renewal timers. Start, Resume, interval cues, completion, and cleanup perform no display-power control. No backlight capability checks, retry logic, or exception handling are needed.
 
-While PAUSED, no keep-awake requests are made and normal system dimming is allowed.
+Retain normal redraws and the periodic timing mechanism defined in §7. Display dimming or blanking alone does not change session state, stop timing, or suppress haptic orchestration. Do not infer application suspension from display visibility; actual suspension/termination follows §12. Verify timing, cues, and completion with the display off on Vivoactive 6.
 
 ## 12. Stop, Exit, Completion, and Lifecycle
 
@@ -203,7 +203,7 @@ The toothbrush illustration is stored as a static drawable/resource asset.
 
 Development builds may use lightweight `System.println()` diagnostics for meaningful events such as state transitions, interval cues, completion, ignored callbacks, and recoverable device-capability failures. Do not log every periodic tick and do not introduce a logging framework.
 
-Unexpected timer callbacks in non-RUNNING states are ignored. Haptics/backlight failures are nonfatal. No recoverable platform-feature failure should leave session state inconsistent.
+Unexpected timer callbacks in non-RUNNING states are ignored. Haptics failures are nonfatal. No recoverable platform-feature failure should leave session state inconsistent.
 
 ## 15. Core Invariants
 
@@ -246,7 +246,7 @@ Verify on hardware:
 
 - interval vs completion vibration feel;
 - touch ergonomics and display readability;
-- screen/backlight behavior and system restrictions;
+- system-controlled display timeout/wake and brightness, including countdown/cues/completion with the display off;
 - hardware Back/Select behavior;
 - real application exit/lifecycle behavior.
 

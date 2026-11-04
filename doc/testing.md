@@ -39,10 +39,14 @@ Use fresh model/fake-clock instances per test. Time values below are test inputs
 | Alternate configuration | Test-only positive equal-stage durations/count different from MVP | Derived stage count, boundaries, and completion work without literal four |
 | Presentation | Remaining ms: 120000, 119999, 119000, 1000, 1; dynamic stage resource | `2:00`, `2:00`, `1:59`, `0:01`, `0:01`; configured stage denominator. Test zero formatting separately without a completion screen |
 | Input routing logic | Inside/outside each control, each session state | Exactly one intended action, no action outside controls |
-| Integration failure paths | Haptic/backlight refusal; callbacks in READY/PAUSED/COMPLETED; repeated cleanup | Domain state remains correct; completion effects occur once; cleanup is safe to repeat |
-| Screen request policy | Start/resume, pause/stop/exit, and platform refusal; coarse renewal if implemented | Requests follow allowed transitions/cadence, stop after refusal, and never change domain time |
+| Integration failure paths | Haptic refusal; callbacks in READY/PAUSED/COMPLETED; repeated cleanup | Domain state remains correct; completion effects occur once; cleanup is safe to repeat |
 
 Test domain event counts separately from delegate side-effect counts: a correct timer alone does not prove the delegate cannot vibrate or exit twice. Use minimal seams within the existing components for tests; reserve actual platform exit/input delivery for simulator/device verification.
+
+Review production source for the absence of backlight/brightness control and
+keep-awake requests, including Start/Resume and cleanup. Remove obsolete
+backlight-request/refusal tests when removing that implementation; retain
+independent input, timing, haptics, completion, and timer-ownership coverage.
 
 ## Manual acceptance matrix
 
@@ -56,7 +60,7 @@ Test domain event counts separately from delegate side-effect counts: a correct 
 | Touch geometry | Center/edge taps inside each region and outside all regions; no accidental Select fallback | Comfortable targets on wrist; Pause/Resume and Stop easy to distinguish |
 | Hardware controls | Enter primary action, Esc/swipe-right Back, no double dispatch | Confirm actual short-press behavior and standard system exit controls |
 | Completion/input race | Domain/delegate tests plus simulator exercise | Input near completion does not leave an app stuck or produce extra cues |
-| Screen restrictions | Transition logic and available simulator protection behavior | Full session with wrist down, normal timeout/gesture settings, long pause, resume, relevant power settings; no crash or retry loop on protection |
+| System-controlled display | Normal transitions/redraws; source review confirms no display-power requests; simulator cannot certify brightness or wake behavior | Record timeout/brightness/gesture settings; run a full session with wrist down and display off, long pause/resume, sleep and battery saver. Verify permitted cues and completion/exit continue, normal system wake restores current state, and Start/Resume cause no app-requested brightness change. Check whether a wake touch/button also invokes a control; do not assume every input wakes the display or is consumed solely for wake |
 | System haptic settings | Record simulator limits | DND/sleep/vibration settings respected; suppressed feedback does not stop countdown or exit |
 | Lifecycle | External exit/suspend where supported; new launch READY | Leave through normal controls/system interruptions, resume/relaunch, and confirm no background timing or restored session |
 | Repeated use | Several complete/stop/pause cycles; stable memory/timer count | Several sessions, including release build; no leftover cues or growing instability |
@@ -79,9 +83,12 @@ Record **pass**, **fail**, or **not run**, with evidence and reason. Simulator r
 - Completion: recheck that the final vibration survives immediate exit after
   haptics/lifecycle changes. If a conflict appears, follow AGENTS.md before
   changing exit timing; do not introduce a speculative delay or completion screen.
-- Display: Start/Resume requests are the baseline. Coarse renewal needs hardware
-  evidence and must respect timeout and burn-in protection; platform refusal
-  must not affect timing ([backlight API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#backlight-instance_function)).
+- Display: the application must make no backlight or keep-awake requests.
+  Garmin documents that the [backlight API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#backlight-instance_function)
+  can suppress gesture detection while active; do not use it to compensate for
+  system timeout or disabled gesture wake. Dimming/blanking alone must not
+  change timer state. Hardware checks must distinguish display-off operation
+  from actual app suspension/termination; do not add background execution.
 - Settings: test DND and the System/Alert vibration switches independently,
   including restoration, sleep, and power modes. Record actual settings instead
   of assuming which physical switch maps to an API flag. Baseline observations
