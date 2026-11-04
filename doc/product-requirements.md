@@ -48,6 +48,8 @@ The MVP does not include:
 
 ## 4. Primary User Flow
 
+Screen behavior in every state follows [§10](#10-screen-behavior).
+
 ### 4.1 Application Launch
 
 When the user opens the application, the initial screen is displayed.
@@ -66,7 +68,6 @@ When the user selects Start:
 
 - the two-minute countdown begins;
 - the timer screen becomes active;
-- display wake, brightness, and timeout remain under system control;
 - the remaining time updates continuously;
 - visual progress through the four 30-second stages is shown;
 - Pause and Stop controls are available.
@@ -79,13 +80,9 @@ When the user selects Pause:
 - elapsed time is preserved;
 - remaining time is preserved;
 - the current stage is preserved;
-- the Pause control becomes Resume;
-- normal system screen dimming behavior is allowed while paused.
+- the Pause control becomes Resume.
 
-When the user selects Resume:
-
-- countdown continues from the exact paused position;
-- display wake, brightness, and timeout remain under system control.
+When the user selects Resume, countdown continues from the exact paused position.
 
 ### 4.4 Stopping
 

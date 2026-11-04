@@ -8,37 +8,12 @@ step to select; future changes need their own scope under [AGENTS.md](../AGENTS.
 - [Regression checklists](testing.md): reusable automated and manual test coverage.
 - [Verification baseline](verification.md): tested artifact, results, and limitations.
 
-This page preserves the original plan path for existing references, including
-`development-workflow.md`.
-
 ## Subsequent change: system-only display control (2026-11-04)
 
-The requirements and design now prohibit app backlight/keep-awake requests.
-This documentation change supersedes the archived step 7 screen policy;
-the original implementation history remains unchanged.
-
-Implementation is complete: removed Start/Resume backlight activation and its
-helpers from `ToothbrushTimerDelegate`, along with obsolete backlight fixtures
-and three tests. Independent regression coverage is retained. Vivoactive 6
-debug, release, and test builds pass without warnings; all 49 remaining tests
-pass. Physical acceptance remains pending for the system-controlled display
-scenario in [testing.md](testing.md). See
-[implementation verification](verification.md#system-only-display-implementation-2026-11-04)
-for simulator results and limits; the earlier
-[policy change](verification.md#system-only-display-policy-2026-11-04) remains historical.
+Implemented: system-only display control. Physical acceptance pending; see
+[verification](verification.md#system-only-display-implementation-2026-11-04).
 
 ## Subsequent change: three-pulse completion signal (2026-11-04)
 
-The requirements and design now specify three short completion vibrations with
-brief pauses, submitted as one vibration command. Exact strength and timing are
-tunable; the design records an illustrative starting pattern.
-
-Implementation is complete: `HapticsService` submits three 170 ms pulses at
-75% duty cycle separated by two 120 ms zero-duty pauses in one vibration call.
-Interval cues, nonfatal haptics handling, and immediate exit are preserved.
-Vivoactive 6 debug, release, and test builds pass without warnings; all 49 tests
-pass. Physical acceptance remains pending for three perceptible pulses without
-exit truncation, plus system haptic suppression and recovery. See
-[implementation verification](verification.md#three-pulse-completion-implementation-2026-11-04)
-for simulator results and limits; the earlier
-[policy change](verification.md#three-pulse-completion-signal-2026-11-04) remains historical.
+Implemented: three-pulse completion in one vibration command. Physical acceptance
+pending; see [verification](verification.md#three-pulse-completion-implementation-2026-11-04).

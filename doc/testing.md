@@ -44,9 +44,7 @@ Use fresh model/fake-clock instances per test. Time values below are test inputs
 Test domain event counts separately from delegate side-effect counts: a correct timer alone does not prove the delegate cannot vibrate or exit twice. Use minimal seams within the existing components for tests; reserve actual platform exit/input delivery for simulator/device verification.
 
 Review production source for the absence of backlight/brightness control and
-keep-awake requests, including Start/Resume and cleanup. Remove obsolete
-backlight-request/refusal tests when removing that implementation; retain
-independent input, timing, haptics, completion, and timer-ownership coverage.
+keep-awake requests, including Start/Resume and cleanup.
 
 ## Manual acceptance matrix
 
@@ -83,11 +81,8 @@ Record **pass**, **fail**, or **not run**, with evidence and reason. Simulator r
 - Completion: recheck that all three final pulses survive immediate exit after
   haptics/lifecycle changes. If a conflict appears, follow AGENTS.md before
   changing exit timing; do not introduce a speculative delay or completion screen.
-- Display: the application must make no backlight or keep-awake requests.
-  Garmin documents that the [backlight API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#backlight-instance_function)
-  can suppress gesture detection while active; do not use it to compensate for
-  system timeout or disabled gesture wake. Dimming/blanking alone must not
-  change timer state. Hardware checks must distinguish display-off operation
+- Display: dimming/blanking alone must not change timer state.
+  Hardware checks must distinguish display-off operation
   from actual app suspension/termination; do not add background execution.
 - Settings: test DND and the System/Alert vibration switches independently,
   including restoration, sleep, and power modes. Record actual settings instead

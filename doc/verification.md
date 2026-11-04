@@ -165,77 +165,24 @@ backlight renewal.
   then-current Bash examples' syntax, and local Markdown links were checked;
   syntax checking did not execute the commands.
 
-## System-only display policy (2026-11-04)
-
-- User reported occasional stronger-than-usual illumination and requested that
-  the application leave backlight control entirely to system mechanisms. The
-  cause of the observed brightness change has not been established.
-- Documentation now specifies no application backlight, brightness, or
-  keep-awake requests in any state. This supersedes the historical Start/Resume
-  request policy, including archived step 7; earlier results above still
-  describe the artifacts actually tested.
-- At the time of this policy update, scope was documentation only; production
-  code and tests were unchanged. `ToothbrushTimerDelegate` still called
-  `Attention.backlight(true)` on Start/Resume, and `DelegateTests.mc` tested
-  that policy. The subsequent removal is recorded under
-  [implementation verification](#system-only-display-implementation-2026-11-04).
-- Review basis: current delegate/timing code, previous physical observations,
-  and Garmin's [backlight API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#backlight-instance_function).
-  Garmin documents Boolean activation at the system backlight level and
-  suppression of gesture detection while active; this does not prove the cause
-  of the user's observation.
-- Verification: documentation diff/whitespace and local Markdown file links
-  checked. No build, unit tests, simulator run, or new physical acceptance was
-  performed for this documentation-only change.
-- Pending hardware checks after implementation: normal timeout and wake,
-  wake touch/button input delivery, brightness on Start/Resume, full countdown
-  with the display off, cues and automatic exit, long pause/resume, sleep and
-  battery-saver settings. Existing display observations are not acceptance of
-  the revised implementation.
-
-## Three-pulse completion signal (2026-11-04)
-
-- User requested three short completion vibrations in one vibration command,
-  replacing the single long signal. Requirements, design, regression checks,
-  and the follow-up implementation plan now reflect this change.
-- Scope: documentation only; production code and tests are unchanged.
-  `HapticsService.completionCue()` still requests a single 1000 ms vibration;
-  implementation of the revised completion signal is pending.
-- Review basis: current haptics code and Garmin's
-  [vibration API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#vibrate-instance_function)
-  and [VibeProfile API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention/VibeProfile.html).
-  The suggested 170 ms pulses, 120 ms pauses, and 75% pulse duty cycle are
-  tuning candidates, not physically verified values.
-- Verification: documentation diff/whitespace and local Markdown file links
-  checked. No build, unit tests, simulator run, or new physical acceptance was
-  performed for this documentation-only change.
-- Pending after implementation: relevant tests and Vivoactive 6 build;
-  simulator confirmation of one completion API call and automatic exit;
-  physical confirmation of three distinct pulses without exit truncation and
-  correct suppression/recovery under system haptic settings. Historical
-  acceptance of the single long cue does not verify the new pattern.
-
 ## System-only display implementation (2026-11-04)
 
-- Status: implementation complete; physical acceptance pending. This implements
-  only the first subsequent work item. The three-pulse completion change remains
-  pending, so this artifact still has the existing single long completion cue.
+The user requested system-only display control after observing occasional stronger
+illumination; its cause was not established. The policy supersedes Start/Resume
+backlight activation in archived step 7. Earlier results describe the old policy.
+
+- Status: implementation complete; physical acceptance pending. This artifact
+  still used the single long completion cue, before the three-pulse implementation below.
 - Source: uncommitted changes on `f478f87456fce495c9c13fd31e419116824eeb7b`.
-  Removed Start/Resume backlight activation, capability checks, failure handling,
-  and the unused Attention import from `ToothbrushTimerDelegate.mc`. Removed
-  backlight fixtures and three obsolete cases from `DelegateTests.mc`; retained
-  input, pause/resume, cue/exit ordering, haptics failure, lifecycle, and real SDK
-  timer ownership coverage. README and the active plan now reflect this status.
+  Removed Start/Resume backlight handling from `ToothbrushTimerDelegate.mc`
+  and obsolete fixtures/tests from `DelegateTests.mc`.
 - Environment: Ubuntu Linux host, official Connect IQ SDK 9.2.0, installed
   Vivoactive 6 package, Strict checking; simulator in the existing Distrobox
   container. Native launch dependencies were missing (`libwebkit2gtk-4.0.so.37`
-  and `libjavascriptcoregtk-4.0.so.18`). Sandbox restrictions prevented container
-  access and the first test-runner connection; approved execution outside the
-  sandbox allowed both. Container startup emitted GTK module/image-handler
-  diagnostics; no application runtime errors were observed.
-- Builds: README commands `bash scripts/build.sh debug`,
-  `bash scripts/build.sh release`, and `bash scripts/build.sh test` all reported
-  `BUILD SUCCESSFUL`, with no compiler/analyzer warnings after correction.
+  and `libjavascriptcoregtk-4.0.so.18`); container/test access required approved
+  execution outside the sandbox. Startup GTK diagnostics were not application errors.
+- Builds: [README debug/release/test commands](../README.md#build) all reported
+  `BUILD SUCCESSFUL`, with no compiler/analyzer warnings.
 - Tests: the README full-suite `monkeydo` command printed
   `PASSED (passed=49, failed=0, errors=0)`. The launcher returned 1; success is
   established by the printed summary. The reduction from 52 is solely the three
@@ -254,16 +201,10 @@ backlight renewal.
   lower hardware Back control exited. Same-process reload after automatic exit
   was therefore not verified; application stop/resume reset coverage passed in
   the unit suite. No application code was changed for the simulator issue.
-- Review: inspected the actual diff and surrounding domain, application, view,
-  and delegate code. No remaining actionable defects in the selected scope.
-  Source/test search found no remaining backlight/brightness/keep-awake code or
-  view-visibility lifecycle hooks. Periodic timing, redraws, haptics, and cleanup
-  are unchanged. Existing regression coverage independently exercises the timing
-  and exit assertions formerly repeated in the deleted backlight cases.
-- Correction iterations: **1**. Initial cleanup also removed `Toybox.Lang`,
-  causing unresolved Boolean/Number types. Restoring that required import fixed
-  compilation; all builds, the full suite, and review were repeated afterward.
-  Final whitespace and 31 local Markdown file/anchor links also passed checks.
+- Review: no actionable defects. Source/test search found no remaining
+  backlight/brightness/keep-awake code or view-visibility lifecycle hooks.
+  Independent timing, input, haptics, completion, lifecycle, and timer-ownership
+  coverage was retained. Whitespace and local Markdown links passed checks.
 - Physical checks not run: normal timeout/wake and brightness on Start/Resume,
   wake-touch/button delivery, full countdown/cues/exit with the display off,
   long pause/resume, sleep and battery saver, and real exit/lifecycle behavior.
@@ -281,32 +222,26 @@ backlight renewal.
 
 ## Three-pulse completion implementation (2026-11-04)
 
+The user requested three short completion vibrations in one command, replacing
+the single long signal. Requirements and design were updated before implementation.
+
 - Status: implementation complete; physical acceptance pending. Replaced the
   single long completion vibration in `HapticsService.mc` with three 170 ms
   pulses at 75% duty cycle and two 120 ms zero-duty pauses (750 ms total),
-  submitted together in one call. These are the design's initial tuning values;
-  physical feel has not been established. Interval cues remain one 250 ms pulse
-  at 100% duty cycle. Capability/settings checks, nonfatal failure handling,
-  timer/domain behavior, and immediate exit are unchanged.
+  submitted together in one call. These are initial tuning values; physical
+  feel has not been established. Interval cues remain one 250 ms pulse at 100% duty cycle.
 - Source: uncommitted changes on `54dea9bd0c1b4cf8347270ce891e32ef552fe28f`.
-  README and the active plan now describe the implementation and remaining
-  acceptance. Requirements, design, and reusable regression coverage already
-  specify this change and needed no updates.
 - API review: current official Garmin [vibration API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#vibrate-instance_function)
   documents sequential playback of up to eight profiles and zero-duty pauses;
   [VibeProfile](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention/VibeProfile.html)
   documents API 1.0.0 availability and Vivoactive 6 support. No API or manifest
   minimum change was needed; the existing minimum remains 3.2.0.
-- Environment: Ubuntu Linux host, official Connect IQ SDK 9.2.0, installed
-  Vivoactive 6 package, Strict checking; simulator API 6.0.3 in the existing
-  Distrobox container. Native simulator libraries were missing as in the prior
-  verification. Container/desktop access required execution outside the
-  sandbox. The existing simulator/test connection initially stalled without
-  a summary; restarting the simulator and retrying the documented launcher
-  produced the passing result below. GTK module/image-handler diagnostics
-  appeared during startup; they were not application errors.
-- Builds: README commands `bash scripts/build.sh debug`,
-  `bash scripts/build.sh release`, and `bash scripts/build.sh test` each printed
+- Environment: same Ubuntu Linux / SDK 9.2.0 / Vivoactive 6 package / Strict /
+  Distrobox setup and native-library limitations as the display verification above;
+  simulator API 6.0.3. The simulator/test connection initially stalled without
+  a summary; restarting the simulator and retrying produced the result below.
+  Startup GTK diagnostics were not application errors.
+- Builds: [README debug/release/test commands](../README.md#build) each printed
   `BUILD SUCCESSFUL` without compiler/analyzer warnings.
 - Tests: README full-suite `monkeydo` command printed
   `PASSED (passed=49, failed=0, errors=0)`. This includes real simulator vibration
@@ -327,14 +262,9 @@ backlight renewal.
   application runtime errors appeared. The capture at 123 seconds showed the
   simulator's idle logo. This confirms request submission and automatic exit,
   not physical pulse playback through exit.
-- Code review: reviewed the actual diff and surrounding haptics/delegate/domain
-  code against the selected work item, requirements, and design. No actionable
-  defects or unresolved contradictions found. Profile creation and submission
-  stay inside the existing failure boundary and follow fresh capability/settings
-  checks. Completion still stops updates, attempts the whole pattern once, and
-  exits immediately. No additional timers, waits, sound, or display-power calls.
-- Correction iterations: **0**. Simulator environment recovery required no
-  production-code changes.
+- Review: no actionable defects or unresolved contradictions. Capability/settings
+  checks, nonfatal failure handling, and immediate exit were preserved; no timers,
+  waits, sound, or display-power calls were added.
 - Physical checks not run: three distinct, perceptible pulses with all three
   surviving immediate exit; strength/pulse/pause tuning; interval contrast;
   suppression and recovery under Alert/System vibration, DND, sleep, and power
@@ -353,6 +283,15 @@ backlight renewal.
 | Debug | `e07cc660938345143ecf2a1ca1eb26a7b1f4cf31cf4a9f2586550b4326ad772d` |
 | Release | `b9b975584d5bb0b70396b66c5ef4ba1d3f47acdb93c083c2b30970da5e3a8c3d` |
 | Test | `6ae1ef9070aa35935bb2ecc08896cdabffaee59774d15f2b4883bb5710257755` |
+
+## Documentation consolidation (2026-11-04)
+
+Shortened change summaries, workflow policy duplication, and verification history;
+product behavior and acceptance requirements are unchanged. Diff/consistency review,
+`git diff --check`, and local Markdown file/anchor checks passed. Original acceptance
+records, artifact hashes, and the archived plan were preserved. No application builds
+or runtime checks were run for this documentation-only change; hardware acceptance
+of the display and completion changes remains pending.
 
 ## Evidence availability
 

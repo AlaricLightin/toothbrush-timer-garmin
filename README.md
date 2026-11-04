@@ -6,20 +6,14 @@ seconds and a three-pulse completion cue. Touch and the upper hardware button pr
 Start/Pause/Resume; touch Stop resets the session. The lower button exits, and
 completion exits automatically. Every launch starts fresh at `2:00`.
 
-The three-pulse completion pattern is implemented; pulse feel and survival
-through immediate exit still need physical Vivoactive 6 acceptance. See the
-[implementation verification](doc/verification.md#three-pulse-completion-implementation-2026-11-04).
+Display wake, brightness, and timeout are controlled entirely by the system.
+The display may dim or turn off during brushing; normal watch wake mechanisms apply.
 
-The display policy revised on 2026-11-04 requires system-only wake, brightness,
-and timeout behavior, with no app backlight or keep-awake requests. The display
-may dim or turn off during brushing; normal watch wake mechanisms apply.
-Implemented: Start/Resume and cleanup make no display-power requests.
-Physical acceptance of this change is pending. See the
-[change status](doc/verification.md#system-only-display-implementation-2026-11-04).
+Physical Vivoactive 6 acceptance remains pending for
+[system-only display control](doc/verification.md#system-only-display-implementation-2026-11-04)
+and [three-pulse completion through exit](doc/verification.md#three-pulse-completion-implementation-2026-11-04).
 
-The original MVP was completed, with simulator regression and user-reported physical
-acceptance on Vivoactive 6 firmware 18.32 recorded in the
-[verification baseline](doc/verification.md). See the [requirements](doc/product-requirements.md),
+See the [verification history](doc/verification.md), [requirements](doc/product-requirements.md),
 [design](doc/technical-design.md), [regression checklists](doc/testing.md), and
 [completed plan](doc/implementation-plan.md).
 

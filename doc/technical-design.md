@@ -158,9 +158,7 @@ Hardware behavior:
 
 All intermediate cues share one single-pulse vibration profile. Completion uses three short pulses separated by two brief pauses, submitted in one `Attention.vibrate()` call with five `Attention.VibeProfile` entries in pulse/pause/pulse/pause/pulse order. Pause entries use zero duty cycle. Keep the pattern in `HapticsService`; do not schedule separate calls or add timers or blocking waits between pulses.
 
-An initial tuning candidate is 75% duty cycle for each 170 ms pulse and zero duty cycle for each 120 ms pause (750 ms total). These values are illustrative, not fixed product requirements; select and verify the final values on Vivoactive 6.
-
-Garmin's [vibration API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#vibrate-instance_function) accepts up to eight profiles and plays them in order; its on/off example uses zero-duty entries for pauses. The [VibeProfile API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention/VibeProfile.html) defines duty cycle and duration and lists Vivoactive 6 support.
+Tune pulse strength and pulse/pause durations on Vivoactive 6; values used in tested artifacts are recorded in [verification](verification.md#three-pulse-completion-implementation-2026-11-04). API references: [vibrate](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#vibrate-instance_function) and [VibeProfile](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention/VibeProfile.html).
 
 The service should use Garmin capability checks where required. Unsupported or restricted vibration must not corrupt timer state or prevent completion. No sound APIs are used.
 
