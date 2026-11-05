@@ -9,13 +9,19 @@ completion exits automatically. Every launch starts fresh at `2:00`.
 Display wake, brightness, and timeout are controlled entirely by the system.
 The display may dim or turn off during brushing; normal watch wake mechanisms apply.
 
+The approved [new UI design](doc/design/ui-design.md) and updated requirements
+specify a centrally defined completion delay, initially about three seconds,
+before automatic exit, with Back/system exit taking priority immediately.
+These changes and production artwork are pending in the [implementation plan](doc/implementation-plan.md);
+the current application still uses the earlier UI and immediate completion exit.
+
 Focused physical Vivoactive 6 checks passed for system-only display control and
 three-pulse completion through exit on firmware 18.32. See the
 [results and remaining coverage](doc/verification.md#focused-physical-verification-2026-11-04).
 
 See the [verification history](doc/verification.md), [requirements](doc/product-requirements.md),
 [design](doc/technical-design.md), [regression checklists](doc/testing.md), and
-[completed plan](doc/implementation-plan.md).
+[implementation plan](doc/implementation-plan.md).
 
 ## Setup
 

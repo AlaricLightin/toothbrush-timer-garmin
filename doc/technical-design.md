@@ -13,17 +13,16 @@ The implementation plan is out of scope and will be maintained separately.
 - Primary device: Garmin Vivoactive 6.
 - The minimum Connect IQ API level is selected when the project is created: use the lowest level that supports Vivoactive 6 and all APIs actually used.
 - The initial manifest may target only Vivoactive 6, while the code should avoid unnecessary device-specific assumptions so compatible devices can be added later.
-- No background service, network access, settings storage, or session persistence is required.
 
 ## 3. Components
 
 | Component | Responsibility |
 | --- | --- |
 | Application class | Creates application objects, returns the initial view, performs cleanup on exit. |
-| `MainView` | Draws READY, RUNNING, and PAUSED states. Contains presentation logic only. |
-| `MainDelegate` | Handles touch/hardware input, periodic updates, haptics orchestration, redraws, and exit. |
+| `MainView` | Draws READY, RUNNING, PAUSED, and COMPLETED states. Contains presentation logic only. |
+| `MainDelegate` | Handles touch/hardware input, periodic updates, haptics orchestration, redraws, and the completion presentation delay before exit. |
 | `BrushingTimer` | Single authoritative source for session state and brushing-time logic. |
-| `TimerConfig` | Centralizes total duration and interval duration; derives stage count. |
+| `TimerConfig` | Centralizes duration values, including completion presentation duration; derives stage count from brushing durations only. |
 | Clock | Provides millisecond time; production implementation uses `System.getTimer()`, tests use a fake clock. |
 | `HapticsService` | Encapsulates Garmin vibration APIs and vibration profiles. |
 
@@ -37,7 +36,7 @@ Application
                             +--> TimerConfig
 ```
 
-`BrushingTimer` must not depend on `WatchUi`, drawing, vibration, or application-exit APIs. No DI framework, repository layer, generic scheduler, exit-service abstraction, or separate view-model layer is needed.
+`BrushingTimer` must not depend on `WatchUi`, drawing, vibration, or application-exit APIs. Architectural exclusions are collected in §18.
 
 ## 4. Configuration
 
@@ -47,7 +46,9 @@ MVP timing values are centralized:
 - interval duration: `30000 ms`;
 - stage count: `totalDuration / intervalDuration`.
 
-The literals `120`, `30`, and `4` must not be duplicated across timer, UI, and haptics code. The configuration assumes positive durations and equal-length stages; a generic arbitrary-event scheduler is deliberately out of scope.
+Keep a separate named `completionDisplayDurationMs`, initially `3000 ms`, in the same configuration. The controller reads this tunable presentation delay; do not duplicate it in exit logic. It does not affect brushing time, stage count, or cue scheduling.
+
+The literals `120`, `30`, and `4` must not be duplicated across timer, UI, and haptics code. The configuration assumes positive durations and equal-length stages.
 
 ## 5. Session State
 
@@ -62,7 +63,7 @@ READY --start--> RUNNING --pause--> PAUSED
 RUNNING --duration reached--> COMPLETED
 ```
 
-`COMPLETED` is terminal for the current session and exists primarily to guarantee one-time completion handling. The controller exits immediately after completion, so there is no completion screen.
+`COMPLETED` is terminal: remaining brushing time is zero and progress is one. The presentation delay adds no domain state or brushing elapsed time; controller handling follows §12.
 
 Back/exit is an application action, not a session state. Stop resets the session to READY; separate STOPPED or CANCELLED states are unnecessary.
 
@@ -98,56 +99,48 @@ progress    = clamp(elapsedMs / totalDurationMs, 0..1)
 stage       = min(floor(elapsedMs / intervalDurationMs) + 1, stageCount)
 ```
 
-The displayed remaining seconds use `ceil(remainingMs / 1000)`. Therefore the session starts at `2:00`, `0:01` remains visible until actual completion, and `0:00` normally is not rendered because completion exits immediately.
+The displayed remaining seconds use `ceil(remainingMs / 1000)`. Therefore the session starts at `2:00` and `0:01` remains visible until actual completion. COMPLETED replaces the countdown and stage label with a completion message; it does not display `0:00`.
 
 ## 7. Periodic Updates and Cue Detection
 
-`MainDelegate` owns one repeating `Timer.Timer` while the session is RUNNING. A period around 250 ms is the initial target; it may be tuned on hardware without changing timer semantics.
+`MainDelegate` owns one `Timer.Timer`, used in repeating mode while the session is RUNNING and rearmed in one-shot mode for completion presentation (§12). A repeating period around 250 ms is the initial target; it may be tuned on hardware without changing timer semantics.
 
-Each callback:
+Each repeating brushing callback:
 
 1. returns immediately unless the session is RUNNING;
 2. synchronizes `BrushingTimer` with the current clock value;
 3. processes at most one resulting event;
 4. requests `WatchUi.requestUpdate()` if the application remains active.
 
-The only domain results needed are conceptually `NONE`, `INTERVAL`, and `COMPLETION`; no generic event framework is required.
+The only domain results needed are conceptually `NONE`, `INTERVAL`, and `COMPLETION`.
 
 Interval boundaries are tracked so each is processed at most once. If a delayed callback crosses several intermediate boundaries, emit one interval cue and mark all crossed intermediate boundaries processed. For example, a jump from 29.8 s to 60.2 s produces one vibration, not two.
 
-Completion has priority. If synchronization first observes elapsed time at or beyond 120 s, emit only the completion event, even if an earlier interval cue was missed.
+Completion has priority over overdue interval cues. If synchronization first observes elapsed time at or beyond 120 s, emit only the completion event, even if an earlier interval cue was missed.
 
-State-changing user actions that depend on current time, especially Pause, should synchronize first. If synchronization reaches completion, completion wins over the requested user action.
+Input synchronization and completion/exit priority follow §12.
 
 ## 8. UI
 
-One `MainView` renders all states instead of switching between separate views.
+One `MainView` renders all states using the palette, layout, and components in [UI design](design/ui-design.md). Centralize semantic colors and derive shared drawing/hit-test geometry from display bounds and available inner radius.
 
-READY shows the toothbrush asset, `2:00`, and Start. RUNNING/PAUSED show the toothbrush asset, remaining time, progress ring, stage label, Pause/Resume, and Stop.
+Draw the ring programmatically from model progress and `stageCount`, following [UI design §4](design/ui-design.md#4-dynamic-progress-ring). Handle zero and full segments explicitly to avoid zero-length arcs becoming full circles. Use standard text rendering and drawing primitives for buttons, control icons, and static completion rays where practical.
 
-The progress indicator consists of:
-
-- a background ring;
-- a foreground arc proportional to `progress`;
-- stage separators derived from `stageCount`.
-
-The view should use relative layout calculations where practical rather than device-specific coordinates. Visual styling should favor high contrast; no fixed product palette is required.
-
-There is no separate DTO/view-model layer. `MainView` may perform simple presentation transformations such as milliseconds to `m:ss`, state to Pause/Resume label, and stage values to a localized stage string. Domain decisions remain in `BrushingTimer`.
-
-The toothbrush image is a small static resource asset.
+`MainView` may format time, control labels, and localized stage text. Domain decisions remain in `BrushingTimer`. Static assets and loading constraints are specified in §13.
 
 ## 9. Input
 
 `MainDelegate` should extend `WatchUi.BehaviorDelegate` so touch and device-independent Garmin behaviors share one controller.
 
-Touch uses tappable regions for Start, Pause/Resume, and Stop. Layout geometry used for hit testing must come from the same layout definition/calculation used by the view rather than duplicate unrelated hardcoded coordinates.
+Touch uses Start, Pause/Resume, and Stop regions from the shared geometry (§8).
 
 Hardware behavior:
 
-- Back: cancel the current session and exit;
+- Back: follow the exit procedure in §12;
 - Select/primary action where naturally supported: Start in READY, Pause in RUNNING, Resume in PAUSED;
 - Stop remains touch-only when there is no natural dedicated hardware action.
+
+In COMPLETED, ignore primary actions and stale control taps; expose no tappable controls. Back/system exit remains available through §12.
 
 ## 10. Haptics
 
@@ -172,42 +165,49 @@ Retain normal redraws and the periodic timing mechanism defined in §7. Display 
 
 ## 12. Stop, Exit, Completion, and Lifecycle
 
-Stop in RUNNING or PAUSED:
+Pause and Stop synchronize first (§7). If synchronization reaches completion, handle completion without applying the requested action.
+
+Otherwise, Stop in RUNNING or PAUSED:
 
 1. stop the periodic timer;
 2. reset `BrushingTimer` to READY;
 3. request a redraw.
 
-Back:
+Back or another system exit action takes priority in every state, including at the completion boundary. Process exit without synchronizing the model, submitting a new cue, or starting a completion presentation:
 
-1. stop the periodic timer;
+1. stop any repeating updates or pending completion exit callback;
 2. discard session state;
-3. exit cleanly with the normal Connect IQ application exit mechanism.
+3. exit immediately with the normal Connect IQ application exit mechanism, or allow system-initiated closure to proceed. Never wait for an already submitted vibration or the presentation delay.
 
-Completion:
+Completion, when exit has not taken priority:
 
 1. `BrushingTimer` enters COMPLETED once;
 2. stop the periodic timer;
 3. submit the entire three-pulse completion pattern once in a single vibration call, subject to system haptic restrictions;
-4. exit cleanly immediately after the submission attempt, including when haptics are unavailable or fail.
+4. request a redraw of COMPLETED and rearm the owned timer as a one-shot for `completionDisplayDurationMs`, starting at completion handling rather than at an inferred past brushing deadline;
+5. when that callback runs, consume the pending exit once and exit cleanly. Haptics being unavailable, suppressed, or failing must not skip the presentation or prevent the scheduled exit.
 
-Verify on Vivoactive 6 that all three pulses survive immediate exit. If exit truncates the pattern, follow the documentation-conflict process in AGENTS.md before changing exit timing; do not add a speculative delay or completion screen.
+The SDK supports one-shot operation through `Timer.Timer.start(callback, duration, false)` and restarting a stopped timer ([official timer API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Timer/Timer.html), API 1.0.0). Reuse the existing timer with a distinct completion-exit callback; do not add a concurrent timer or blocking wait. This does not require raising the existing API minimum. Confirm the mode change and cancellation on the Vivoactive 6 simulator and hardware during implementation.
 
-The application never persists or restores an active session. If the platform suspends or terminates the app, the session is discarded. A later launch always starts in READY at `2:00`, including when the platform reports a resume. `AppBase.onStop()` performs cleanup only; no background timing mechanism is used.
+Keep only pending callback ownership in the controller; do not duplicate domain completion state or elapsed brushing time. Guard the exit callback with active lifecycle ownership, pending status, and the authoritative COMPLETED state. Clear pending ownership before exiting. Repeated redraws, late RUNNING callbacks, or repeated completion observations must neither rearm the delay nor repeat haptics or exit. The delay is independent of redraw count and display visibility; platform callback/render latency makes its visible duration approximate. Do not wait for a rendered frame or request display wake.
+
+Back, actual suspension/termination, and application cleanup stop the timer in either mode and clear pending ownership. Cleanup must be safe to repeat and release callback references, avoiding strong reference cycles. A discarded controller's callback must not affect a fresh launch. Display dimming or view hiding alone is not a suspension signal and must not cancel the delay.
+
+Verify on Vivoactive 6 that all three completion pulses are perceptible through automatic exit. Tune the named presentation value and haptic profile coherently if needed; the presentation delay must never postpone the completion signal or change the two-minute brushing deadline.
+
+A later launch always starts fresh in READY at `2:00`, including when the platform reports a resume. `AppBase.onStop()` performs cleanup only.
 
 ## 13. Resources and Localization
 
-All user-visible text must come from standard Connect IQ string resources. Initial resources contain English only, including Start, Pause, Resume, Stop, and the stage label.
+Use standard Connect IQ string resources as required by [requirements §9](product-requirements.md#9-localization), with both current stage and stage count as stage-format arguments. Icon-only controls do not require visible text labels.
 
-The stage format should accept both current stage and total stage count rather than embedding `4` in the localized string.
-
-The toothbrush illustration is stored as a static drawable/resource asset.
+Store the in-app toothbrush and launcher icon as separate static graphical resources, with transparency around the in-app illustration. Prefer editable vector sources and appropriately sized Connect IQ-compatible exports; runtime vector support is not assumed. Follow the standard project template and load/cache resources outside frequent redraws. Verify exports, transparency, stroke readability, and resource loading on Vivoactive 6. Reference PNGs are design inputs, never full-screen runtime backgrounds.
 
 ## 14. Diagnostics and Failure Handling
 
-Development builds may use lightweight `System.println()` diagnostics for meaningful events such as state transitions, interval cues, completion, ignored callbacks, and recoverable device-capability failures. Do not log every periodic tick and do not introduce a logging framework.
+Development builds may use lightweight `System.println()` diagnostics for meaningful events such as state transitions, interval cues, completion, ignored callbacks, and recoverable device-capability failures. Do not log every periodic tick.
 
-Unexpected timer callbacks in non-RUNNING states are ignored. Haptics failures are nonfatal. No recoverable platform-feature failure should leave session state inconsistent.
+No recoverable platform-feature failure should leave session state inconsistent. Callback guards and haptics failure handling follow §§7, 10, and 12.
 
 ## 15. Core Invariants
 
@@ -216,43 +216,17 @@ Unexpected timer callbacks in non-RUNNING states are ignored. Haptics failures a
 3. Paused time never counts toward brushing time.
 4. Each intermediate boundary is processed at most once.
 5. Delayed callbacks do not replay multiple old cues.
-6. Completion occurs exactly once and has priority over overdue interval cues or simultaneous user input.
-7. Stop fully resets the session.
-8. Back/exit never leaves timing active in the background.
-9. Every new launch starts with a fresh READY session.
-10. Timing constants and UI strings are centralized rather than duplicated.
+6. Timing constants and UI strings are centralized rather than duplicated.
+
+Completion priority, exactly-once effects, reset, exit, and fresh-launch guarantees follow §12; terminal brushing values follow §5.
 
 ## 16. Testing Strategy
 
-### Unit Tests
+Use [testing.md](testing.md) as the reusable coverage specification and [verification.md](verification.md) for dated results and limitations.
 
-Use the Connect IQ Monkey C test framework with a fake clock. Unit tests should cover:
-
-- initial state, start, stop/reset;
-- elapsed/remaining time and stage boundaries;
-- pause/resume, including multiple cycles;
-- interval crossing and duplicate prevention;
-- delayed callbacks crossing multiple boundaries;
-- pause around a boundary;
-- completion at and beyond total duration;
-- completion priority and exactly-once behavior;
-- `System.getTimer()` rollover-sensitive duration calculation.
-
-Pixel-level drawing tests and vibration-profile unit tests are unnecessary.
-
-### Simulator
-
-Use the Connect IQ Simulator for normal navigation, touch behavior, countdown, stage/progress rendering, Pause/Resume/Stop, Back, automatic completion/exit, and layout checks on additional candidate devices.
-
-### Physical Vivoactive 6
-
-Verify on hardware:
-
-- interval vs completion vibration feel, including three distinct completion pulses without truncation by exit;
-- touch ergonomics and display readability;
-- system-controlled display timeout/wake and brightness, including countdown/cues/completion with the display off;
-- hardware Back/Select behavior;
-- real application exit/lifecycle behavior.
+- Automated: Monkey C tests with a fake clock for domain logic, presentation arithmetic, controller scheduling, and side-effect counts; no pixel tests, vibration-profile tests, or real-time sleeps.
+- Simulator: rendering, resource loading, navigation, input, lifecycle integration, and layout on additional candidate devices.
+- Physical Vivoactive 6: vibration feel, touch ergonomics, readability, display restrictions, hardware controls, and real exit/lifecycle behavior. Simulator success cannot certify these.
 
 ## 17. Suggested Source Organization
 
@@ -280,7 +254,7 @@ Use the actual Connect IQ project-template conventions where they differ from th
 
 ## 18. Deliberately Excluded Complexity
 
-The MVP does not introduce persistence, background execution, networking, settings infrastructure, a generic timed-event scheduler, arbitrary per-stage durations, DI infrastructure, a separate view-model layer, an exit-service abstraction, a logging framework, or device-specific views unless a later concrete requirement makes one of them necessary.
+The MVP does not introduce persistence, background execution, networking, settings infrastructure, a generic event framework or timed-event scheduler, arbitrary per-stage durations, DI infrastructure, a repository or DTO/view-model layer, an exit-service abstraction, a logging framework, or device-specific views unless a later concrete requirement makes one of them necessary.
 
 ## 19. Implementation Conventions
 

@@ -1,9 +1,12 @@
 # Regression Testing
 
-Use these checklists for changes to the completed MVP. Behavior and architecture
+Use these checklists for the current specification. Behavior and architecture
 remain defined by [product requirements](product-requirements.md) and
 [technical design](technical-design.md); [AGENTS.md](../AGENTS.md) defines the
 verification policy. Build and run commands are in [README](../README.md).
+
+See [README](../README.md) for implementation status. These checklists include
+pending design changes; historical passes do not establish their acceptance.
 
 Select cases affected by a change, run the full suite when integration scope
 warrants it, and build for Vivoactive 6 after production-code changes. Include
@@ -32,12 +35,16 @@ Use fresh model/fake-clock instances per test. Time values below are test inputs
 | Pause around interval | Pause just before, exactly at, and just after a boundary | No early cue; a newly crossed cue is consumed once; no duplicate on resume |
 | Stop/reset | Stop RUNNING and PAUSED models after cues | READY defaults and boundary bookkeeping reset; next session cues normally |
 | Completion boundary | Synchronize at 119999, 120000, and beyond | RUNNING until actual duration; then COMPLETED, remaining zero, progress 1, stage capped |
-| Completion priority | Jump from before an interval to beyond 120000; process input at completion | Only COMPLETION; no overdue interval or subsequent pause/stop transition |
-| Terminal handling | Repeat synchronization/callback/input after completion | No second completion effect; terminal state retained until discarded/new session |
+| Completion priority | Jump from before an interval to beyond 120000; process Pause/Stop at completion | Only COMPLETION; no overdue interval or subsequent pause/stop transition |
+| System exit priority | Back/system cleanup just before, at, and after completion is due, before completion handling; also during presentation | Immediate exit/cleanup without model synchronization, new cue, or new presentation; pending callbacks cancelled; no wait for haptics or delay |
+| Terminal handling | Repeat synchronization/callback/primary input after completion | No second completion effect; terminal state retained until discarded/new session |
 | Signed rollover | Start near `2147483647`, advance across signed wrap | Small positive elapsed difference; normal boundaries/cues |
 | Wrap and pause | Cross −1 → 0 and wrap during a paused interval | Correct running delta; paused time still excluded |
 | Alternate configuration | Test-only positive equal-stage durations/count different from MVP | Derived stage count, boundaries, and completion work without literal four |
-| Presentation | Remaining ms: 120000, 119999, 119000, 1000, 1; dynamic stage resource | `2:00`, `2:00`, `1:59`, `0:01`, `0:01`; configured stage denominator. Test zero formatting separately without a completion screen |
+| Presentation | Remaining ms: 120000, 119999, 119000, 1000, 1; dynamic stage resource | `2:00`, `2:00`, `1:59`, `0:01`, `0:01`; configured stage denominator. COMPLETED replaces countdown/stage with the completion message |
+| Segment fractions | Zero, partial progress within stages, exact boundaries, completion; alternate stage count | Fractions follow UI design §4, independent of rounded countdown text. Test arithmetic, not pixels |
+| Completion delay | Completion observed on time and late; alternate configured display durations | One cue attempt at completion handling, no immediate exit; one exit after the configured delay; brushing state/time remain terminal |
+| Completion cancellation | Back/cleanup before exit, repeated cleanup, old callback after fresh launch | Pending callback cancelled; no duplicate exit or cue; new session unaffected |
 | Input routing logic | Inside/outside each control, each session state | Exactly one intended action, no action outside controls |
 | Integration failure paths | Haptic refusal; callbacks in READY/PAUSED/COMPLETED; repeated cleanup | Domain state remains correct; completion effects occur once; cleanup is safe to repeat |
 
@@ -50,47 +57,41 @@ keep-awake requests, including Start/Resume and cleanup.
 
 | Scenario | Simulator checks | Physical Vivoactive 6 checks |
 | --- | --- | --- |
-| Fresh launch | READY layout, resource loading, no automatic countdown | App is discoverable; icon/time/Start readable at a glance |
-| Full session | Continuous ring, stages, countdown rounding; three interval requests and one completion request; automatic exit | Time against an independent stopwatch; cues at approximately 30/60/90 seconds of active time and completion at approximately 120 seconds, allowing callback/platform latency; no accumulated drift |
-| Vibration | Trace request order/count; confirm one completion API call with pulse/pause/pulse/pause/pulse profiles; inspect runtime errors | All interval cues feel the same; final cue has three distinct short pulses separated by brief pauses, with all three perceptible through exit; no sound |
-| Pause/resume | Freeze time/ring/stage, Resume label, exact continuation | Include a long pause; verify active-time cue schedule and screen dimming/resume behavior |
-| Stop/restart | RUNNING and PAUSED Stop reset all visible state immediately | Touch is reliable; no confirmation; subsequent session has normal cue sequence |
+| Fresh launch | Empty segmented ring, toothbrush, resource loading, time and Start; no automatic countdown | Separate launcher icon is recognizable; READY readable at a glance |
+| Full session | Continuous clockwise ring enclosing controls, stages, countdown rounding, partial fill and boundaries; three interval requests and one completion request | Time against an independent stopwatch; cues at approximately 30/60/90 seconds of active time and completion at approximately 120 seconds, allowing callback/platform latency; no accumulated drift |
+| COMPLETED presentation | Full mint-green segments with gaps, toothbrush/static rays, localized `Nice job!`, no countdown/stage/buttons or active control hit regions; automatic exit after configured duration | Approximately three-second initial presentation when display is visible; readable message and complete vibration; Back exits early; display-off completion/exit remains correct |
+| Vibration | Trace request order/count; confirm one completion API call with pulse/pause/pulse/pause/pulse profiles; inspect runtime errors | All interval cues feel the same; final cue has three distinct short pulses separated by brief pauses, with all three perceptible through automatic exit; no sound |
+| Pause/resume | Freeze time/ring/stage; filled ring yellow, Resume/play button mint green; exact continuation restores mint-green progress | Include a long pause; verify active-time cue schedule, color distinction, and screen dimming/resume behavior |
+| Stop/restart | Before completion is due, RUNNING and PAUSED Stop reset all visible state immediately | Touch is reliable; no confirmation; subsequent session has normal cue sequence |
 | Touch geometry | Center/edge taps inside each region and outside all regions; no accidental Select fallback | Comfortable targets on wrist; Pause/Resume and Stop easy to distinguish |
 | Hardware controls | Enter primary action, Esc/swipe-right Back, no double dispatch | Confirm actual short-press behavior and standard system exit controls |
-| Completion/input race | Domain/delegate tests plus simulator exercise | Input near completion does not leave an app stuck or produce extra cues |
+| Completion/input race | Pause/Stop yields to completion; Back/system exit bypasses completion handling and cancels pending exit work | Back/system exit closes immediately at the boundary and during presentation, without waiting for vibration; no extra cues or stuck app |
 | System-controlled display | Normal transitions/redraws; source review confirms no display-power requests; simulator cannot certify brightness or wake behavior | Record timeout/brightness/gesture settings; run a full session with wrist down and display off, long pause/resume, sleep and battery saver. Verify permitted cues and completion/exit continue, normal system wake restores current state, and Start/Resume cause no app-requested brightness change. Check whether a wake touch/button also invokes a control; do not assume every input wakes the display or is consumed solely for wake |
 | System haptic settings | Record simulator limits | DND/sleep/vibration settings respected; suppressed feedback does not stop countdown or exit |
-| Lifecycle | External exit/suspend where supported; new launch READY | Leave through normal controls/system interruptions, resume/relaunch, and confirm no background timing or restored session |
+| Lifecycle | External exit/suspend where supported, including during completion delay; cancel callbacks; new launch READY | Leave through normal controls/system interruptions, resume/relaunch, and confirm no background timing, stale exit callback, or restored session |
 | Repeated use | Several complete/stop/pause cycles; stable memory/timer count | Several sessions, including release build; no leftover cues or growing instability |
 
 Record **pass**, **fail**, or **not run**, with evidence and reason. Simulator request logs cannot certify motor feel, AMOLED behavior, touch ergonomics, or the real watch's exit destination.
 
 ## Platform regression notes
 
-- Clock: cover both signed wrap and −1 → 0 using time differences, not callback
-  counts or absolute deadlines ([clock API](https://developer.garmin.com/connect-iq/api-docs/Toybox/System.html#getTimer-instance_function)).
-- Rendering: preview zero/tiny arcs, exact boundaries, partial progress at 50 s,
-  and near completion. Equal arc angles draw a full circle; check integer-angle
+- Clock: use time differences across rollover, not absolute deadlines
+  ([clock API](https://developer.garmin.com/connect-iq/api-docs/Toybox/System.html#getTimer-instance_function)).
+- Rendering: include zero/tiny arcs and near completion in previews.
+  Equal arc angles draw a full circle; check integer-angle
   truncation and handle full progress separately ([arc API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/Dc.html#drawArc-instance_function)).
-- Input: verify coordinate taps and raw Enter each cause one action, with no
-  action outside controls. Select consumption can prevent raw input delivery
+- Input: Select consumption can prevent raw input delivery
   ([behavior delegate](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/BehaviorDelegate.html)).
 - Resources/API changes: check drawable loading, actual API minimum, and target
   support. The baseline uses `WatchUi.Bitmap` so the platform handles underlying
   bitmap types. Compilation and an API 6.0.3 simulator do not certify older devices.
-- Completion: recheck that all three final pulses survive immediate exit after
-  haptics/lifecycle changes. If a conflict appears, follow AGENTS.md before
-  changing exit timing; do not introduce a speculative delay or completion screen.
-- Display: dimming/blanking alone must not change timer state.
-  Hardware checks must distinguish display-off operation
-  from actual app suspension/termination; do not add background execution.
 - Settings: test DND and the System/Alert vibration switches independently,
   including restoration, sleep, and power modes. Record actual settings instead
   of assuming which physical switch maps to an API flag. Baseline observations
   are in [verification](verification.md#physical-acceptance-2026-11-03).
-- Ownership/lifecycle: repeated sessions must release timer callbacks and object
-  references. Treat view hiding as visibility information, not proof of app
-  termination; distinguish an interruption overlay from actual suspension.
+- Ownership/lifecycle: check release of timer callbacks and object references.
+  Distinguish display-off operation, view hiding, and interruption overlays from
+  actual app suspension/termination.
 
 ## Recording results
 

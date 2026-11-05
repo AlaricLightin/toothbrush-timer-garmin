@@ -2,18 +2,7 @@
 
 ## 1. Overview
 
-Toothbrush Timer is a simple Garmin Connect IQ watch application intended to help a user brush their teeth for the recommended two-minute duration.
-
-The application provides:
-- a two-minute countdown timer;
-- haptic feedback every 30 seconds;
-- a distinct haptic signal of three short vibrations when the full two minutes have elapsed;
-- a visual indication of overall progress and the current 30-second stage;
-- simple pause, resume, and stop controls.
-
-The primary target device is Garmin Vivoactive 6. Support for additional compatible Garmin watches is desirable when it does not require substantial device-specific UI variants or significant additional complexity.
-
-The initial version is primarily intended for personal use, but the implementation should follow reasonable product and Connect IQ development best practices so that publishing the application later remains practical.
+Toothbrush Timer is a Garmin Connect IQ watch app for two-minute brushing sessions, with visual progress, 30-second haptic cues, and a distinct completion signal. Vivoactive 6 is the primary target. The initial version is for personal use, with future publication kept practical.
 
 ## 2. Goals
 
@@ -24,7 +13,7 @@ The MVP should:
 - clearly indicate the remaining brushing time when the user does look at the screen;
 - make the current quarter of the brushing session visible;
 - allow the user to pause, resume, or stop the timer;
-- automatically return to the normal watch interface when a completed session ends;
+- briefly acknowledge completion, then automatically return to the normal watch interface;
 - remain simple and require no configuration;
 - be structured so that localization and configurable durations/intervals can be added later without major redesign.
 
@@ -48,19 +37,11 @@ The MVP does not include:
 
 ## 4. Primary User Flow
 
-Screen behavior in every state follows [§10](#10-screen-behavior).
+Screen appearance follows [UI design](design/ui-design.md); display behavior in every state follows [§7](#7-screen-behavior).
 
 ### 4.1 Application Launch
 
-When the user opens the application, the initial screen is displayed.
-
-The initial screen contains:
-
-- a simple toothbrush icon near the top of the screen;
-- the initial remaining time: `2:00`;
-- a Start control.
-
-The timer does not begin automatically.
+Every launch starts fresh in READY at `2:00`, with Start available. The timer does not begin automatically.
 
 ### 4.2 Starting a Session
 
@@ -76,17 +57,14 @@ When the user selects Start:
 
 When the user selects Pause:
 
-- countdown stops;
-- elapsed time is preserved;
-- remaining time is preserved;
-- the current stage is preserved;
-- the Pause control becomes Resume.
+- countdown freezes, preserving elapsed time, remaining time, stage, and progress;
+- the Pause control becomes Resume, with the PAUSED appearance defined in UI design.
 
 When the user selects Resume, countdown continues from the exact paused position.
 
 ### 4.4 Stopping
 
-When the user selects Stop:
+When the user selects Stop before completion has been reached:
 
 - the active session is cancelled immediately;
 - no confirmation dialog is shown;
@@ -94,27 +72,28 @@ When the user selects Stop:
 - the timer is reset to `2:00`;
 - the progress indicator is reset to its initial state.
 
+If completion has been reached when Pause or Stop is processed, completion takes priority (§4.6).
+
 ### 4.5 Leaving the Application
 
-If the user invokes the standard Back or exit action during an active session:
+Back and other system exit actions take priority in every state, including at the completion boundary. Exit immediately without confirmation or waiting for a cue or presentation to finish. Processing exit must not trigger a new cue or start a completion presentation.
 
-- the session is cancelled;
-- the timer does not continue in the background;
-- the application exits normally.
-
-No confirmation dialog is required.
+Exit cancels pending callbacks and discards the session; timing never continues in the background. Actual suspension/termination also discards the session, and a later launch starts fresh. Callbacks from a discarded session must not affect a new launch.
 
 ### 4.6 Completing a Session
 
-At the end of two minutes:
+At the end of two minutes, unless system exit takes priority (§4.5):
 
 - the final signal of three short vibrations separated by brief pauses is emitted once;
 - the timer stops;
 - the session is considered complete;
-- the application automatically exits;
+- the COMPLETED presentation replaces the countdown and controls;
+- the completion screen is presented for approximately three seconds, then the application automatically exits;
 - the user is returned to the normal watch interface.
 
-No completion screen is required.
+Completion takes priority over Pause/Stop and overdue interval cues. The presentation duration is centrally defined and tunable without changing brushing duration or cue scheduling; it is not a user setting. The delay starts when completion is handled, even if observed late. Brushing time does not advance during it, and redraws or input must not repeat the cue. Haptic suppression or failure must not prevent presentation or automatic exit.
+
+System-controlled dimming/blanking still applies; the app must not wake the display or extend the delay waiting for visibility.
 
 ## 5. Timer Behavior
 
@@ -126,96 +105,37 @@ The MVP uses the following fixed timing values:
 - stage duration: 30 seconds;
 - number of stages: 4.
 
-These values are fixed from the user's perspective in the MVP.
-
-However, the internal design should avoid unnecessarily coupling timer logic, UI layout, and vibration scheduling to literal hardcoded values. The implementation should make it reasonably straightforward to introduce configurable total duration and interval duration in a future version.
-
-For example, timing values should be represented as centralized configuration or constants rather than duplicated throughout the codebase.
+These values are fixed from the user's perspective. Centralize durations and derive stage count so future configuration does not require redesigning timer logic, UI, or cue scheduling.
 
 ### 5.2 Interval Signals
 
-Short vibration signals occur when elapsed brushing time reaches:
-
-- 30 seconds;
-- 60 seconds;
-- 90 seconds.
-
-All three intermediate vibration signals use the same pattern.
+Identical short vibration signals occur at 30, 60, and 90 seconds of elapsed brushing time.
 
 ### 5.3 Completion Signal
 
-At 120 seconds, the application produces one completion signal consisting of three short vibrations separated by brief pauses.
-
-The three-pulse pattern must be clearly distinguishable from the single short vibration at each 30-second interval. Exact pulse strength, pulse duration, and pause duration may be tuned on Vivoactive 6; no sound is used. All three pulses must remain perceptible through automatic application exit when system settings permit haptics.
+The completion signal (§4.6) must be clearly distinguishable from the single-pulse interval cue. Pulse strength, duration, and spacing may be tuned on Vivoactive 6; no sound is used. All three pulses must remain perceptible through automatic exit when system settings permit haptics. User/system exit must not wait for the pattern to finish.
 
 ### 5.4 System Haptic Restrictions
 
-The application should respect normal Garmin/system restrictions and settings that affect haptic feedback.
+Respect Garmin/system haptic restrictions, including Do Not Disturb; do not attempt to bypass them.
 
-The application should not attempt to bypass system behavior such as Do Not Disturb or other platform-level haptic restrictions.
+## 6. Timer Presentation
 
-## 6. Timer Screen
+RUNNING and PAUSED share a layout showing remaining time, overall progress, current stage, and Pause/Resume and Stop controls. Prioritize time and progress over decoration; [UI design](design/ui-design.md) specifies appearance and state differences.
 
-The active timer screen should contain the following elements:
+### 6.1 Remaining Time
 
-- a simple toothbrush icon near the top;
-- a prominent digital remaining-time display;
-- a circular progress indicator divided into four quarters;
-- a stage label in the format `Stage 1/4`;
-- Pause/Resume control;
-- Stop control.
+Show remaining brushing time as `m:ss`, starting at `2:00`. Rounding follows [technical design §6.2](technical-design.md#62-running-and-paused-time).
 
-The layout should prioritize the remaining time and overall progress over decorative elements.
+### 6.2 Progress Indicator
 
-## 7. Remaining Time
+The circular indicator represents elapsed brushing time continuously, with one segment per configured stage. READY is empty; PAUSED preserves the exact fraction; COMPLETED is full. Filled and remaining progress must be clearly distinguishable. Geometry and per-segment fill follow [UI design §4](design/ui-design.md#4-dynamic-progress-ring).
 
-The application shows remaining time as minutes and seconds.
+### 6.3 Stage Indicator
 
-Examples:
+Display `Stage X/N`, where `X` is the current stage and `N` is the configured count (4 in the MVP). Stage changes occur at the same 30-second boundaries as intermediate cues.
 
-- `2:00`
-- `1:47`
-- `0:30`
-- `0:01`
-
-The displayed value represents time remaining until the two-minute session is complete.
-
-## 8. Progress Indicator
-
-A circular progress indicator represents the complete two-minute brushing session.
-
-The circle is divided visually into four equal quarters.
-
-Each quarter represents one 30-second stage.
-
-Progress should be continuous rather than changing only every 30 seconds.
-
-For example, after 50 seconds:
-
-- the first quarter is fully completed;
-- the second quarter is partially completed;
-- the remaining quarters are not yet completed.
-
-The visual design should make completed progress clearly distinguishable from remaining progress while remaining readable on small watch displays.
-
-## 9. Stage Indicator
-
-The application displays the current stage using the following format:
-
-`Stage X/4`
-
-where `X` is the current stage number.
-
-Examples:
-
-- `Stage 1/4`
-- `Stage 2/4`
-- `Stage 3/4`
-- `Stage 4/4`
-
-Stage changes occur at the same 30-second boundaries as the intermediate vibration signals.
-
-## 10. Screen Behavior
+## 7. Screen Behavior
 
 The application must not control the backlight or request that the display remain awake in any state, including on Start or Resume. Display wake, brightness, dimming, and timeout are controlled exclusively by Garmin system mechanisms and the user's watch settings.
 
@@ -225,68 +145,25 @@ Display dimming or blanking alone must not pause or reset the session. While the
 
 The implementation should avoid unnecessary battery usage beyond what is required for a short two-minute active session.
 
-## 11. Controls
+## 8. Controls
 
-The application should support touch input on devices that provide a touchscreen.
+Support touch on touchscreen devices and equivalent hardware controls where practical without significant complexity. Device-specific mappings should follow Garmin conventions.
 
-Where practical and supported by the device, standard Garmin hardware buttons should also provide equivalent control paths.
+## 9. Localization
 
-The application should not depend exclusively on touchscreen interaction if hardware-button support can be added without significant complexity.
+All user-visible text must use standard Connect IQ string resources, initially English only. This includes displayed control labels, the stage format with both current stage and stage count, and the completion message. Additional languages should require resources rather than application-logic changes.
 
-Exact button mappings may vary by device and should follow Garmin platform conventions.
+## 10. Visual Design
 
-## 12. Localization
+The approved [UI design](design/ui-design.md) defines all four state layouts, palette, components, and separate launcher artwork. The interface must remain legible at a glance, avoid unnecessary text or dense controls, and follow Garmin conventions. Functional requirements take precedence over reference-image inaccuracies.
 
-The MVP user interface is English-only.
+## 11. Device Support
 
-However, the application must be implemented using the standard Connect IQ localization/resource mechanisms.
-
-User-visible strings must not be embedded directly in application logic or UI code.
-
-The initial localization resources should contain only English strings.
-
-Examples of localizable strings include:
-
-- `Start`
-- `Pause`
-- `Resume`
-- `Stop`
-- `Stage %d/4`
-
-The architecture should allow additional languages to be added later by supplying additional localization resources rather than changing application logic.
-
-## 13. Visual Design
-
-The MVP visual style should be simple and functional.
-
-### 13.1 Toothbrush Icon
-
-The application should use a simple static toothbrush illustration/icon.
-
-Requirements:
-
-- visually recognizable at watch-screen size;
-- monochrome or limited-color design;
-- no animation required;
-- no dependence on large or high-resolution assets.
-
-### 13.2 General UI
-
-The UI should:
-
-- remain legible at a glance;
-- prioritize the countdown;
-- avoid unnecessary text;
-- avoid dense controls;
-- follow Garmin/Connect IQ interaction conventions where practical.
-
-## 14. Device Support
-
-### 14.1 Primary Device
+### 11.1 Primary Device
 
 Garmin Vivoactive 6 is the primary target and should be treated as the mandatory reference device for development and testing.
 
-### 14.2 Additional Devices
+### 11.2 Additional Devices
 
 Additional Garmin Connect IQ watches may be supported when:
 
@@ -299,23 +176,11 @@ The MVP does not require support for all legacy Connect IQ devices.
 
 Compatibility decisions should favor a maintainable common implementation over a large number of device-specific UI variants.
 
-## 15. Data and Persistence
+## 12. Data and Persistence
 
-The MVP does not require persistent user data.
+The MVP uses no persistence or network access; session disposal follows §4.5.
 
-The application does not need to store:
-
-- completed sessions;
-- interrupted sessions;
-- brushing history;
-- statistics;
-- preferences.
-
-Closing the application may discard all current session state.
-
-No network access is required.
-
-## 16. Future Extensions
+## 13. Future Extensions
 
 The following features are explicitly outside the MVP but should remain reasonably possible without redesigning the application's core architecture:
 
@@ -330,45 +195,21 @@ The following features are explicitly outside the MVP but should remain reasonab
 
 The MVP should not implement these features prematurely, but code structure should avoid assumptions that would make them unnecessarily difficult to introduce.
 
-## 17. MVP Acceptance Criteria
+## 14. MVP Acceptance Criteria
 
-The MVP is considered functionally complete when all of the following are true:
+Acceptance requires the following, verified using [testing.md](testing.md):
 
-1. The application launches to a screen showing a toothbrush icon, `2:00`, and Start.
-2. Selecting Start begins a two-minute countdown.
-3. Remaining time is visibly updated during the session.
-4. A circular four-quarter progress indicator shows continuous session progress.
-5. The current stage is displayed as `Stage X/4`.
-6. A short vibration occurs at 30 seconds.
-7. A short vibration occurs at 60 seconds.
-8. A short vibration occurs at 90 seconds.
-9. The three intermediate vibrations use the same pattern.
-10. One distinct completion signal of three short vibrations separated by brief pauses occurs at 120 seconds, with all three pulses perceptible when system settings permit haptics.
-11. The application exits automatically after the final signal.
-12. Pause freezes the countdown and preserves progress.
-13. Resume continues from the paused position.
-14. Stop immediately cancels the session and returns to the initial screen.
-15. Back/exit during a session cancels the session and exits the application.
-16. The application makes no backlight, brightness, or keep-awake requests; display behavior uses only system mechanisms in every state.
-17. System dimming/blanking is allowed in every state and does not itself pause or reset an active countdown or prevent permitted cues and completion/exit.
-18. No sound is produced by the application.
-19. No user settings are required for MVP operation.
-20. User-visible strings are loaded from localization resources rather than hardcoded in application logic.
-21. Garmin Vivoactive 6 is supported and tested as the primary target device.
-22. The application does not store brushing history or other persistent session data.
+1. Fresh launch shows READY at `2:00`; only Start begins countdown (§4.1–4.2).
+2. Remaining time, continuous progress, and current stage follow §6.
+3. Pause preserves time/progress/stage, Resume continues exactly, and Stop resets immediately without confirmation (§4.3–4.4), subject to completion priority (§4.6).
+4. Identical interval cues occur at 30/60/90 seconds; one distinct three-pulse cue occurs at completion, subject to system restrictions and exit priority (§§4.5–5).
+5. Completion presentation and automatic exit follow §4.6, including when haptics fail or are suppressed.
+6. Back/system exit takes priority immediately; cleanup cancels pending work, and relaunch is fresh (§4.5).
+7. All four screens and the separate launcher icon follow [UI design](design/ui-design.md).
+8. Display control is entirely system-owned; dimming/blanking alone does not interrupt timing, permitted cues, or completion/exit (§7).
+9. Controls and resource-based English text follow §§8–9; Vivoactive 6 is tested as the primary target (§11).
+10. No sound, user settings, persistence, or background timing is introduced (§§3, 4.5, and 12).
 
-## 18. Implementation Principles
+## 15. Implementation Principles
 
-The implementation should favor simplicity, reliability, and maintainability.
-
-In particular:
-
-- timer state should have a single authoritative source;
-- vibration scheduling should derive from timer/stage configuration;
-- timing constants should be centralized;
-- UI strings should come from localization resources;
-- device-specific code should be minimized;
-- application behavior should remain correct across pause/resume transitions;
-- duplicate vibration events must be avoided after pause/resume or UI refreshes;
-- completion should occur exactly once per session;
-- timer behavior should not depend solely on screen refresh frequency.
+Follow [technical design](technical-design.md) for architecture, timing, lifecycle, and implementation constraints, and [AGENTS.md](../AGENTS.md) for development policy.

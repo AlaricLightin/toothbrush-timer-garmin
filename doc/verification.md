@@ -333,6 +333,33 @@ does not establish these untested cases for this artifact or other firmware/sett
 This follow-up changes documentation only. No new application build, unit-test,
 or simulator run was performed when recording the user-reported results.
 
+## UI design documentation (2026-11-05)
+
+Updated requirements and technical design, and added [UI design](design/ui-design.md)
+for the approved segmented-ring layouts, semantic palette, separate artwork, and
+configured COMPLETED presentation before exit. The initial documentation pass
+inspected all five reference PNGs; their approximate progress does not override
+elapsed-time calculations. README distinguishes the current implementation from
+the approved design, the plan tracks pending work, and the regression checklist
+describes required coverage.
+
+User-approved follow-ups clarified immediate Back/system-exit priority without
+new completion effects or waiting for haptics, the centrally defined delay,
+completion priority over Pause/Stop, and mandatory session disposal. Removed the
+worked progress example, grouped timer presentation requirements, updated section
+references, and consolidated repeated lifecycle rules, architectural exclusions,
+test notes, and these same-day documentation records.
+
+Documentation consistency/diff review, `git diff --check`, and local Markdown
+file/anchor and whitespace checks passed for the consolidated working-tree docs.
+Application source, tests, and runtime assets are unchanged; no builds, unit tests,
+simulator sessions, or hardware checks were run. Prior runtime evidence remains
+historical and does not establish acceptance of the new design.
+
+Implementation and production artwork remain outstanding, followed by the
+Vivoactive 6 build, simulator checks, and physical acceptance in
+[testing.md](testing.md).
+
 ## Evidence availability
 
 Logs, captures, and isolated probes were local ignored artifacts under
