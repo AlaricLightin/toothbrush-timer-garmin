@@ -23,8 +23,10 @@ firmware 18.32; see
 
 ## Subsequent change: approved UI and completion presentation (2026-11-05)
 
-**Status:** Step 1 implemented; simulator artwork preview and physical acceptance
-remain pending. Steps 2–7 are pending.
+**Status:** Steps 1–2 implemented; launcher simulator preview and physical
+acceptance remain pending. Steps 3–7 are pending. See the
+[segmented-progress verification](verification.md#segmented-progress-and-shared-geometry-2026-11-06)
+for in-app artwork and ring previews.
 
 Implement the approved [UI design](design/ui-design.md) under the current
 [requirements](product-requirements.md) and [technical design](technical-design.md).
@@ -41,8 +43,9 @@ Keep unavailable simulator and hardware checks separate from implementation stat
 
 **Dependencies:** none.
 
-**Status:** implemented; simulator visual preview and physical readability remain
-pending. See [verification](verification.md#production-artwork-2026-11-06).
+**Status:** implemented; launcher simulator preview and physical readability remain
+pending. See [artwork verification](verification.md#production-artwork-2026-11-06)
+and the later [in-app preview](verification.md#segmented-progress-and-shared-geometry-2026-11-06).
 
 - Update the separate in-app toothbrush and launcher resources in
   `resources/drawables/` to follow UI design §§2–3 and §6. Preserve editable vector
@@ -59,6 +62,10 @@ palette, sizing, and stroke readability. Final on-watch readability remains step
 ### Step 2 — Implement shared geometry, palette, and segmented progress
 
 **Dependencies:** none; coordinate artwork dimensions with step 1 before step 3.
+
+**Status:** implemented; automated tests, target builds, and simulator ring
+previews passed. Physical readability and touch acceptance remain pending. See
+[verification](verification.md#segmented-progress-and-shared-geometry-2026-11-06).
 
 - Update `source/TimerLayout.mc` and the view's drawing code so the outer ring
   encloses the content and controls with safe circular-screen clearance.

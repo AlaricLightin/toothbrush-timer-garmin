@@ -409,6 +409,37 @@ Vivoactive 6 build, simulator checks, and physical acceptance in
   `bfe1bd27d537c56143e195357aa73f091cb373cce943ad9307a9f4c70176e4fd`, release
   `18305c931345da9f12c135da3f4f899970fd40102d400682b72f19e89aaf25fd`.
 
+## Segmented progress and shared geometry (2026-11-06)
+
+- UI change step 2 implemented over `4a8a963`: shared layout, semantic palette,
+  segmented progress, and presentation tests. No domain/controller timing,
+  haptics, display-power behavior, or API minimum (3.2.0) changed.
+- Ubuntu Linux, official Connect IQ SDK 9.2.0, Vivoactive 6 package, Strict
+  checking: README debug and test builds printed
+  `BUILD SUCCESSFUL` without compiler/analyzer warnings. The full README
+  `monkeydo` command printed `PASSED (passed=54, failed=0, errors=0)`, including
+  five new tests for clearance, fractions/boundaries, alternate stage counts,
+  pause/time-rounding independence, and integer sweeps/gaps.
+- In the documented Distrobox simulator, eight fake-clock fixture captures
+  covered empty, tiny (1 ms), partial (15 s), boundary (30 s), just-after-boundary,
+  paused (45 s), full, and full six-stage progress. Visual inspection confirmed
+  clockwise fills, persistent gaps, palette, transparent artwork, and control
+  clearance without accidental circles or runtime errors. Full-progress fixtures
+  used RUNNING content; they do not verify COMPLETED rendering or completion flow.
+- Production simulator smoke checks passed for READY, Start, Pause, outside
+  taps, Resume, and Stop/reset, with expected progress colors and no runtime
+  errors. Back/exit remained unverified because the input attempt timed out.
+- `git diff --check`, changed-document local links, and verification anchors
+  passed. Physical readability, color distinction, clearance, and touch ergonomics
+  remain unverified. Launcher preview, final state layouts/controls, exit priority,
+  completion presentation, real-duration regression, and hardware acceptance remain
+  later checks. No release build or physical-device run was performed.
+- Local ignored evidence: logs, fixture, screenshots, and capture scripts under
+  `build/verification/segmented-progress/`. Debug SHA-256:
+  `688aecfe21ec50d8a6d2de067a519c7de7d3636f8506951ee49a55fd574d0214`.
+  Test SHA-256:
+  `2b543748ceaf4b46cd8fa33e990d71015aa0fd0d2cadddd92e3ebaf470df1378`.
+
 ## Evidence availability
 
 Logs, captures, and isolated probes were local ignored artifacts under

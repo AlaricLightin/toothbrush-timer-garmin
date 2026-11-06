@@ -34,19 +34,24 @@ class TimerLayout {
     function initialize(width as Number, height as Number) {
         var size = width < height ? width : height;
         centerX = width / 2;
-        ringY = (height * 0.42).toNumber();
-        ringRadius = (size * 0.34).toNumber();
-        ringWidth = (size * 0.02).toNumber();
-        iconY = (height * 0.24).toNumber();
-        timeY = (height * 0.42).toNumber();
-        stageY = (height * 0.57).toNumber();
-        var top = (height * 0.77).toNumber();
-        var controlHeight = (height * 0.11).toNumber();
-        start = new ControlBounds((width * 0.30).toNumber(), top,
-            (width * 0.40).toNumber(), controlHeight);
-        primary = new ControlBounds((width * 0.18).toNumber(), top,
-            (width * 0.30).toNumber(), controlHeight);
-        stop = new ControlBounds((width * 0.52).toNumber(), top,
-            (width * 0.30).toNumber(), controlHeight);
+        ringY = height / 2;
+        ringRadius = (size * 0.46).toNumber();
+        ringWidth = (size * 0.025).toNumber();
+        var innerRadius = ringRadius - (ringWidth + 1) / 2;
+        iconY = ringY - (innerRadius * 0.60).toNumber();
+        timeY = ringY - (innerRadius * 0.08).toNumber();
+        stageY = ringY + (innerRadius * 0.24).toNumber();
+        // The lower outer corners stay inside the ring on a circular display.
+        var top = ringY + (innerRadius * 0.43).toNumber();
+        var controlHeight = (innerRadius * 0.25).toNumber();
+        var startWidth = (innerRadius * 0.96).toNumber();
+        var controlWidth = (innerRadius * 0.60).toNumber();
+        var halfGap = (innerRadius * 0.06).toNumber();
+        start = new ControlBounds(centerX - startWidth / 2, top,
+            startWidth, controlHeight);
+        primary = new ControlBounds(centerX - halfGap - controlWidth, top,
+            controlWidth, controlHeight);
+        stop = new ControlBounds(centerX + halfGap, top,
+            controlWidth, controlHeight);
     }
 }

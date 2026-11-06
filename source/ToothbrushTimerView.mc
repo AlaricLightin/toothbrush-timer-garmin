@@ -1,12 +1,12 @@
 import Toybox.Graphics;
 import Toybox.Lang;
-import Toybox.Math;
 import Toybox.WatchUi;
 
 class ToothbrushTimerView extends WatchUi.View {
     private var _timer as BrushingTimer;
     private var _config as TimerConfig;
     private var _layout as TimerLayout?;
+    private var _ring as SegmentedRing;
     private var _toothbrush as WatchUi.Bitmap;
     private var _start as String;
     private var _pause as String;
@@ -19,6 +19,7 @@ class ToothbrushTimerView extends WatchUi.View {
         View.initialize();
         _timer = timer;
         _config = config;
+        _ring = new SegmentedRing(config.getStageCount());
         // Let the drawable handle the platform's underlying bitmap resource type.
         _toothbrush = new WatchUi.Bitmap({:rezId => Rez.Drawables.Toothbrush});
         _start = WatchUi.loadResource(Rez.Strings.Start) as String;
@@ -62,24 +63,23 @@ class ToothbrushTimerView extends WatchUi.View {
     }
 
     function onUpdate(dc as Dc) as Void {
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        dc.setColor(TimerPalette.BACKGROUND, TimerPalette.BACKGROUND);
         dc.clear();
         var layout = _layout;
         // onLayout precedes drawing; no COMPLETED screen is presented.
         if (layout == null || _timer.getState() == BrushingTimer.COMPLETED) {
             return;
         }
-        if (_timer.getState() != BrushingTimer.READY) {
-            drawProgress(dc, layout);
-        }
+        drawProgress(dc, layout);
         _toothbrush.draw(dc);
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(TimerPalette.FOREGROUND, Graphics.COLOR_TRANSPARENT);
         dc.drawText(layout.centerX, layout.timeY, Graphics.FONT_NUMBER_HOT,
             formatRemainingTime(_timer.getRemainingMs()),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         if (_timer.getState() == BrushingTimer.READY) {
             drawControl(dc, layout.start, getPrimaryLabel());
         } else {
+            dc.setColor(TimerPalette.SECONDARY_FOREGROUND, Graphics.COLOR_TRANSPARENT);
             dc.drawText(layout.centerX, layout.stageY, Graphics.FONT_SMALL,
                 getStageLabel(), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             drawControl(dc, layout.primary, getPrimaryLabel());
@@ -88,7 +88,7 @@ class ToothbrushTimerView extends WatchUi.View {
     }
 
     private function drawControl(dc as Dc, bounds as ControlBounds, label as String) as Void {
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(TimerPalette.FOREGROUND, Graphics.COLOR_TRANSPARENT);
         dc.setPenWidth(1);
         dc.drawRectangle(bounds.x, bounds.y, bounds.width, bounds.height);
         dc.drawText(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2,
@@ -97,25 +97,24 @@ class ToothbrushTimerView extends WatchUi.View {
 
     private function drawProgress(dc as Dc, layout as TimerLayout) as Void {
         dc.setPenWidth(layout.ringWidth);
-        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_BLACK);
-        dc.drawCircle(layout.centerX, layout.ringY, layout.ringRadius);
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
-        var sweep = (_timer.getProgress() * 360).toNumber();
-        // drawArc truncates angles and draws a full circle for equal endpoints.
-        if (sweep >= 360) {
-            dc.drawCircle(layout.centerX, layout.ringY, layout.ringRadius);
-        } else if (sweep > 0) {
-            dc.drawArc(layout.centerX, layout.ringY, layout.ringRadius,
-                Graphics.ARC_CLOCKWISE, 90, 90 - sweep);
-        }
-        dc.setPenWidth(2);
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+        var progress = _timer.getProgress();
+        var progressColor = _timer.getState() == BrushingTimer.PAUSED
+            ? TimerPalette.PAUSED_PROGRESS : TimerPalette.ACCENT;
         for (var stage = 0; stage < _config.getStageCount(); stage += 1) {
-            var angle = 2 * Math.PI * stage / _config.getStageCount() - Math.PI / 2;
-            var inner = layout.ringRadius - layout.ringWidth;
-            var outer = layout.ringRadius + layout.ringWidth;
-            dc.drawLine(layout.centerX + inner * Math.cos(angle), layout.ringY + inner * Math.sin(angle),
-                layout.centerX + outer * Math.cos(angle), layout.ringY + outer * Math.sin(angle));
+            var startAngle = _ring.getStartAngle(stage);
+            var endAngle = _ring.getEndAngle(stage);
+            dc.setColor(TimerPalette.SECONDARY_SURFACE, TimerPalette.BACKGROUND);
+            // Also skip tracks too small to survive SDK angle truncation.
+            if (startAngle > endAngle) {
+                dc.drawArc(layout.centerX, layout.ringY, layout.ringRadius,
+                    Graphics.ARC_CLOCKWISE, startAngle, endAngle);
+            }
+            var sweep = _ring.getFilledSweep(progress, stage);
+            if (sweep > 0) {
+                dc.setColor(progressColor, TimerPalette.BACKGROUND);
+                dc.drawArc(layout.centerX, layout.ringY, layout.ringRadius,
+                    Graphics.ARC_CLOCKWISE, startAngle, startAngle - sweep);
+            }
         }
         dc.setPenWidth(1);
     }
