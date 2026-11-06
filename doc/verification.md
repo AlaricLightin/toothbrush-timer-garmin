@@ -440,6 +440,53 @@ Vivoactive 6 build, simulator checks, and physical acceptance in
   Test SHA-256:
   `2b543748ceaf4b46cd8fa33e990d71015aa0fd0d2cadddd92e3ebaf470df1378`.
 
+## Approved state rendering and controls (2026-11-06)
+
+- UI step 3 implemented over `1abb162` in the working tree: four state layouts,
+  shared pill drawing/hit geometry, completion string, and presentation/input
+  tests. The in-app SVG rasterizes at 96 × 80; artwork and launcher are unchanged.
+- Ubuntu Linux, official Connect IQ SDK 9.2.0, installed Vivoactive 6 package,
+  Strict checking: README debug and test builds reported `BUILD SUCCESSFUL`
+  without warnings; the full suite printed `PASSED (passed=56, failed=0, errors=0)`.
+  The launcher returned 1 despite the passing summary, as documented.
+- API review: the official [drawing API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/Dc.html)
+  documents `fillRoundedRectangle` and `fillPolygon` at API 1.0.0; both rendered
+  on the Vivoactive 6 simulator with the existing API minimum of 3.2.0.
+- Simulator fixture: RUNNING/PAUSED at `1:15` / Stage 2/4 showed mint/yellow
+  progress, identical geometry, and Pause/play icons. COMPLETED showed the full
+  mint segmented ring, toothbrush, six rays, and resource-based `Nice job!`, with
+  no countdown, stage, or controls. Stale taps and primary hardware input did
+  nothing. The fake-clock fixture does not verify live completion orchestration.
+- Production launch showed READY at `2:00` with an empty ring, toothbrush,
+  and Start only. A production-component trace fixture confirmed one action per
+  center tap for Start/Pause/Resume/RUNNING Stop and per primary hardware press;
+  rounded-off control corners did nothing. PAUSED remained at `1:55` across a
+  two-second wait and an outside Stop tap, with identical display crops.
+- Simulator limits: the documented Distrobox setup supplied missing native
+  dependencies. Unreliable edge automation and partial captures limit evidence
+  to the traced center/corner inputs and complete frames above. PAUSED Stop and
+  Back were not observed in the trace; their simulator acceptance remains pending
+  despite passing unit coverage. Live completion integration awaits steps 4–5.
+- Not run for this artifact: release build, full-duration/integrated regression,
+  launcher preview, and physical readability, touch, display, haptics, and
+  lifecycle acceptance. Earlier physical passes do not verify this artifact.
+- Local ignored evidence: `build/verification/state-layouts/` contains build and
+  test logs, fixture sources, screenshots, and input/capture scripts. Debug
+  SHA-256: `6b2fd9e4734bfb50c7f8ff49f7f84c2907b78332941ede1884c9ae9cb496f3b9`.
+  Test SHA-256: `5b12a34542d975a068242a4e19a840a481180190418accfa2270586335e21c76`.
+
+### Review cleanup (2026-11-06)
+
+- Removed unused control labels/resources; lifecycle assertions now use the
+  session-state accessor consumed by rendering. Shortened the entry above.
+- Same SDK/device environment: Strict debug, release, and test builds passed
+  without warnings; the full suite printed `PASSED (passed=56, failed=0, errors=0)`.
+  `git diff --check` passed. Interactive UI and physical acceptance were not rerun;
+  the limits above remain. Release SHA-256:
+  `c221d2b8fe951fb4d158349a807ce8d808ac88df3a7134ec980322bf1f04c242`.
+  Test SHA-256:
+  `6eec7f00214d108666d2247e4f9c42e81c102881b66cec6eef6edefedf54a131`.
+
 ## Evidence availability
 
 Logs, captures, and isolated probes were local ignored artifacts under

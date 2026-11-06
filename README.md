@@ -12,9 +12,10 @@ The display may dim or turn off during brushing; normal watch wake mechanisms ap
 The approved [new UI design](doc/design/ui-design.md) and updated requirements
 specify a centrally defined completion delay, initially about three seconds,
 before automatic exit, with Back/system exit taking priority immediately.
-The production artwork is implemented; the remaining UI and completion changes are
-pending in the [implementation plan](doc/implementation-plan.md). The current
-application still uses the earlier layout and immediate completion exit.
+The production artwork, segmented ring, and four state layouts are implemented.
+COMPLETED rendering has a test-only preview; the live application still exits
+immediately at completion. Exit priority and the presentation delay remain
+pending in the [implementation plan](doc/implementation-plan.md).
 
 Focused physical Vivoactive 6 checks passed for system-only display control and
 three-pulse completion through exit on firmware 18.32. See the

@@ -15,7 +15,17 @@ class ControlBounds {
     }
 
     function contains(px as Number, py as Number) as Boolean {
-        return px >= x && px < x + width && py >= y && py < y + height;
+        if (px < x || px >= x + width || py < y || py >= y + height) {
+            return false;
+        }
+        var radius = height / 2;
+        var capX = px < x + radius ? x + radius : x + width - radius;
+        if (px >= x + radius && px <= x + width - radius) {
+            return true;
+        }
+        var dx = px - capX;
+        var dy = py - (y + radius);
+        return dx * dx + dy * dy <= radius * radius;
     }
 }
 
@@ -27,6 +37,8 @@ class TimerLayout {
     var iconY as Number;
     var timeY as Number;
     var stageY as Number;
+    var completedIconY as Number;
+    var completionY as Number;
     var start as ControlBounds;
     var primary as ControlBounds;
     var stop as ControlBounds;
@@ -41,9 +53,11 @@ class TimerLayout {
         iconY = ringY - (innerRadius * 0.60).toNumber();
         timeY = ringY - (innerRadius * 0.08).toNumber();
         stageY = ringY + (innerRadius * 0.24).toNumber();
+        completedIconY = ringY - (innerRadius * 0.32).toNumber();
+        completionY = ringY + (innerRadius * 0.28).toNumber();
         // The lower outer corners stay inside the ring on a circular display.
         var top = ringY + (innerRadius * 0.43).toNumber();
-        var controlHeight = (innerRadius * 0.25).toNumber();
+        var controlHeight = (innerRadius * 0.30).toNumber();
         var startWidth = (innerRadius * 0.96).toNumber();
         var controlWidth = (innerRadius * 0.60).toNumber();
         var halfGap = (innerRadius * 0.06).toNumber();

@@ -23,10 +23,11 @@ firmware 18.32; see
 
 ## Subsequent change: approved UI and completion presentation (2026-11-05)
 
-**Status:** Steps 1–2 implemented; launcher simulator preview and physical
-acceptance remain pending. Steps 3–7 are pending. See the
+**Status:** Steps 1–3 implemented; launcher simulator preview and physical
+acceptance remain pending. Steps 4–7 are pending. See the
 [segmented-progress verification](verification.md#segmented-progress-and-shared-geometry-2026-11-06)
-for in-app artwork and ring previews.
+for ring previews and the [state-rendering verification](verification.md#approved-state-rendering-and-controls-2026-11-06)
+for state layouts and controls. Live completion presentation awaits step 5.
 
 Implement the approved [UI design](design/ui-design.md) under the current
 [requirements](product-requirements.md) and [technical design](technical-design.md).
@@ -86,6 +87,11 @@ or clipped controls.
 ### Step 3 — Render all four approved states and align controls
 
 **Dependencies:** steps 1–2.
+
+**Status:** implemented; target builds, automated tests, and state previews passed.
+COMPLETED uses a test-only simulator fixture until step 5. Simulator input limits
+and pending physical readability/touch acceptance are recorded in
+[verification](verification.md#approved-state-rendering-and-controls-2026-11-06).
 
 - Update `source/ToothbrushTimerView.mc` for READY, RUNNING, PAUSED, and COMPLETED
   using UI design §5. Add the resource-based completion message in

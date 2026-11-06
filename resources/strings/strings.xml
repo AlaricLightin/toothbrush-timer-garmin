@@ -2,9 +2,7 @@
     <string id="AppName">Toothbrush Timer</string>
 
     <string id="Start">Start</string>
-    <string id="Pause">Pause</string>
-    <string id="Resume">Resume</string>
-    <string id="Stop">Stop</string>
+    <string id="CompletionMessage">Nice job!</string>
     <string id="StageFormat">Stage $1$/$2$</string>
     <string id="TimeFormat">$1$:$2$</string>
 </strings>

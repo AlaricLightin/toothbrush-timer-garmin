@@ -133,19 +133,46 @@ function delegateTouchEdgesAndOutside(logger as Test.Logger) as Boolean {
     var start = f.view.layout.start;
     Test.assert(!f.delegate.handleTap(start.x - 1, start.y));
     Test.assert(!f.delegate.handleTap(start.x + start.width, start.y));
-    Test.assert(f.delegate.handleTap(start.x, start.y));
+    Test.assert(!f.delegate.handleTap(start.x, start.y));
+    Test.assert(f.delegate.handleTap(start.x, start.y + start.height / 2));
     var primary = f.view.layout.primary;
     Test.assert(!f.delegate.handleTap(primary.x, primary.y - 1));
     Test.assert(!f.delegate.handleTap(primary.x, primary.y + primary.height));
     Test.assertEqual(f.timer.getState(), BrushingTimer.RUNNING);
-    Test.assert(f.delegate.handleTap(primary.x + primary.width - 1, primary.y + primary.height - 1));
+    Test.assert(!f.delegate.handleTap(primary.x + primary.width - 1, primary.y + primary.height - 1));
+    Test.assert(f.delegate.handleTap(primary.x + primary.width - 1, primary.y + primary.height / 2));
     Test.assertEqual(f.timer.getState(), BrushingTimer.PAUSED);
     Test.assert(!f.delegate.handleTap(0, 0));
     var stop = f.view.layout.stop;
-    Test.assert(f.delegate.handleTap(stop.x + stop.width - 1, stop.y + stop.height - 1));
+    Test.assert(!f.delegate.handleTap(stop.x + stop.width - 1, stop.y + stop.height - 1));
+    Test.assert(f.delegate.handleTap(stop.x + stop.width / 2, stop.y + stop.height - 1));
     Test.assertEqual(f.timer.getState(), BrushingTimer.READY);
     f.delegate.cleanup();
     Test.assert(!f.tap(start));
+    return true;
+}
+
+(:test)
+function delegateCompletedControlsAreInert(logger as Test.Logger) as Boolean {
+    var f = new DelegateFixture();
+    // Keep the controller active to exercise state routing independently of the
+    // existing live completion exit (the presentation delay is a later step).
+    f.timer.handleAction(BrushingTimer.START);
+    f.clock.advance(120000);
+    f.timer.synchronize();
+    Test.assertEqual(f.timer.getState(), BrushingTimer.COMPLETED);
+    Test.assert(!f.tap(f.view.layout.start));
+    Test.assert(!f.tap(f.view.layout.primary));
+    Test.assert(!f.tap(f.view.layout.stop));
+    Test.assert(!f.delegate.onSelect());
+    Test.assert(f.delegate.handleKey(WatchUi.KEY_ENTER));
+    f.delegate.onTimer();
+    Test.assertEqual(f.timer.getState(), BrushingTimer.COMPLETED);
+    Test.assertEqual(f.timer.getElapsedMs(), 120000);
+    Test.assertEqual(f.delegate.starts, 0);
+    Test.assertEqual(f.delegate.redraws, 0);
+    Test.assertEqual(f.effects.size(), 0);
+    f.delegate.cleanup();
     return true;
 }
 
@@ -321,16 +348,16 @@ function applicationStopAndResumeDiscardSession(logger as Test.Logger) as Boolea
     var view = initial[0] as ToothbrushTimerView;
     var delegate = initial[1] as ToothbrushTimerDelegate;
     delegate.handleKey(WatchUi.KEY_ENTER);
-    Test.assertEqual(view.getPrimaryLabel(), "Pause");
+    Test.assertEqual(view.getSessionState(), BrushingTimer.RUNNING);
     app.onStop(null);
     app.onStop(null);
     delegate.onTimer();
     delegate.handleKey(WatchUi.KEY_ENTER);
-    Test.assertEqual(view.getPrimaryLabel(), "Pause");
+    Test.assertEqual(view.getSessionState(), BrushingTimer.RUNNING);
     app.onStart({:resume => true});
     var fresh = app.getInitialView();
     var freshView = fresh[0] as ToothbrushTimerView;
-    Test.assertEqual(freshView.getPrimaryLabel(), "Start");
+    Test.assertEqual(freshView.getSessionState(), BrushingTimer.READY);
     Test.assertEqual(freshView.getStageLabel(), "Stage 1/4");
     app.onStop(null);
     return true;
@@ -355,7 +382,7 @@ class OwnershipTestDelegate extends ToothbrushTimerDelegate {
             delegate.handleKey(WatchUi.KEY_ENTER);
             delegate.handleKey(WatchUi.KEY_ENTER);
             delegate.handleKey(WatchUi.KEY_ENTER);
-            delegate.handleTap(view.layout.stop.x, view.layout.stop.y);
+            delegate.handleTap(view.layout.stop.x, view.layout.stop.y + view.layout.stop.height / 2);
             Test.assertEqual(timer.getState(), BrushingTimer.READY);
         }
         // Also release a running timer from cleanup, including a repeated cleanup.

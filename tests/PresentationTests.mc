@@ -19,20 +19,16 @@ function presentationFollowsModel(logger as Test.Logger) as Boolean {
     var clock = new FakeClock(0);
     var timer = new BrushingTimer(config, clock);
     var view = new ToothbrushTimerView(timer, config);
-    Test.assertEqual(view.getPrimaryLabel(), "Start");
     Test.assertEqual(view.getStageLabel(), "Stage 1/4");
     timer.handleAction(BrushingTimer.START);
-    Test.assertEqual(view.getPrimaryLabel(), "Pause");
     clock.advance(50000);
     timer.handleAction(BrushingTimer.PAUSE);
-    Test.assertEqual(view.getPrimaryLabel(), "Resume");
     Test.assertEqual(view.getStageLabel(), "Stage 2/4");
     Test.assertEqual(view.formatRemainingTime(timer.getRemainingMs()), "1:10");
     clock.advance(90000);
     Test.assertEqual(view.getStageLabel(), "Stage 2/4");
     Test.assertEqual(view.formatRemainingTime(timer.getRemainingMs()), "1:10");
     timer.handleAction(BrushingTimer.STOP);
-    Test.assertEqual(view.getPrimaryLabel(), "Start");
     Test.assertEqual(view.getStageLabel(), "Stage 1/4");
     Test.assertEqual(view.formatRemainingTime(timer.getRemainingMs()), "2:00");
     return true;
@@ -63,8 +59,12 @@ function controlGeometryHitTesting(logger as Test.Logger) as Boolean {
         var controls = [layout.start, layout.primary, layout.stop];
         for (var j = 0; j < controls.size(); j += 1) {
             var bounds = controls[j];
-            Test.assert(bounds.contains(bounds.x, bounds.y));
-            Test.assert(bounds.contains(bounds.x + bounds.width - 1, bounds.y + bounds.height - 1));
+            Test.assert(!bounds.contains(bounds.x, bounds.y));
+            Test.assert(!bounds.contains(bounds.x + bounds.width - 1, bounds.y + bounds.height - 1));
+            Test.assert(bounds.contains(bounds.x, bounds.y + bounds.height / 2));
+            Test.assert(bounds.contains(bounds.x + bounds.width / 2, bounds.y));
+            Test.assert(bounds.contains(bounds.x + bounds.width - 1, bounds.y + bounds.height / 2));
+            Test.assert(bounds.contains(bounds.x + bounds.width / 2, bounds.y + bounds.height - 1));
             Test.assert(bounds.contains(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2));
             Test.assert(!bounds.contains(bounds.x - 1, bounds.y));
             Test.assert(!bounds.contains(bounds.x, bounds.y - 1));
@@ -74,6 +74,23 @@ function controlGeometryHitTesting(logger as Test.Logger) as Boolean {
         Test.assert(!layout.primary.contains(layout.stop.x, layout.stop.y));
         Test.assert(!layout.stop.contains(layout.primary.x + layout.primary.width - 1, layout.primary.y));
     }
+    return true;
+}
+
+(:test)
+function pillHitTestingFollowsRoundedEnds(logger as Test.Logger) as Boolean {
+    var bounds = new ControlBounds(10, 20, 100, 40);
+    Test.assert(bounds.contains(10, 40));
+    Test.assert(bounds.contains(30, 20));
+    Test.assert(bounds.contains(90, 20));
+    Test.assert(bounds.contains(18, 24));
+    Test.assert(!bounds.contains(17, 24));
+    Test.assert(bounds.contains(102, 24));
+    Test.assert(!bounds.contains(103, 24));
+    Test.assert(!bounds.contains(10, 59));
+    Test.assert(!bounds.contains(109, 20));
+    Test.assert(!bounds.contains(110, 40));
+    Test.assert(!bounds.contains(60, 60));
     return true;
 }
 
