@@ -40,25 +40,54 @@ class TestTimerDelegate extends ToothbrushTimerDelegate {
     var redraws as Number = 0;
     var updating as Boolean = false;
     var effects as Array<String>;
+    var exitSchedules as Number = 0;
+    var scheduledDurationMs as Number = 0;
+    private var _clock as FakeClock;
+    private var _scheduledAtMs as Number = 0;
+    private var _callback as (Method() as Void)?;
 
     function initialize(timer as BrushingTimer, view as ToothbrushTimerView,
-            haptics as HapticsService, trace as Array<String>) {
-        ToothbrushTimerDelegate.initialize(timer, view, haptics);
+            haptics as HapticsService, trace as Array<String>, config as TimerConfig, clock as FakeClock) {
+        ToothbrushTimerDelegate.initialize(timer, view, haptics, config);
+        _clock = clock;
         effects = trace;
     }
 
-    protected function startUpdates() as Void {
-        Test.assert(!updating);
-        updating = true;
-        starts += 1;
+    protected function startTimer(callback as Method() as Void, durationMs as Number, repeat as Boolean) as Void {
+        Test.assert(_callback == null);
+        _callback = callback;
+        _scheduledAtMs = _clock.nowMs();
+        scheduledDurationMs = durationMs;
+        updating = repeat;
+        if (repeat) {
+            starts += 1;
+        } else {
+            exitSchedules += 1;
+            effects.add("schedule");
+        }
     }
 
-    protected function stopUpdates() as Void {
-        if (updating) {
+    protected function stopTimer() as Void {
+        if (_callback != null) {
             stops += 1;
             updating = false;
+            _callback = null;
             effects.add("stop");
         }
+    }
+
+    // Only the SDK boundary is replaced; deliver the actual captured callback.
+    function deliverDueExit() as Void {
+        var callback = _callback;
+        if (callback != null && !updating &&
+                _clock.nowMs() - _scheduledAtMs >= scheduledDurationMs) {
+            _callback = null;
+            callback.invoke();
+        }
+    }
+
+    function getScheduledCallback() as (Method() as Void)? {
+        return _callback;
     }
 
     protected function requestRedraw() as Void {
@@ -83,7 +112,7 @@ class DelegateFixture {
         clock = new FakeClock(0);
         timer = new BrushingTimer(config, clock);
         view = new DelegateTestView(timer, config);
-        delegate = new TestTimerDelegate(timer, view, new DelegateTestHaptics(effects), effects);
+        delegate = new TestTimerDelegate(timer, view, new DelegateTestHaptics(effects), effects, config, clock);
     }
 
     function tap(bounds as ControlBounds) as Boolean {
@@ -155,8 +184,7 @@ function delegateTouchEdgesAndOutside(logger as Test.Logger) as Boolean {
 (:test)
 function delegateCompletedControlsAreInert(logger as Test.Logger) as Boolean {
     var f = new DelegateFixture();
-    // Keep the controller active to exercise state routing independently of the
-    // existing live completion exit (the presentation delay is a later step).
+    // An authoritative COMPLETED state alone does not own a pending exit callback.
     f.timer.handleAction(BrushingTimer.START);
     f.clock.advance(120000);
     f.timer.synchronize();
@@ -167,6 +195,7 @@ function delegateCompletedControlsAreInert(logger as Test.Logger) as Boolean {
     Test.assert(!f.delegate.onSelect());
     Test.assert(f.delegate.handleKey(WatchUi.KEY_ENTER));
     f.delegate.onTimer();
+    f.delegate.onCompletionExit();
     Test.assertEqual(f.timer.getState(), BrushingTimer.COMPLETED);
     Test.assertEqual(f.timer.getElapsedMs(), 120000);
     Test.assertEqual(f.delegate.starts, 0);
@@ -213,14 +242,18 @@ function delegateDelayedCallbacksAndCompletion(logger as Test.Logger) as Boolean
     Test.assertEqual(f.effects.size(), 4);
     Test.assertEqual(f.effects[1], "stop");
     Test.assertEqual(f.effects[2], "completion");
-    Test.assertEqual(f.effects[3], "exit");
+    Test.assertEqual(f.effects[3], "schedule");
     var redraws = f.delegate.redraws;
     f.delegate.onTimer();
     f.delegate.handleKey(WatchUi.KEY_ENTER);
+    f.clock.advance(3000);
+    f.delegate.deliverDueExit();
+    f.delegate.onCompletionExit();
     f.delegate.onBack();
     f.delegate.cleanup();
     Test.assert(!f.tap(f.view.layout.stop));
-    Test.assertEqual(f.effects.size(), 4);
+    Test.assertEqual(f.effects.size(), 5);
+    Test.assertEqual(f.effects[4], "exit");
     Test.assertEqual(f.delegate.redraws, redraws);
     Test.assertEqual(f.delegate.stops, 1);
     return true;
@@ -243,8 +276,9 @@ function delegateCompletionWinsPauseAndStop(logger as Test.Logger) as Boolean {
         Test.assertEqual(f.effects.size(), 3);
         Test.assertEqual(f.effects[0], "stop");
         Test.assertEqual(f.effects[1], "completion");
-        Test.assertEqual(f.effects[2], "exit");
-        Test.assertEqual(f.delegate.redraws, 1);
+        Test.assertEqual(f.effects[2], "schedule");
+        Test.assertEqual(f.delegate.redraws, 2);
+        f.delegate.cleanup();
     }
     return true;
 }
@@ -360,7 +394,7 @@ function delegateHapticsFailureStillCompletes(logger as Test.Logger) as Boolean 
     var timer = new BrushingTimer(config, clock);
     var haptics = new TestHapticsService();
     var effects = [] as Array<String>;
-    var delegate = new TestTimerDelegate(timer, new ToothbrushTimerView(timer, config), haptics, effects);
+    var delegate = new TestTimerDelegate(timer, new ToothbrushTimerView(timer, config), haptics, effects, config, clock);
     haptics.failVibration = true;
     delegate.handleKey(WatchUi.KEY_ENTER);
     clock.advance(30000);
@@ -373,7 +407,145 @@ function delegateHapticsFailureStillCompletes(logger as Test.Logger) as Boolean 
     Test.assertEqual(timer.getState(), BrushingTimer.COMPLETED);
     Test.assertEqual(effects.size(), 2);
     Test.assertEqual(effects[0], "stop");
-    Test.assertEqual(effects[1], "exit");
+    Test.assertEqual(effects[1], "schedule");
+    Test.assertEqual(delegate.redraws, 3);
+    clock.advance(3000);
+    delegate.deliverDueExit();
+    Test.assertEqual(effects.size(), 3);
+    Test.assertEqual(effects[2], "exit");
+    return true;
+}
+
+(:test)
+function delegateCompletionDelayTiming(logger as Test.Logger) as Boolean {
+    // Include delayed detection, an alternate delay, and signed clock rollover.
+    for (var scenario = 0; scenario < 3; scenario += 1) {
+        var delayMs = scenario == 1 ? 4500 : 3000;
+        var config = new TimerConfig(120000, 30000, delayMs);
+        var clock = new FakeClock(scenario == 2 ? 2147362000 : 1000);
+        var timer = new BrushingTimer(config, clock);
+        var view = new DelegateTestView(timer, config);
+        var effects = [] as Array<String>;
+        var delegate = new TestTimerDelegate(timer, view,
+            new DelegateTestHaptics(effects), effects, config, clock);
+        // An unsolicited callback in READY or RUNNING cannot exit.
+        delegate.onCompletionExit();
+        delegate.handleKey(WatchUi.KEY_ENTER);
+        delegate.onCompletionExit();
+        clock.advance(119999);
+        delegate.onTimer();
+        Test.assertEqual(timer.getState(), BrushingTimer.RUNNING);
+        Test.assertEqual(delegate.exitSchedules, 0);
+        clock.advance(scenario == 1 ? 30001 : 1);
+        delegate.onTimer();
+        Test.assertEqual(timer.getState(), BrushingTimer.COMPLETED);
+        Test.assertEqual(effects[effects.size() - 1], "schedule");
+        Test.assertEqual(delegate.exitSchedules, 1);
+        Test.assertEqual(delegate.scheduledDurationMs, delayMs);
+        var count = effects.size();
+        var redraws = delegate.redraws;
+        clock.advance(delayMs - 1);
+        delegate.deliverDueExit();
+        delegate.onTimer();
+        delegate.handleKey(WatchUi.KEY_ENTER);
+        Test.assert(!delegate.handleTap(view.layout.primary.x, view.layout.primary.y));
+        Test.assert(!delegate.handleTap(view.layout.stop.x, view.layout.stop.y));
+        // Repeated redraws have no orchestration side effects.
+        Test.assertEqual(view.getSessionState(), BrushingTimer.COMPLETED);
+        Test.assertEqual(timer.getRemainingMs(), 0);
+        Test.assertEqual(timer.getProgress(), 1.0);
+        Test.assertEqual(timer.getElapsedMs(), 120000);
+        Test.assertEqual(effects.size(), count);
+        Test.assertEqual(delegate.redraws, redraws);
+        Test.assertEqual(delegate.exitSchedules, 1);
+        clock.advance(1);
+        delegate.deliverDueExit();
+        delegate.onCompletionExit();
+        delegate.deliverDueExit();
+        delegate.onBack();
+        Test.assertEqual(effects.size(), count + 1);
+        Test.assertEqual(effects[count], "exit");
+    }
+    return true;
+}
+
+(:test)
+function delegateCompletionCancellationAndStaleCallbacks(logger as Test.Logger) as Boolean {
+    for (var action = 0; action < 2; action += 1) {
+        var f = new DelegateFixture();
+        f.delegate.handleKey(WatchUi.KEY_ENTER);
+        f.clock.advance(120000);
+        f.delegate.onTimer();
+        var staleCallback = f.delegate.getScheduledCallback();
+        Test.assert(staleCallback != null);
+        f.clock.advance(1000);
+        var samples = f.clock.getSampleCount();
+        if (action == 0) {
+            f.delegate.onBack();
+        } else {
+            f.delegate.cleanup();
+        }
+        Test.assertEqual(f.clock.getSampleCount(), samples);
+        Test.assert(f.delegate.getScheduledCallback() == null);
+        Test.assertEqual(f.effects.size(), action == 0 ? 5 : 4);
+        Test.assertEqual(f.effects[3], "stop");
+        if (action == 0) {
+            Test.assertEqual(f.effects[4], "exit");
+        }
+        var fresh = new DelegateFixture();
+        var count = f.effects.size();
+        for (var state = 0; state < 2; state += 1) {
+            if (state == 1) {
+                fresh.tap(fresh.view.layout.start);
+            }
+            f.clock.advance(3000);
+            if (staleCallback != null) {
+                staleCallback.invoke();
+            }
+            f.delegate.onTimer();
+            f.delegate.onCompletionExit();
+            f.delegate.cleanup();
+            f.delegate.onBack();
+            Test.assertEqual(f.effects.size(), count);
+            Test.assertEqual(f.delegate.exitSchedules, 1);
+            Test.assertEqual(fresh.effects.size(), 0);
+            Test.assertEqual(fresh.timer.getState(), state == 0 ? BrushingTimer.READY : BrushingTimer.RUNNING);
+        }
+        fresh.delegate.cleanup();
+    }
+    return true;
+}
+
+(:test)
+function delegateSuppressedHapticsStillExits(logger as Test.Logger) as Boolean {
+    for (var restriction = 0; restriction < 3; restriction += 1) {
+        var config = TimerConfig.createDefault();
+        var clock = new FakeClock(0);
+        var timer = new BrushingTimer(config, clock);
+        var haptics = new TestHapticsService();
+        var settings = new TestDndSettings();
+        settings.vibrateOn = restriction != 0;
+        settings.doNotDisturb = restriction == 1;
+        haptics.settings = settings;
+        haptics.failAvailability = restriction == 2;
+        var effects = [] as Array<String>;
+        var delegate = new TestTimerDelegate(timer, new DelegateTestView(timer, config),
+            haptics, effects, config, clock);
+        delegate.handleKey(WatchUi.KEY_ENTER);
+        clock.advance(150000);
+        delegate.onTimer();
+        Test.assertEqual(haptics.requests, 0);
+        Test.assertEqual(haptics.checks, 1);
+        Test.assertEqual(delegate.redraws, 2);
+        Test.assertEqual(delegate.exitSchedules, 1);
+        Test.assertEqual(effects[1], "schedule");
+        clock.advance(3000);
+        delegate.deliverDueExit();
+        delegate.onCompletionExit();
+        Test.assertEqual(effects.size(), 3);
+        Test.assertEqual(effects[2], "exit");
+        Test.assertEqual(timer.getState(), BrushingTimer.COMPLETED);
+    }
     return true;
 }
 
@@ -418,18 +590,22 @@ function applicationStopAndResumeDiscardSession(logger as Test.Logger) as Boolea
 // Exercise real SDK timer ownership while muting redraws.
 (:test)
 class OwnershipTestDelegate extends ToothbrushTimerDelegate {
-    function initialize(timer as BrushingTimer, view as ToothbrushTimerView) {
-        ToothbrushTimerDelegate.initialize(timer, view, new HapticsService());
+    function initialize(timer as BrushingTimer, view as ToothbrushTimerView, config as TimerConfig) {
+        ToothbrushTimerDelegate.initialize(timer, view, new HapticsService(), config);
     }
 
     protected function requestRedraw() as Void {
     }
 
-    static function exerciseOwnership() as Array<WeakReference> {
+    protected function exitApplication() as Void {
+    }
+
+    static function exerciseOwnership(completionMode as Number) as Array<WeakReference> {
         var config = TimerConfig.createDefault();
-        var timer = new BrushingTimer(config, new FakeClock(0));
+        var clock = new FakeClock(0);
+        var timer = new BrushingTimer(config, clock);
         var view = new DelegateTestView(timer, config);
-        var delegate = new OwnershipTestDelegate(timer, view);
+        var delegate = new OwnershipTestDelegate(timer, view, config);
         for (var session = 0; session < 40; session += 1) {
             delegate.handleKey(WatchUi.KEY_ENTER);
             delegate.handleKey(WatchUi.KEY_ENTER);
@@ -439,6 +615,14 @@ class OwnershipTestDelegate extends ToothbrushTimerDelegate {
         }
         // Also release a running timer from cleanup, including a repeated cleanup.
         delegate.handleKey(WatchUi.KEY_ENTER);
+        if (completionMode > 0) {
+            clock.advance(120000);
+            delegate.onTimer();
+            Test.assertEqual(timer.getState(), BrushingTimer.COMPLETED);
+            if (completionMode == 2) {
+                delegate.onCompletionExit();
+            }
+        }
         delegate.cleanup();
         delegate.cleanup();
         return [delegate.weak(), view.weak(), timer.weak()];
@@ -447,11 +631,12 @@ class OwnershipTestDelegate extends ToothbrushTimerDelegate {
 
 (:test)
 function delegateTimerOwnershipReleased(logger as Test.Logger) as Boolean {
-    var references = OwnershipTestDelegate.exerciseOwnership();
-    // The helper's locals have gone out of scope. A retained timer callback
-    // cycle would keep the delegate and everything it owns alive here.
-    for (var index = 0; index < references.size(); index += 1) {
-        Test.assert(!references[index].stillAlive());
+    for (var mode = 0; mode < 3; mode += 1) {
+        var references = OwnershipTestDelegate.exerciseOwnership(mode);
+        // A retained repeating or one-shot callback cycle keeps these alive.
+        for (var index = 0; index < references.size(); index += 1) {
+            Test.assert(!references[index].stillAlive());
+        }
     }
     return true;
 }

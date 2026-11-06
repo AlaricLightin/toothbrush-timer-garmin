@@ -4,18 +4,17 @@ A Garmin Connect IQ watch app for Vivoactive 6. A two-minute countdown shows
 continuous progress through four stages, with short cues at 30, 60, and 90
 seconds and a three-pulse completion cue. Touch and the upper hardware button provide
 Start/Pause/Resume; touch Stop resets the session. The lower button exits, and
-completion exits automatically. Every launch starts fresh at `2:00`.
+completion shows `Nice job!` for about three seconds before automatic exit.
+Every launch starts fresh at `2:00`.
 
 Display wake, brightness, and timeout are controlled entirely by the system.
 The display may dim or turn off during brushing; normal watch wake mechanisms apply.
 
-The approved [new UI design](doc/design/ui-design.md) and updated requirements
-specify a centrally defined completion delay, initially about three seconds,
-before automatic exit, with Back/system exit taking priority immediately.
-The production artwork, segmented ring, and four state layouts are implemented.
-COMPLETED rendering has a test-only preview; the live application still exits
-immediately at completion. Back/system exit now bypasses overdue cues; the
-presentation delay remains pending in the [implementation plan](doc/implementation-plan.md).
+The approved [UI design](doc/design/ui-design.md), production artwork, segmented
+ring, four state layouts, and configured completion delay are implemented.
+Back/system exit takes priority immediately, bypasses overdue cues, and cancels
+pending automatic exit. Integrated regression and physical acceptance remain
+pending in the [implementation plan](doc/implementation-plan.md).
 
 Focused physical Vivoactive 6 checks passed for system-only display control and
 three-pulse completion through exit on firmware 18.32. See the

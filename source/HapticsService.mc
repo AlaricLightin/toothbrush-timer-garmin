@@ -24,7 +24,7 @@ class HapticsService {
         try {
             if (canVibrate()) {
                 if (completion) {
-                    // Submit the whole pattern before immediate application exit.
+                    // Submit the whole pattern without separate pulse callbacks.
                     sendVibration([
                         new Attention.VibeProfile(75, 170),
                         new Attention.VibeProfile(0, 120),

@@ -514,6 +514,54 @@ Vivoactive 6 build, simulator checks, and physical acceptance in
   Release SHA-256:
   `e47f3589b5da307e742ac30f1da248d7327527452632d0383b65e7eb497bfe7e`.
 
+## Configured completion presentation delay (2026-11-06)
+
+- UI step 5 over `30a6416`, working tree: added independent completion display
+  configuration (default `3000 ms`), retained terminal model state, and reused
+  the stopped repeating SDK timer as a one-shot. Completion requests the existing
+  three-pulse cue and COMPLETED redraw once. Back/cleanup cancels either mode,
+  clears pending ownership, and releases callback references.
+- Ubuntu Linux, official SDK/compiler 9.2.0, installed Vivoactive 6 package,
+  Strict checking, API minimum 3.2.0: README debug/test/release builds each printed
+  `BUILD SUCCESSFUL` without compiler/analyzer warnings. Full suite printed
+  `PASSED (passed=60, failed=0, errors=0)`; launcher returned 1 as documented.
+  Coverage includes on-time/late completion, alternate display delay, signed
+  rollover during presentation, completion priority, inert input, haptic failure
+  and suppression, exactly-once scheduling/exit, cancellation/stale callbacks,
+  and release of repeating/one-shot callback ownership.
+- The official [Timer API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Timer/Timer.html)
+  confirms one-shot mode and restarting a stopped timer at API 1.0.0; no minimum
+  API change was required.
+- Distrobox simulator, Vivoactive 6 API 6.0.3: an isolated fixture advanced the
+  injected clock near completion while keeping production model, view, haptics,
+  and SDK timer scheduling. COMPLETED rendered the full mint segmented ring,
+  toothbrush, rays, and `Nice job!` without controls/countdown/stage. One cue
+  attempt and one one-shot arm were logged; the exit callback ran after
+  `3002 ms` and exited once (launcher status 0). Two stale control taps, primary
+  hardware input, and additional redraws did not repeat the cue or rearm exit.
+  In a separate run, the lower hardware button exited during presentation:
+  Back, timer stop, exit, and app cleanup logged the same millisecond, with no
+  completion-exit callback (launcher status 0); the simulator returned to idle.
+  Fixture loading stalled after the unit run and again between probe runs;
+  restarting the simulator restored operation, with no application-code workaround.
+- Review found no actionable defects or requirements conflicts; zero correction
+  iterations. `git diff --check` and changed-document local file links passed.
+  No reusable checklist changes were needed: existing completion-delay and
+  cancellation cases cover this increment.
+- Pending: integrated real-duration regression (step 6), launcher preview, and
+  physical Vivoactive 6 acceptance (step 7), including three perceptible pulses,
+  presentation readability/duration, immediate Back/system exit, real lifecycle,
+  touch/hardware ergonomics, display-off completion/exit, and haptic restrictions.
+  No physical device was exercised; prior physical passes apply to older artifacts.
+- Local ignored evidence: `build/verification/completion-delay/` contains build
+  and test logs, isolated fixture sources, simulator traces, and captures.
+  Debug SHA-256:
+  `1c7afd91b5ec70b4ef0dc3853647623b4c09ffe0f6934832ade3a2bbbbc09166`.
+  Test SHA-256:
+  `d12b15d7404dbd9e7f1114b757215a33cc8d6a78113180423f214cf7a30d148f`.
+  Release SHA-256:
+  `af116369bdf09147de8f46fc29478031682c284458a728aeafb228cac11081dd`.
+
 ## Evidence availability
 
 Logs, captures, and isolated probes were local ignored artifacts under

@@ -36,7 +36,7 @@ function presentationFollowsModel(logger as Test.Logger) as Boolean {
 
 (:test)
 function presentationUsesConfiguredStages(logger as Test.Logger) as Boolean {
-    var config = new TimerConfig(150000, 25000);
+    var config = new TimerConfig(150000, 25000, 3000);
     var clock = new FakeClock(0);
     var timer = new BrushingTimer(config, clock);
     var view = new ToothbrushTimerView(timer, config);
@@ -148,7 +148,7 @@ function segmentFractionsAndBoundaries(logger as Test.Logger) as Boolean {
 
 (:test)
 function segmentFractionsUseConfiguredStages(logger as Test.Logger) as Boolean {
-    var config = new TimerConfig(150000, 25000);
+    var config = new TimerConfig(150000, 25000, 3000);
     var clock = new FakeClock(0);
     var timer = new BrushingTimer(config, clock);
     var ring = new SegmentedRing(config.getStageCount());

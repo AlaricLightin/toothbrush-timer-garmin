@@ -306,7 +306,7 @@ function timerRolloverDuringPause(logger as Test.Logger) as Boolean {
 (:test)
 function timerAlternateConfiguration(logger as Test.Logger) as Boolean {
     var clock = new FakeClock(76);
-    var timer = new BrushingTimer(new TimerConfig(3500, 500), clock);
+    var timer = new BrushingTimer(new TimerConfig(3500, 500, 3000), clock);
     Test.assertEqual(timer.handleAction(BrushingTimer.START), BrushingTimer.NONE);
     for (var stage = 2; stage <= 7; stage += 1) {
         clock.advance(500);
@@ -324,7 +324,7 @@ function timerAlternateConfiguration(logger as Test.Logger) as Boolean {
 (:test)
 function timerSingleStageConfiguration(logger as Test.Logger) as Boolean {
     var clock = new FakeClock(90);
-    var timer = new BrushingTimer(new TimerConfig(1, 1), clock);
+    var timer = new BrushingTimer(new TimerConfig(1, 1, 3000), clock);
     Test.assertEqual(timer.handleAction(BrushingTimer.START), BrushingTimer.NONE);
     BrushingTimerAssertions.assertValues(timer, BrushingTimer.RUNNING, 0, 1, 0.0, 1);
     clock.advance(1);

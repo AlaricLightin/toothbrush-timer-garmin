@@ -23,12 +23,13 @@ firmware 18.32; see
 
 ## Subsequent change: approved UI and completion presentation (2026-11-05)
 
-**Status:** Steps 1–4 implemented; launcher simulator preview and physical
-acceptance remain pending. Steps 5–7 are pending. See the
+**Status:** Steps 1–5 implemented; launcher simulator preview and physical
+acceptance remain pending. Steps 6–7 are pending. See the
 [segmented-progress verification](verification.md#segmented-progress-and-shared-geometry-2026-11-06)
 for ring previews and the [state-rendering verification](verification.md#approved-state-rendering-and-controls-2026-11-06)
 for state layouts and controls, and [exit-priority verification](verification.md#immediate-back-and-system-exit-priority-2026-11-06)
-for step 4. Live completion presentation awaits step 5.
+for step 4, and [completion-delay verification](verification.md#configured-completion-presentation-delay-2026-11-06)
+for step 5.
 
 Implement the approved [UI design](design/ui-design.md) under the current
 [requirements](product-requirements.md) and [technical design](technical-design.md).
@@ -137,6 +138,11 @@ the simulator; extend cancellation coverage for the delay in step 5.
 ### Step 5 — Integrate the configured completion presentation delay
 
 **Dependencies:** steps 3–4.
+
+**Status:** implemented; Strict debug/test/release builds and all 60 unit tests
+passed. Simulator completion, automatic exit, and Back cancellation passed;
+physical acceptance remains pending. See
+[verification and remaining acceptance](verification.md#configured-completion-presentation-delay-2026-11-06).
 
 - Add the separate `completionDisplayDurationMs` configuration, initially
   `3000 ms`, in `source/TimerConfig.mc`; update construction sites and configuration

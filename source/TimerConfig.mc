@@ -3,20 +3,25 @@ import Toybox.Lang;
 class TimerConfig {
     static const DEFAULT_TOTAL_DURATION_MS = 120000;
     static const DEFAULT_INTERVAL_DURATION_MS = 30000;
+    static const DEFAULT_COMPLETION_DISPLAY_DURATION_MS = 3000;
 
     private var _totalDurationMs as Number;
     private var _intervalDurationMs as Number;
     private var _stageCount as Number;
+    private var _completionDisplayDurationMs as Number;
 
     // Callers supply positive durations with total evenly divisible by interval.
-    function initialize(totalDurationMs as Number, intervalDurationMs as Number) {
+    function initialize(totalDurationMs as Number, intervalDurationMs as Number,
+            completionDisplayDurationMs as Number) {
         _totalDurationMs = totalDurationMs;
         _intervalDurationMs = intervalDurationMs;
         _stageCount = totalDurationMs / intervalDurationMs;
+        _completionDisplayDurationMs = completionDisplayDurationMs;
     }
 
     static function createDefault() as TimerConfig {
-        return new TimerConfig(DEFAULT_TOTAL_DURATION_MS, DEFAULT_INTERVAL_DURATION_MS);
+        return new TimerConfig(DEFAULT_TOTAL_DURATION_MS, DEFAULT_INTERVAL_DURATION_MS,
+            DEFAULT_COMPLETION_DISPLAY_DURATION_MS);
     }
 
     function getTotalDurationMs() as Number {
@@ -29,5 +34,9 @@ class TimerConfig {
 
     function getStageCount() as Number {
         return _stageCount;
+    }
+
+    function getCompletionDisplayDurationMs() as Number {
+        return _completionDisplayDurationMs;
     }
 }

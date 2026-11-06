@@ -7,14 +7,18 @@ class ToothbrushTimerDelegate extends WatchUi.BehaviorDelegate {
     protected var _timer as BrushingTimer;
     protected var _view as ToothbrushTimerView;
     private var _haptics as HapticsService;
+    private var _config as TimerConfig;
     private var _updateTimer as Timer.Timer?;
     private var _active as Boolean = true;
+    private var _completionExitPending as Boolean = false;
 
-    function initialize(timer as BrushingTimer, view as ToothbrushTimerView, haptics as HapticsService) {
+    function initialize(timer as BrushingTimer, view as ToothbrushTimerView,
+            haptics as HapticsService, config as TimerConfig) {
         BehaviorDelegate.initialize();
         _timer = timer;
         _view = view;
         _haptics = haptics;
+        _config = config;
     }
 
     // Let raw taps retain their coordinates and Enter use the same primary action.
@@ -82,9 +86,9 @@ class ToothbrushTimerDelegate extends WatchUi.BehaviorDelegate {
             return;
         }
         if (_timer.getState() == BrushingTimer.RUNNING) {
-            startUpdates();
+            startTimer(method(:onTimer), 250, true);
         } else {
-            stopUpdates();
+            releaseTimer();
         }
         requestRedraw();
     }
@@ -98,18 +102,29 @@ class ToothbrushTimerDelegate extends WatchUi.BehaviorDelegate {
         }
     }
 
-    // True means terminal handling won; callers must not process input or redraw.
+    // True means completion owns the redraw and scheduling; input must not proceed.
     private function consumeCue(cue as BrushingTimer.Cue) as Boolean {
         if (cue == BrushingTimer.COMPLETION) {
-            cleanup();
+            stopTimer();
             _haptics.completionCue();
-            exitApplication();
+            requestRedraw();
+            _completionExitPending = true;
+            startTimer(method(:onCompletionExit), _config.getCompletionDisplayDurationMs(), false);
             return true;
         }
         if (cue == BrushingTimer.INTERVAL) {
             _haptics.intervalCue();
         }
         return false;
+    }
+
+    function onCompletionExit() as Void {
+        if (!_active || !_completionExitPending || _timer.getState() != BrushingTimer.COMPLETED) {
+            return;
+        }
+        _completionExitPending = false;
+        cleanup();
+        exitApplication();
     }
 
     function onBack() as Boolean {
@@ -128,22 +143,31 @@ class ToothbrushTimerDelegate extends WatchUi.BehaviorDelegate {
             return;
         }
         _active = false;
-        stopUpdates();
+        _completionExitPending = false;
+        releaseTimer();
     }
 
-    protected function startUpdates() as Void {
-        var updateTimer = new Timer.Timer();
-        _updateTimer = updateTimer;
-        updateTimer.start(method(:onTimer), 250, true);
+    protected function startTimer(callback as Method() as Void, durationMs as Number, repeat as Boolean) as Void {
+        var updateTimer = _updateTimer;
+        if (updateTimer == null) {
+            updateTimer = new Timer.Timer();
+            _updateTimer = updateTimer;
+        }
+        updateTimer.start(callback, durationMs, repeat);
     }
 
-    protected function stopUpdates() as Void {
+    protected function stopTimer() as Void {
         var updateTimer = _updateTimer;
         if (updateTimer != null) {
             updateTimer.stop();
-            // Release our timer reference even if stop retains its callback.
-            _updateTimer = null;
         }
+    }
+
+    private function releaseTimer() as Void {
+        stopTimer();
+        // Break callback ownership when paused, reset, or discarded. Completion
+        // keeps this same stopped timer briefly to rearm it in one-shot mode.
+        _updateTimer = null;
     }
 
     protected function requestRedraw() as Void {
