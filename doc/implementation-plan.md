@@ -23,7 +23,8 @@ firmware 18.32; see
 
 ## Subsequent change: approved UI and completion presentation (2026-11-05)
 
-**Status:** pending implementation; all steps below are pending.
+**Status:** Step 1 implemented; simulator artwork preview and physical acceptance
+remain pending. Steps 2–7 are pending.
 
 Implement the approved [UI design](design/ui-design.md) under the current
 [requirements](product-requirements.md) and [technical design](technical-design.md).
@@ -39,6 +40,9 @@ Keep unavailable simulator and hardware checks separate from implementation stat
 ### Step 1 — Prepare production artwork
 
 **Dependencies:** none.
+
+**Status:** implemented; simulator visual preview and physical readability remain
+pending. See [verification](verification.md#production-artwork-2026-11-06).
 
 - Update the separate in-app toothbrush and launcher resources in
   `resources/drawables/` to follow UI design §§2–3 and §6. Preserve editable vector

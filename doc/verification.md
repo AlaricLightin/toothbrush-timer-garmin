@@ -360,6 +360,55 @@ Implementation and production artwork remain outstanding, followed by the
 Vivoactive 6 build, simulator checks, and physical acceptance in
 [testing.md](testing.md).
 
+## Production artwork (2026-11-06)
+
+- Step 1 implementation is complete. Separate editable SVG resources provide a
+  transparent in-app toothbrush and a black launcher icon with the independent
+  four-segment motif, shared palette, and outlined handle overlap. The existing
+  drawable declarations, manifest launcher reference, and bitmap cached in the
+  view constructor remain in use; no new API or minimum-level change was needed.
+- Ubuntu Linux, Connect IQ SDK 9.2.0, Vivoactive 6 package, Strict checking:
+  debug, test, and release builds each reported `BUILD SUCCESSFUL` without
+  compiler or analyzer warnings. Concurrent debug/test compilation produced a
+  JVM performance-data lock warning, not a compiler/analyzer warning.
+- The full Monkey C suite printed `PASSED (passed=49, failed=0, errors=0)`.
+  As documented, the launcher returned 1 despite the passing summary.
+- The app was launched in the Distrobox simulator without a reported runtime
+  error during observation. Static SVG previews were inspected for palette,
+  transparent surroundings, separate ring, and recognizability. Simulator
+  screenshot capture failed, so neither the in-app rendering nor launcher icon
+  was visually verified in the simulator; resource loading and rasterization
+  there remain unconfirmed. Native simulator libraries were missing; the
+  documented container provided them.
+- Review found no actionable defects; no correction iterations were required.
+  Simulator visual preview and Vivoactive 6 launcher and in-app readability,
+  transparency, and stroke checks remain outstanding. Later UI steps and full
+  physical acceptance remain pending; earlier acceptance applies only to older
+  artifacts.
+- Artifact SHA-256: debug
+  `e21d6ea965b9198d48fb488c4e7cc14595f5057e1fe5f51a188ff9f86d56ff57`, release
+  `4be77dacb47aa4f81709638326d3462694ce83e55329e1a514a9690aa05592c4`, test
+  `58d03bcdb5f3a9353384eaf6dcefd84e34fa28a0d7920937dd78ffb8178865e4`.
+
+## Launcher progress correction (2026-11-06)
+
+- Corrected UI design §6 and `resources/drawables/launcher_icon.svg` so mint
+  progress ends beneath the lower-left toothbrush handle, matching the reference.
+  The lower-left segment is partially filled; its remainder is dark gray.
+  Changes were applied over the existing artwork working tree at `64d74a9`.
+- Static SVG previews at 54 × 54 and enlarged size were visually inspected:
+  the transition is hidden beneath the outlined handle, and the ring retains
+  its four segments. `git diff --check` passed.
+- Ubuntu Linux, Connect IQ SDK 9.2.0, Vivoactive 6 package, Strict checking:
+  README debug and release builds both reported `BUILD SUCCESSFUL` without
+  compiler or analyzer warnings.
+- Unit tests were not rerun for this artwork/documentation-only correction.
+  Simulator launcher rendering and physical Vivoactive 6 launcher readability
+  remain unverified; static previews do not establish device acceptance.
+- Artifact SHA-256: debug
+  `bfe1bd27d537c56143e195357aa73f091cb373cce943ad9307a9f4c70176e4fd`, release
+  `18305c931345da9f12c135da3f4f899970fd40102d400682b72f19e89aaf25fd`.
+
 ## Evidence availability
 
 Logs, captures, and isolated probes were local ignored artifacts under

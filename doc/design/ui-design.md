@@ -22,9 +22,9 @@ Use flat colors and reuse these semantic values throughout the interface and sta
 | --- | --- | --- |
 | Background | `#000000` | Screen and icon background; primary-button text/icons; thin separation outline in the launcher icon |
 | Primary foreground | `#FFFFFF` | Countdown, completion message, toothbrush body/bristles and toothpaste interior, Stop icon |
-| Accent | `#00E6B0` | RUNNING/COMPLETED progress, Start/Pause/Resume buttons, toothpaste outline in every state, celebratory rays, filled launcher-icon segments |
+| Accent | `#00E6B0` | RUNNING/COMPLETED progress, Start/Pause/Resume buttons, toothpaste outline in every state, celebratory rays, filled launcher-icon arcs |
 | Paused progress | `#FFD740` | Filled progress only while PAUSED; warm yellow |
-| Secondary surface | `#3A4147` | Unfilled ring segments, Stop button, unfilled launcher-icon segment |
+| Secondary surface | `#3A4147` | Unfilled ring segments, Stop button, unfilled launcher-icon arcs |
 | Secondary foreground | `#A6A6A6` | Stage label and other secondary text if required |
 
 Avoid gradients, shadows, glows, and extra decorative colors. Use the same accent in exported toothpaste artwork and programmatically drawn elements.
@@ -88,6 +88,6 @@ Completion timing and exit priority follow [requirements §4](../product-require
 
 ## 6. Launcher Icon
 
-Follow [app-icon.png](reference/app-icon.png): a dark background, white toothbrush and bristles, mint-green toothpaste outline, and a four-segment ring. Three segments are mint green; the upper-left segment is dark gray. The toothbrush handle crosses the ring at the lower-left, with a thin black outline separating it from the ring at the intersection.
+Follow [app-icon.png](reference/app-icon.png): a dark background, white toothbrush and bristles, mint-green toothpaste outline, and a four-segment ring. Mint-green progress runs clockwise from the top to the toothbrush handle at the lower-left: the two right-hand segments are fully mint green, and the lower-left segment is mint green only from the bottom to the handle. The rest of the lower-left segment and the entire upper-left segment are dark gray. The toothbrush handle crosses the ring at the color transition, with a thin black outline separating it from the ring at the intersection.
 
 This static four-segment motif is independent of runtime stage geometry. The launcher and in-app toothbrush share a visual style but use separate resources. Rendering and asset preparation follow [technical design §8](../technical-design.md#8-ui) and [§13](../technical-design.md#13-resources-and-localization).
