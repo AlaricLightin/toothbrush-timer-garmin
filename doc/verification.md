@@ -487,6 +487,33 @@ Vivoactive 6 build, simulator checks, and physical acceptance in
   Test SHA-256:
   `6eec7f00214d108666d2247e4f9c42e81c102881b66cec6eef6edefedf54a131`.
 
+## Immediate Back and system exit priority (2026-11-06)
+
+- UI step 4 over `af88585`, working tree: Back bypasses synchronization and
+  overdue cues; existing lifecycle cleanup preserves fresh launch/resume.
+- Ubuntu Linux, SDK/compiler 9.2.0, Vivoactive 6 package, API minimum 3.2.0:
+  Strict debug/test/release builds passed without warnings. Full suite:
+  `PASSED (passed=57, failed=0, errors=0)`; launcher status 1, as documented.
+  Coverage includes exit boundaries, stale callbacks, repeatable cleanup,
+  lifecycle/ownership, and preserved Pause/Stop completion priority.
+- Distrobox simulator, Vivoactive 6 API 6.0.3: touch Start ran the countdown;
+  lower hardware button exited RUNNING and READY to idle (launcher status 0).
+  Relaunch in the same simulator process showed fresh READY at `2:00`.
+  Connection recovery required a restart before these checks; input was verified
+  through mouse clicks, while keyboard automation remained inconclusive.
+- Review found no actionable defects or requirement conflicts;
+  `git diff --check` passed.
+- Pending: physical Back/system exit, lifecycle, UI/haptic/display acceptance;
+  completion presentation/cancellation (step 5); integrated regression (step 6).
+- Local ignored evidence: `build/verification/exit-priority/` and
+  `build/verification/exit-priority-followup/` contain logs and captures.
+  Debug SHA-256:
+  `6cbd869815fca534846098a066a0d7077526ea3f840e69991f6d30a1ec06caaa`.
+  Test SHA-256:
+  `8a5c674a565ec9ec66fcc1a1cc68b145c3a74e0b869ee870eb788ca8e1bf4aa8`.
+  Release SHA-256:
+  `e47f3589b5da307e742ac30f1da248d7327527452632d0383b65e7eb497bfe7e`.
+
 ## Evidence availability
 
 Logs, captures, and isolated probes were local ignored artifacts under

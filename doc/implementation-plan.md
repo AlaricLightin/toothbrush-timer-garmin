@@ -23,11 +23,12 @@ firmware 18.32; see
 
 ## Subsequent change: approved UI and completion presentation (2026-11-05)
 
-**Status:** Steps 1–3 implemented; launcher simulator preview and physical
-acceptance remain pending. Steps 4–7 are pending. See the
+**Status:** Steps 1–4 implemented; launcher simulator preview and physical
+acceptance remain pending. Steps 5–7 are pending. See the
 [segmented-progress verification](verification.md#segmented-progress-and-shared-geometry-2026-11-06)
 for ring previews and the [state-rendering verification](verification.md#approved-state-rendering-and-controls-2026-11-06)
-for state layouts and controls. Live completion presentation awaits step 5.
+for state layouts and controls, and [exit-priority verification](verification.md#immediate-back-and-system-exit-priority-2026-11-06)
+for step 4. Live completion presentation awaits step 5.
 
 Implement the approved [UI design](design/ui-design.md) under the current
 [requirements](product-requirements.md) and [technical design](technical-design.md).
@@ -114,6 +115,11 @@ states, including color changes, text clearance, and inside/outside control taps
 ### Step 4 — Give Back and system exit immediate priority
 
 **Dependencies:** none; complete before step 5.
+
+**Status:** implemented; Strict debug/test/release target builds and all 57 unit
+tests passed. Simulator READY/RUNNING Back and fresh relaunch passed.
+See [verification and remaining acceptance](verification.md#immediate-back-and-system-exit-priority-2026-11-06).
+Completion-delay cancellation coverage remains in step 5.
 
 - Change delegate Back handling to clean up and exit without synchronizing the
   model or submitting a new cue, including when completion is already due.

@@ -116,9 +116,7 @@ class ToothbrushTimerDelegate extends WatchUi.BehaviorDelegate {
         if (!_active) {
             return true;
         }
-        if (consumeCue(_timer.synchronize())) {
-            return true;
-        }
+        // Exit bypasses synchronization so overdue cues cannot delay closure.
         cleanup();
         exitApplication();
         return true;

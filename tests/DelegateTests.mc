@@ -227,8 +227,8 @@ function delegateDelayedCallbacksAndCompletion(logger as Test.Logger) as Boolean
 }
 
 (:test)
-function delegateCompletionWinsAllInput(logger as Test.Logger) as Boolean {
-    for (var action = 0; action < 4; action += 1) {
+function delegateCompletionWinsPauseAndStop(logger as Test.Logger) as Boolean {
+    for (var action = 0; action < 3; action += 1) {
         var f = new DelegateFixture();
         f.delegate.handleKey(WatchUi.KEY_ENTER);
         f.clock.advance(120000);
@@ -236,10 +236,8 @@ function delegateCompletionWinsAllInput(logger as Test.Logger) as Boolean {
             f.tap(f.view.layout.primary);
         } else if (action == 1) {
             f.tap(f.view.layout.stop);
-        } else if (action == 2) {
-            f.delegate.handleKey(WatchUi.KEY_ENTER);
         } else {
-            f.delegate.onBack();
+            f.delegate.handleKey(WatchUi.KEY_ENTER);
         }
         Test.assertEqual(f.timer.getState(), BrushingTimer.COMPLETED);
         Test.assertEqual(f.effects.size(), 3);
@@ -301,18 +299,57 @@ function delegateBackAndCleanup(logger as Test.Logger) as Boolean {
 }
 
 (:test)
+function delegateBackBypassesOverdueCues(logger as Test.Logger) as Boolean {
+    var exitTimes = [29999, 30000, 60200, 119999, 120000, 150000];
+    for (var index = 0; index < exitTimes.size(); index += 1) {
+        var f = new DelegateFixture();
+        f.delegate.handleKey(WatchUi.KEY_ENTER);
+        f.clock.advance(exitTimes[index]);
+        var samples = f.clock.getSampleCount();
+        Test.assert(f.delegate.onBack());
+        Test.assertEqual(f.clock.getSampleCount(), samples);
+        // A discarded model need not transition: exit must not synchronize it.
+        Test.assertEqual(f.timer.getState(), BrushingTimer.RUNNING);
+        Test.assertEqual(f.timer.getElapsedMs(), 0);
+        Test.assertEqual(f.effects.size(), 2);
+        Test.assertEqual(f.effects[0], "stop");
+        Test.assertEqual(f.effects[1], "exit");
+        Test.assert(!f.delegate.updating);
+        f.delegate.cleanup();
+        f.delegate.cleanup();
+        f.delegate.onBack();
+        f.delegate.onTimer();
+        f.delegate.handleKey(WatchUi.KEY_ENTER);
+        Test.assert(!f.tap(f.view.layout.stop));
+        Test.assertEqual(f.effects.size(), 2);
+        Test.assertEqual(f.delegate.stops, 1);
+        Test.assertEqual(f.delegate.redraws, 1);
+        Test.assertEqual(f.clock.getSampleCount(), samples);
+    }
+    return true;
+}
+
+(:test)
 function delegateExternalCleanupIgnoresOverdueCues(logger as Test.Logger) as Boolean {
-    var f = new DelegateFixture();
-    f.delegate.handleKey(WatchUi.KEY_ENTER);
-    f.clock.advance(150000);
-    f.delegate.cleanup();
-    f.delegate.cleanup();
-    f.delegate.onTimer();
-    f.delegate.handleKey(WatchUi.KEY_ENTER);
-    Test.assertEqual(f.effects.size(), 1);
-    Test.assertEqual(f.effects[0], "stop");
-    Test.assertEqual(f.delegate.stops, 1);
-    Test.assertEqual(f.delegate.redraws, 1);
+    var exitTimes = [29999, 30000, 60200, 119999, 120000, 150000];
+    for (var index = 0; index < exitTimes.size(); index += 1) {
+        var f = new DelegateFixture();
+        f.delegate.handleKey(WatchUi.KEY_ENTER);
+        f.clock.advance(exitTimes[index]);
+        var samples = f.clock.getSampleCount();
+        f.delegate.cleanup();
+        f.delegate.cleanup();
+        f.delegate.onTimer();
+        f.delegate.onBack();
+        f.delegate.handleKey(WatchUi.KEY_ENTER);
+        Test.assertEqual(f.effects.size(), 1);
+        Test.assertEqual(f.effects[0], "stop");
+        Test.assertEqual(f.delegate.stops, 1);
+        Test.assertEqual(f.delegate.redraws, 1);
+        Test.assertEqual(f.clock.getSampleCount(), samples);
+        Test.assertEqual(f.timer.getState(), BrushingTimer.RUNNING);
+        Test.assertEqual(f.timer.getElapsedMs(), 0);
+    }
     return true;
 }
 
@@ -355,10 +392,25 @@ function applicationStopAndResumeDiscardSession(logger as Test.Logger) as Boolea
     delegate.handleKey(WatchUi.KEY_ENTER);
     Test.assertEqual(view.getSessionState(), BrushingTimer.RUNNING);
     app.onStart({:resume => true});
-    var fresh = app.getInitialView();
+    var fresh = app.getInitialView() as [WatchUi.Views, WatchUi.InputDelegates];
     var freshView = fresh[0] as ToothbrushTimerView;
+    var freshDelegate = fresh[1] as ToothbrushTimerDelegate;
+    delegate.onTimer();
+    delegate.onBack();
+    delegate.cleanup();
     Test.assertEqual(freshView.getSessionState(), BrushingTimer.READY);
     Test.assertEqual(freshView.getStageLabel(), "Stage 1/4");
+    freshDelegate.handleKey(WatchUi.KEY_ENTER);
+    delegate.onTimer();
+    delegate.onBack();
+    Test.assertEqual(freshView.getSessionState(), BrushingTimer.RUNNING);
+    // A reported resume also discards a controller before onStop is delivered.
+    app.onStart({:resume => true});
+    freshDelegate.onTimer();
+    freshDelegate.handleKey(WatchUi.KEY_ENTER);
+    Test.assertEqual(freshView.getSessionState(), BrushingTimer.RUNNING);
+    var resumed = app.getInitialView();
+    Test.assertEqual((resumed[0] as ToothbrushTimerView).getSessionState(), BrushingTimer.READY);
     app.onStop(null);
     return true;
 }
