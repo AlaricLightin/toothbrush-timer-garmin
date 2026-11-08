@@ -23,9 +23,9 @@ firmware 18.32; see
 
 ## Subsequent change: approved UI and completion presentation (2026-11-05)
 
-**Status:** Steps 1–5 implemented; launcher simulator preview and physical
-acceptance remain pending. Steps 6–7 are pending. See the
-[segmented-progress verification](verification.md#segmented-progress-and-shared-geometry-2026-11-06)
+**Status:** Steps 1–6 implemented; physical acceptance remains pending in step 7.
+See the [integrated regression results and limits](verification.md#integrated-ui-and-completion-regression-2026-11-08),
+the [segmented-progress verification](verification.md#segmented-progress-and-shared-geometry-2026-11-06)
 for ring previews and the [state-rendering verification](verification.md#approved-state-rendering-and-controls-2026-11-06)
 for state layouts and controls, and [exit-priority verification](verification.md#immediate-back-and-system-exit-priority-2026-11-06)
 for step 4, and [completion-delay verification](verification.md#configured-completion-presentation-delay-2026-11-06)
@@ -46,9 +46,10 @@ Keep unavailable simulator and hardware checks separate from implementation stat
 
 **Dependencies:** none.
 
-**Status:** implemented; launcher simulator preview and physical readability remain
-pending. See [artwork verification](verification.md#production-artwork-2026-11-06)
-and the later [in-app preview](verification.md#segmented-progress-and-shared-geometry-2026-11-06).
+**Status:** implemented; both resources previewed in the simulator, with physical
+readability pending. See [artwork verification](verification.md#production-artwork-2026-11-06),
+the [in-app preview](verification.md#segmented-progress-and-shared-geometry-2026-11-06),
+and the [launcher resource preview](verification.md#integrated-ui-and-completion-regression-2026-11-08).
 
 - Update the separate in-app toothbrush and launcher resources in
   `resources/drawables/` to follow UI design §§2–3 and §6. Preserve editable vector
@@ -91,8 +92,9 @@ or clipped controls.
 **Dependencies:** steps 1–2.
 
 **Status:** implemented; target builds, automated tests, and state previews passed.
-COMPLETED uses a test-only simulator fixture until step 5. Simulator input limits
-and pending physical readability/touch acceptance are recorded in
+The initial COMPLETED preview used a test-only fixture; steps 5–6 verified the
+live completion flow. Initial simulator input limits and pending physical
+readability/touch acceptance are recorded in
 [verification](verification.md#approved-state-rendering-and-controls-2026-11-06).
 
 - Update `source/ToothbrushTimerView.mc` for READY, RUNNING, PAUSED, and COMPLETED
@@ -170,6 +172,9 @@ redraws and late callbacks neither repeat the cue nor restart the delay.
 
 **Dependencies:** steps 1–5.
 
+**Status:** completed for available checks; physical acceptance remains step 7.
+See [integrated verification and simulator limits](verification.md#integrated-ui-and-completion-regression-2026-11-08).
+
 - Run the full Monkey C test suite and Strict debug, test, and release builds for
   Vivoactive 6. Confirm test success from the printed summary.
 - Run applicable simulator scenarios in [testing.md](testing.md), including a
@@ -188,6 +193,9 @@ remaining limitations are recorded rather than inherited as passes from older bu
 
 **Dependencies:** step 6 for final acceptance; earlier hardware feedback may inform
 artwork, layout, and timing tuning.
+
+**Status:** pending; no physical device was exercised for the current UI and
+completion-delay artifact. Historical physical results do not accept this artifact.
 
 - Install the verified release artifact using the documented transfer procedure
   and run the applicable physical matrix in [testing.md](testing.md).

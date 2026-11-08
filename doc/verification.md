@@ -562,6 +562,110 @@ Vivoactive 6 build, simulator checks, and physical acceptance in
   Release SHA-256:
   `af116369bdf09147de8f46fc29478031682c284458a728aeafb228cac11081dd`.
 
+## Integrated UI and completion regression (2026-11-08)
+
+- UI step 6 over `5f6f639`: reran integration checks and updated README/plan
+  status. Production code, resources, API minimum, and tests are unchanged.
+  No new implementation or reusable regression cases were needed.
+- Environment: Ubuntu 24.04.5 LTS host, Bash, OpenJDK 21.0.12.1, official
+  SDK/compiler 9.2.0 (`2026-06-09-92a1605b2`), documented Ubuntu 22.04 Distrobox
+  simulator under X11/XWayland, Vivoactive 6 package
+  `eddc2840754f6d29c6c9a3ede43befdaadd25a09`, simulator API 6.0.3.
+  Vibration availability assertions passed with vibration enabled and DND off.
+  These versions/settings describe this run, not universal prerequisites.
+- All README Strict debug/test/release build commands printed `BUILD SUCCESSFUL`
+  without compiler/analyzer warnings. The full README test command printed
+  `Ran 60 tests` and `PASSED (passed=60, failed=0, errors=0)`; launcher status
+  was 1, as documented. Coverage includes timer boundaries/rollover, input
+  priority, delay/suppression/failure, cancellation/stale callbacks, lifecycle,
+  and weak-reference release after 40 SDK timer cycles in each ownership mode.
+- Production debug simulator checks passed: READY remained at `2:00`, a
+  rounded-off Start corner did nothing, touch Start/Pause/Stop and hardware
+  Resume worked, PAUSED stayed frozen, both RUNNING and PAUSED Stop reset to
+  READY, and the lower hardware button exited immediately.
+- Fresh release smoke checks passed for READY, touch Start/Pause and
+  RUNNING/PAUSED Stop, upper-button Start/Pause/Resume, and lower-button Back (launcher
+  status 0). A separate fixture loaded the production launcher resource through
+  `WatchUi.Bitmap` and rendered its native 54 × 54 pixels in the simulator:
+  recognizable toothbrush, mint/gray segmented ring, and handle overlap, without
+  resource/runtime errors. This previews the compiled resource, not a physical
+  watch's app list.
+- An isolated diagnostic app used unchanged production model/view/controller/
+  haptics, default timing, the real system clock, and real SDK timers/vibration/
+  exit, with event logging added through subclasses. A full active two-minute
+  session passed: interval requests at brushing elapsed 30001, 60198, and
+  90198 ms; completion was observed about 198 ms after the two-minute deadline
+  following a 6012 ms pause. Exactly three single-entry vibration calls and one
+  five-entry completion call returned. Pause preserved `1:30`, Stage 2/4, and
+  yellow progress; hardware Resume restored mint progress and continued timing.
+  COMPLETED showed full separated mint segments, toothbrush/rays, and `Nice job!`
+  without countdown/stage/controls. Stale control taps and primary input did not
+  repeat effects. One one-shot arm exited once after 3002 ms, followed by cleanup.
+- Eight deterministic simulator races passed using an isolated injected clock
+  and real touch/hardware delivery, SDK timers, vibration, and exit. At 119999 ms,
+  Pause/primary input froze at `0:01`, Stop reset to READY, and Back exited.
+  At 120000 ms, Pause/Stop/primary input produced one completion cue and one
+  delayed exit; Back exited with the last synchronized elapsed value still
+  119750 ms and no completion cue or presentation arm. Both boundary Back cases
+  therefore bypassed synchronization. Each case exited once and cleaned up.
+  A separate Back-during-COMPLETED run exited and cleaned up in the same
+  millisecond, cancelled the one-shot, and produced no exit callback afterward.
+- Simulator File → Kill App during RUNNING invoked application cleanup and
+  stopped the timer in the same millisecond, with no completion cue or app-issued
+  exit. No later callback appeared in that run's trace. Relaunching the production
+  debug artifact in that same simulator process showed fresh READY at `2:00`.
+  Actual suspension and reported-resume delivery were not exercised in the
+  simulator; automated tests cover repeated `onStop` and fresh launch after
+  reported resume. A separate File → Kill App during COMPLETED passed: cleanup
+  cancelled the pending one-shot, with no automatic-exit callback or app-issued
+  exit afterward (launcher status 0).
+- Repeated-use trace: four observed touch Start/Pause/Resume/Stop cycles returned
+  to 17112 bytes at every reset (active snapshots 17208–17216 bytes), without
+  timer errors. A later unexpected Back interrupted the longer automation run;
+  subsequent attempted cycles are not counted as passes. The full-duration run
+  above was performed separately after restarting the simulator.
+- Artifact audit: debug/release symbol and class tables exclude all 60 test
+  functions, 11 test helpers, and diagnostic probes. English strings are cached
+  from resources, stage formatting uses both arguments, timing values remain
+  centralized, and the controller owns one SDK timer. Manifest permissions and
+  barrels remain empty; no display-power, sound, settings, persistence,
+  networking, or background-execution APIs are present.
+  Current official [Timer](https://developer.garmin.com/connect-iq/api-docs/Toybox/Timer/Timer.html),
+  [Bitmap](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/Bitmap.html),
+  [drawing](https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/Dc.html),
+  [input](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/BehaviorDelegate.html),
+  [vibration](https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html#vibrate-instance_function),
+  and [DND](https://developer.garmin.com/connect-iq/api-docs/Toybox/System/DeviceSettings.html#doNotDisturb-var)
+  references confirm the used calls/options fit the retained API 3.2.0 minimum;
+  optional DND and vibration are capability-guarded. Only Vivoactive 6 was built
+  and run; this does not certify additional or older devices.
+- Tooling/coverage limits: an initial artifact reload stalled and required a
+  simulator restart; an early release automation attempt sent input before
+  loading finished. Neither establishes a pass. Fresh retries above waited for
+  READY and succeeded. Exhaustive touch-edge/swipe delivery and interactive
+  simulator DND/sleep toggles were not rerun; automated geometry and suppression
+  coverage passed.
+- Final diff and surrounding production code reviewed against requirements,
+  design, and regression matrices: no actionable implementation defects or
+  unresolved specification conflicts; zero implementation correction iterations.
+  `git diff --check`, build-script shell syntax, and changed-document file/anchor
+  links passed. No application changes or additional build/test runs were needed
+  after the documentation edits.
+- Not run on hardware: launcher/state readability, wrist touch ergonomics,
+  hardware/system controls and real exit destination, three perceptible
+  completion pulses, presentation duration/readability, interruption/relaunch,
+  display-off countdown/completion/exit, and DND/sleep/power settings. Step 7
+  remains pending; historical physical passes apply to older artifacts.
+- Local ignored logs, captures, isolated diagnostic sources, and automation are
+  under `build/verification/integrated-regression/`. Freshly rebuilt artifacts
+  have the same hashes as step 5:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Debug | `1c7afd91b5ec70b4ef0dc3853647623b4c09ffe0f6934832ade3a2bbbbc09166` |
+| Test | `d12b15d7404dbd9e7f1114b757215a33cc8d6a78113180423f214cf7a30d148f` |
+| Release | `af116369bdf09147de8f46fc29478031682c284458a728aeafb228cac11081dd` |
+
 ## Evidence availability
 
 Logs, captures, and isolated probes were local ignored artifacts under

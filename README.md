@@ -13,8 +13,11 @@ The display may dim or turn off during brushing; normal watch wake mechanisms ap
 The approved [UI design](doc/design/ui-design.md), production artwork, segmented
 ring, four state layouts, and configured completion delay are implemented.
 Back/system exit takes priority immediately, bypasses overdue cues, and cancels
-pending automatic exit. Integrated regression and physical acceptance remain
-pending in the [implementation plan](doc/implementation-plan.md).
+pending automatic exit. Integrated builds, all 60 unit tests, and available
+simulator regression checks passed; see the
+[integrated results and limits](doc/verification.md#integrated-ui-and-completion-regression-2026-11-08).
+Physical Vivoactive 6 acceptance remains pending in the
+[implementation plan](doc/implementation-plan.md).
 
 Focused physical Vivoactive 6 checks passed for system-only display control and
 three-pulse completion through exit on firmware 18.32. See the
