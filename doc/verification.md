@@ -666,6 +666,85 @@ Vivoactive 6 build, simulator checks, and physical acceptance in
 | Test | `d12b15d7404dbd9e7f1114b757215a33cc8d6a78113180423f214cf7a30d148f` |
 | Release | `af116369bdf09147de8f46fc29478031682c284458a728aeafb228cac11081dd` |
 
+## Guided physical acceptance (2026-11-08)
+
+Host release preparation is complete. The user reports building and installing
+the application from another PC because this computer has no USB-C port.
+Step 7 physical acceptance is complete for the identified release on Vivoactive 6
+firmware 18.32 in the reported configurations. All guided scenarios passed;
+no production corrections or tuning were needed. Physical evidence is
+user-reported, not directly observed by the development agent. Coverage limits
+below remain explicit rather than being counted as passes.
+
+- Source revision: `8cd11fa04b5ce3f5d01eec5e4d7c12286ad378e0`; working tree clean
+  before preparation. This entry changes documentation only.
+- Host release check: `bash scripts/build.sh release` printed `BUILD SUCCESSFUL`
+  without compiler/analyzer warnings, using official compiler 9.2.0.
+- Artifact: `build/ToothbrushTimer-release.prg`, 25,948 bytes, targeting
+  `vivoactive6`.
+- SHA-256: `af116369bdf09147de8f46fc29478031682c284458a728aeafb228cac11081dd`.
+  This matches the step 6 release artifact above. Unit tests and simulator checks
+  were not rerun during this preparation; their recorded results apply to that
+  same artifact and unchanged production source.
+- Installation (user reported): application built on another PC and copied to
+  the watch. The supplied SHA-256 matches the release hash above and the step 6
+  artifact. A read-back comparison of the watch's copied file was not reported.
+- User-confirmed device firmware: **18.32**. Full-session baseline: Alert
+  vibration on; DND, sleep mode, and battery saver off. Display settings left
+  unchanged: timeout **8 seconds**, always-on display **off**, gesture wake
+  **on**, brightness described as **low** (watch shows a bar without numbers).
+
+| Check | Result | User-reported evidence / remaining work |
+| --- | --- | --- |
+| Launcher icon and fresh launch | Pass | Launcher toothbrush recognizable; READY shows empty segmented ring, toothbrush, `2:00`, and Start, with no stage label. Remains at `2:00` without automatic countdown during the requested idle check. No clipping, unclear elements, or errors reported |
+| Uninterrupted full session | Pass | Separate stopwatch used; smooth clockwise progress and readable countdown/stage. All three identical single-pulse interval cues and expected stage/segment boundaries confirmed. Supplied cue times `1:30`, `1:00`, `0:30`, and completion `0:00` are interpreted as remaining-time references; individual elapsed stopwatch timestamps and quantitative drift were not supplied |
+| Completion presentation and haptics | Pass | Three distinct short final pulses all finish; full mint ring retains gaps, toothbrush/rays and `Nice job!` visible, with countdown/stage/controls removed. Reported presentation duration `0:03`, then automatic exit to application list. No sound, clipping, readability problems, errors, or other unexpected behavior reported |
+| Long pause/resume | Pass | Paused at `1:32` for 60 stopwatch seconds: countdown, ring, and stage frozen; filled progress yellow, Resume/play shown, primary button mint; no paused cues. Normal dimming and gesture wake confirmed, with no unexpected control action reported. Resume restored mint progress and continued from frozen values. First cue reported at `0:03` elapsed after Resume, consistent with the approximately two-second remaining active interval and manual timing precision. Remaining cues had no duplicates; three final pulses, completion presentation, and exit after about three seconds confirmed. No sound, errors, or unexpected brightness changes |
+| Stop/restart and cancellation | Pass | Stop after the first RUNNING cue and Stop from PAUSED both immediately restore READY at `2:00`, empty ring, and Start without confirmation or completion presentation. Restarted session's first cue at stopwatch `0:29` (approximately 30 seconds with manual timing), Stage 2/4 and one filled segment. A subsequent Stop followed by 35 seconds on READY produced no leftover cues or countdown changes |
+| Focused touch ergonomics and routing | Pass | Worn on wrist: Start, Pause/Resume, and Stop comfortable and distinguishable; taps just inside both ends of Start work, with resets between attempts. Toothbrush/countdown taps in READY do not start; countdown/stage taps in RUNNING do not alter timing. No accidental actions or errors reported |
+| Hardware controls | Pass | Short upper-button presses perform Start/Pause/Resume, exactly once per press; countdown stays frozen during the five-second pause. Short lower-button presses exit immediately from RUNNING, PAUSED, and READY. RUNNING exit destination explicitly reported as application list. No duplicated actions, unexpected cues, or errors |
+| Back cancellation and fresh relaunch | Pass | RUNNING Back exits without confirmation or completion screen; 35 seconds outside app produces no leftover vibrations. Relaunch from each tested state shows fresh READY at `2:00`; after RUNNING exit, five seconds on relaunched READY produces no stale exit or automatic start |
+| Back just before completion | Pass | Lower-button Back when countdown first shows `0:01` exits immediately, without `Nice job!` or a new completion cue. Prompt relaunch shows READY at `2:00`, with no unexpected exit, start, or vibration during five seconds. Exact simultaneous completion/input on hardware is not established |
+| Completed-state primary input and Back cancellation | Pass (user reported; manual timing) | Upper-button press at `Nice job!` leaves COMPLETED unchanged without restart or repeated cue. Lower-button Back reported to exit immediately, before automatic exit, about two seconds into presentation. Prompt relaunch shows READY at `2:00` and remains open without stale exit or repeated cue for five seconds. The separate free-text question about certainty of Back causing exit was unanswered; the checked Back-response assertions are the evidence. No stuck screen, sound, or errors |
+| Full session with dimmed display | Pass | Wrist horizontal: display dimmed at about stopwatch `0:10` but did not turn off. No wake gestures, taps, or buttons until `2:08`. Separate stopwatch interval readings `0:29`, `0:59`, `1:29`; first completion pulse `1:59`; all three final pulses finish. Constant approximately one-second offset, without accumulating drift at manual whole-second precision. No unexpected display wake/brightness change. App already exited when checked at `2:08`; destination not specified. Relaunch fresh READY at `2:00`; no sound, errors, or unexpected behavior |
+| Fully blanked display | Pass | Separate repeat with unchanged baseline settings: wrist-away gesture blanks screen at about stopwatch `0:12`; no wake gestures, taps, or buttons until `2:08`. Interval stopwatch readings `0:29`, `0:59`, `1:29`, first completion pulse `1:59`, with all three final pulses complete and no noticed display wake/brightness change. At `2:08`, normal wake shows application list: app already exited. Relaunch shows READY at `2:00`; no sound, errors, or unexpected behavior. Exact exit time while black was not directly observed |
+| DND suppression and recovery | Pass | DND on, Alert vibration on, sleep/saver off: full session advances normally without interval or completion vibrations; `Nice job!` appears around two minutes, remains about three seconds, then exits to application list. DND off restores a first interval cue around 30 seconds during a fresh approximately 35-second run, followed by Stop/exit. No sound, errors, stuck screen, or unexpected behavior |
+| Completed-state stale touch | Pass (former Stop position) | During the DND completion presentation, tapping the former Stop-button position neither resets nor changes COMPLETED; automatic exit still occurs after about three seconds. Former Pause/Resume-position touch has not been separately exercised |
+| Independent vibration switches and recovery | Pass | DND/sleep/saver off. A: System vibration off / Alert on, approximately 35-second run: first cue present, supplied reading `1:30` interpreted as remaining time; Stop/exit. B: System on / Alert off, full session: normal countdown/progress/stages without interval or completion vibration; `Nice job!` and automatic exit after about three seconds to application list; no errors/stuck screen. C: both on, fresh READY and approximately 35-second run: first cue returns around 30 seconds; Stop/exit. No sound or unexpected behavior. Both switches off together was not separately retested |
+| Sleep mode | Pass (reported configuration) | Both vibration switches on, battery saver off, sleep enabled without option changes; effective DND reported off, separate sleep-specific DND/options not supplied. App launches fresh; display dims without blanking and does not react to gesture wake. Visible countdown/progress reflect active elapsed time. All three interval cues, completion around two minutes, all three final pulses, and visible `Nice job!` confirmed. By about stopwatch `2:08`, app exited; destination described as “Application screen,” wake method unspecified. No errors, stuck screen, sound, or unexpected brightness. Sleep off, DND off, both vibration switches on restored; relaunch READY at `2:00`. Center-touch wake was explicitly not run |
+| Battery saver | Pass (reported configuration) | Sleep/DND off, both vibration switches on; saver enabled without option changes, detailed options not supplied. App launches fresh without restriction/message. Display dims without blanking; user reports wrist-away gesture does not blank it, so gesture wake could not be tested. Visible countdown/progress reflect active elapsed time. Three interval cues, completion around two minutes, all three final pulses, and visible `Nice job!` confirmed. Presentation-duration field answered “yes,” so no numeric duration established in this run. App exited to application list by about stopwatch `2:08`; no errors, stuck screen, sound, or unexpected brightness. Saver off and baseline restored; relaunch READY at `2:00` |
+| Repeated use | Pass (observed cycles) | Guided checks include ten sessions reaching completion, a separate Back exit at `0:01`, multiple Stop/reset and hardware-control cycles, DND and vibration-switch recovery runs, and additional Start-end touch/reset attempts without reported instability. This does not establish long-term endurance |
+| Touch/button input with screen off | Pass | Baseline restored; each trial confirms black screen first. A: one short upper-button press from READY wakes display and starts RUNNING; numeric countdown value not supplied. B: center/countdown touch while RUNNING wakes display and preserves RUNNING without reset/unintended pause; Stop/exit afterward. C: one short lower-button press while RUNNING exits to application list; relaunch READY at `2:00`. Gesture fallback was unnecessary in the reported trials |
+| System alarm interruption | Pass (observed overlay scenario) | Alarm appears at stopwatch `0:40`, last countdown `1:20`; after normal dismissal app remains RUNNING at `1:10`. Alarm display duration not separately supplied. Countdown/progress reflect active elapsed time without reset, unexpected pause, or burst of old cues. One completion cue and `Nice job!`, completion stopwatch `1:59`, automatic exit to application list. No errors, stuck screen, or unexpected behavior. Temporary alarm removed/disabled; fresh relaunch READY at `2:00` stays open for five seconds without stale exit or unexpected start |
+
+### Acceptance scope and limits
+
+- Physical acceptance covers the reported artifact, firmware, and settings only.
+  Launcher/state readability, touch ergonomics, primary/Back controls, timing,
+  pause/Stop/restart, three-pulse completion and approximately three-second
+  presentation, immediate exit, relaunch, dimmed/black-screen operation, DND and
+  independent vibration switches, sleep/saver modes, and alarm interruption have
+  user-reported passing coverage. No known defects or specification conflicts
+  were found; no further manual run is required for this guided acceptance scope.
+- Exact simultaneous completion/input and forced suspension/termination were
+  not induced on hardware. The alarm establishes overlay continuity, not actual
+  lifecycle callbacks. Controller boundary/cancellation and lifecycle behavior
+  retain the automated/simulator evidence and limits recorded in step 6.
+- Stopwatch measurements are manual whole-second readings, not calibrated
+  latency measurements. The constant approximately one-second early readings
+  do not establish a two-minute timer defect or accumulating drift. Exact exit
+  time with the screen black was not directly observed.
+- Watch-file read-back hash, exhaustive touch edges/corners, former Pause/Resume
+  touch during COMPLETED, both vibration switches off together, sleep-specific
+  DND settings, sleep touch wake, and detailed saver options were not established
+  in this run. Other firmware/devices/settings and long-term stability are not
+  certified by these results.
+- Changes for step 7 are documentation only. The release build above passed
+  without warnings; unit tests and simulator checks were not rerun because
+  production source and the step 6 release artifact are unchanged.
+- Documentation validation: `git diff --check` passed; all three new acceptance
+  links in README and the implementation plan resolve to this record.
+
 ## Evidence availability
 
 Logs, captures, and isolated probes were local ignored artifacts under

@@ -16,12 +16,11 @@ Back/system exit takes priority immediately, bypasses overdue cues, and cancels
 pending automatic exit. Integrated builds, all 60 unit tests, and available
 simulator regression checks passed; see the
 [integrated results and limits](doc/verification.md#integrated-ui-and-completion-regression-2026-11-08).
-Physical Vivoactive 6 acceptance remains pending in the
-[implementation plan](doc/implementation-plan.md).
-
-Focused physical Vivoactive 6 checks passed for system-only display control and
-three-pulse completion through exit on firmware 18.32. See the
-[results and remaining coverage](doc/verification.md#focused-physical-verification-2026-11-04).
+Guided physical Vivoactive 6 acceptance passed on firmware 18.32 for the same
+release artifact, covering UI/controls, timing, completion, display-off operation,
+DND/vibration restrictions, sleep/battery saver, and alarm interruption. See the
+[physical results and coverage limits](doc/verification.md#guided-physical-acceptance-2026-11-08)
+and completed [implementation plan](doc/implementation-plan.md).
 
 See the [verification history](doc/verification.md), [requirements](doc/product-requirements.md),
 [design](doc/technical-design.md), [regression checklists](doc/testing.md), and

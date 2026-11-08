@@ -23,7 +23,8 @@ firmware 18.32; see
 
 ## Subsequent change: approved UI and completion presentation (2026-11-05)
 
-**Status:** Steps 1–6 implemented; physical acceptance remains pending in step 7.
+**Status:** Steps 1–7 complete for the tested Vivoactive 6 release and firmware
+18.32. See [physical acceptance and coverage limits](verification.md#guided-physical-acceptance-2026-11-08).
 See the [integrated regression results and limits](verification.md#integrated-ui-and-completion-regression-2026-11-08),
 the [segmented-progress verification](verification.md#segmented-progress-and-shared-geometry-2026-11-06)
 for ring previews and the [state-rendering verification](verification.md#approved-state-rendering-and-controls-2026-11-06)
@@ -194,8 +195,13 @@ remaining limitations are recorded rather than inherited as passes from older bu
 **Dependencies:** step 6 for final acceptance; earlier hardware feedback may inform
 artwork, layout, and timing tuning.
 
-**Status:** pending; no physical device was exercised for the current UI and
-completion-delay artifact. Historical physical results do not accept this artifact.
+**Status:** completed on 2026-11-08 for the step 6 release artifact on Vivoactive 6
+firmware 18.32. Guided user-reported checks passed for the applicable physical
+matrix, including black-screen operation, system restrictions, and alarm
+interruption. No production tuning was needed. See
+[artifact, observations, and coverage limits](verification.md#guided-physical-acceptance-2026-11-08);
+exact simultaneous input and forced suspension/termination were not induced on
+hardware.
 
 - Install the verified release artifact using the documented transfer procedure
   and run the applicable physical matrix in [testing.md](testing.md).
