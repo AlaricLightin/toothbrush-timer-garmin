@@ -1,73 +1,44 @@
-Implement the first incomplete work item from [implementation-plan.md](implementation-plan.md),
-whether a numbered Step or a subsequent change.
+# Development Workflow
 
-Execute this workflow autonomously under [AGENTS.md](../AGENTS.md), which defines
-scope, conflict handling, coding, verification, and reporting policy.
+Use this workflow for a new feature, bug fix, or an explicitly requested continuation of an active plan. [AGENTS.md](../AGENTS.md) defines standing rules, approval boundaries, and verification policy.
 
-## 1. Preparation
+## 1. Understand and scope the task
 
-- Read the current plan, product requirements, technical design, relevant code,
-  and linked verification records; inspect Git status.
-- Compare work items in plan order against the actual code and applicable
-  [regression checks](testing.md), rather than relying solely on completion markers.
-  Complete the first partially implemented or unimplemented item.
-- Treat the archived plan as history, not an active work queue. Current
-  requirements and design supersede archived behavior.
-- Keep pending simulator or physical acceptance separate from incomplete
-  implementation; it does not by itself block a later independent work item.
-- If all items are implemented, report outstanding verification and stop.
-  If selection is ambiguous, stop and explain why.
-- Make a short working plan for nontrivial work.
+Read product requirements and technical design, inspect Git status and relevant code/tests, and consult UI design for visual work. Compare the request with current behavior and constraints. Follow AGENTS.md's confirmation process for conflicts or material product/architecture decisions before changing affected specifications or code.
 
-Follow the AGENTS.md conflict process whenever requirements conflict or a
-significant product or architectural decision is needed.
+Use each document for its own responsibility; update it only when the task changes that information:
 
-## 2. Implementation
+| Document | Purpose and update trigger |
+| --- | --- |
+| [Product requirements](product-requirements.md) | User-visible behavior, product scope, localization, and device-support policy |
+| [Technical design](technical-design.md) | Architecture, state/timing ownership, lifecycle, platform and implementation constraints |
+| [UI design](design/ui-design.md) | Appearance, layout, controls, artwork, and visual references |
+| [README](../README.md) / [development](development.md) | Quick-start commands / detailed setup, troubleshooting, and installation |
+| [Testing](testing.md) | Reusable automated, simulator, and physical regression coverage |
+| [Verification](verification.md) | Checks actually performed, tested revision/artifact/environment, results, and remaining limits |
+| [AGENTS.md](../AGENTS.md) | Repository-wide working rules and approval boundaries |
+| This workflow | Task intake, planning, implementation, and closure sequence |
 
-Implement only the selected item's scope under the current requirements and
-design. Change earlier code only as needed; do not implement later items.
-Apply AGENTS.md testing rules, removing superseded tests only where necessary
-and preserving independent regression coverage.
+Possible extensions are uncommitted ideas, not an instruction to implement them. Update affected specifications before implementation when an approved task changes the contract; do not rewrite them afterward simply to match an implementation choice.
 
-## 3. Verification
+## 2. Plan the work
 
-Follow AGENTS.md verification policy using the commands and prerequisites in
-[README](../README.md) and [development.md](development.md), and the applicable
-checklists in [testing.md](testing.md).
+For a small task, use a short working plan; no implementation-plan file is required. For larger work with dependencies or multiple delivery steps, create `doc/implementation-plan.md` containing only active work: scope, ordered steps/dependencies, verification checkpoints, and implementation/acceptance status. Link to specifications rather than restating them.
 
-For documentation-only changes, review consistency, references, and the Git diff;
-application builds and runtime tests are not required.
+When explicitly asked to continue the plan, compare its steps with code and checks and select the first incomplete implementation step. Status markers alone are insufficient. If selection is ambiguous, explain and clarify; if all implementation is complete, report remaining acceptance work rather than inventing another step. Pending simulator/hardware acceptance does not block independent implementation work.
 
-Distinguish tooling failures from implementation failures. Do not change
-application code to work around an unrelated environment problem. Complete
-available checks and report any blockers or unverified checks.
+## 3. Implement and verify
 
-Record dated results and limitations in [verification.md](verification.md).
-Update testing.md only when reusable regression coverage changes.
+Implement the requested task or selected step within its scope. Follow AGENTS.md and the authoritative documents; preserve independent regression coverage when updating tests. Run affected checks from testing.md with documented commands, and record results/limits in verification.md.
 
-## 4. Code Review
+Distinguish tooling failures from application defects. Do not change application code to work around an unrelated environment problem; complete available checks and report blockers.
 
-Review the actual Git diff and surrounding code for requirement compliance,
-correctness, regressions, test adequacy, maintainability, platform compatibility,
-and unnecessary complexity or scope expansion. Identify actionable defects,
-not merely stylistic preferences.
+## 4. Review and correct
 
-## 5. Correction Loop
+Review the actual diff and surrounding code for requirement compliance, correctness, regressions, test adequacy, maintainability, platform compatibility, and unnecessary scope/complexity. Fix actionable defects and repeat affected verification/review. Allow at most two correction iterations after initial implementation; if defects remain, report them, attempted fixes, and likely causes.
 
-If verification or review finds actionable defects in the selected scope:
+## 5. Close the task
 
-1. Analyze and fix the defects.
-2. Repeat the verification phase and review the updated changes.
+Update affected documentation and any active plan's status, separating implementation completion from pending acceptance. Follow AGENTS.md's final-report requirements; for planned work also identify the completed step, review findings/resolutions, and correction count.
 
-Allow at most **two correction iterations** after initial implementation, each
-including fixes, verification, and review. If problems remain after the second,
-stop and report the remaining problems, attempted fixes, and likely causes.
-
-## 6. Completion
-
-Update the selected item's status in [implementation-plan.md](implementation-plan.md)
-and link its verification record. Separate implementation completion from pending
-acceptance; preserve archived history and historical results. Do not commit or push.
-
-Use the AGENTS.md final-report requirements, also identifying the selected item,
-its implementation status, review findings and resolutions, and correction count.
+Once all plan work, including applicable acceptance, is complete, move lasting decisions/findings into their appropriate documents and remove the completed plan. Keep only a compact, scoped verification baseline; Git retains committed history. Do not remove unresolved acceptance work or carry an older pass forward as evidence for a new revision. No permanent archive or empty plan file is needed.

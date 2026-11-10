@@ -10,21 +10,17 @@ Every launch starts fresh at `2:00`.
 Display wake, brightness, and timeout are controlled entirely by the system.
 The display may dim or turn off during brushing; normal watch wake mechanisms apply.
 
-The approved [UI design](doc/design/ui-design.md), production artwork, segmented
-ring, four state layouts, and configured completion delay are implemented.
-Back/system exit takes priority immediately, bypasses overdue cues, and cancels
-pending automatic exit. Integrated builds, all 60 unit tests, and available
-simulator regression checks passed; see the
-[integrated results and limits](doc/verification.md#integrated-ui-and-completion-regression-2026-11-08).
-Guided physical Vivoactive 6 acceptance passed on firmware 18.32 for the same
-release artifact, covering UI/controls, timing, completion, display-off operation,
-DND/vibration restrictions, sleep/battery saver, and alarm interruption. See the
-[physical results and coverage limits](doc/verification.md#guided-physical-acceptance-2026-11-08)
-and completed [implementation plan](doc/implementation-plan.md).
+For new work, start with [development workflow](doc/development-workflow.md) and
+[repository rules](AGENTS.md). The documentation has these responsibilities:
 
-See the [verification history](doc/verification.md), [requirements](doc/product-requirements.md),
-[design](doc/technical-design.md), [regression checklists](doc/testing.md), and
-[implementation plan](doc/implementation-plan.md).
+| Document | Purpose |
+| --- | --- |
+| [Product requirements](doc/product-requirements.md) | Current behavior, scope, and possible extensions |
+| [Technical design](doc/technical-design.md) | Architecture, timing, lifecycle, and platform constraints |
+| [UI design](doc/design/ui-design.md) | Palette, layouts, components, and reference artwork |
+| [Development](doc/development.md) | Detailed setup, troubleshooting, and watch installation |
+| [Testing](doc/testing.md) | Reusable automated and manual regression checks |
+| [Verification](doc/verification.md) | Tested artifacts, results, and remaining limits |
 
 ## Setup
 
@@ -67,12 +63,9 @@ unit-test compilation with `-t`. Omitting the mode builds debug. All modes targe
 `vivoactive6` with warnings enabled and Strict checking in `monkey.jungle`.
 Do not also pass `-l 3`, which causes a duplicate-setting warning.
 
-The wrapper checks prerequisites and preserves compiler failures. Install missing
-device packages through SDK Manager. It scopes Java AWT headless mode to compilation;
-`base.sourcePath = source;tests` excludes generated copies from source discovery.
-Outputs are ignored by Git; use them only after a successful build, since failures
-can leave older artifacts. Test functions and the fake clock use `:test` annotations
-and are excluded from normal debug and release artifacts.
+The wrapper checks prerequisites and preserves compiler failures. Use outputs
+only after successful builds: failures can leave older artifacts. Test functions
+and helpers use `:test` annotations and are excluded from debug/release builds.
 
 ## Unit tests
 
@@ -123,48 +116,15 @@ set, from the repository root:
 "$CIQ_SDK/bin/monkeydo" build/ToothbrushTimer.prg vivoactive6
 ```
 
-The launch check is the toothbrush icon, `2:00`, and Start rendering without a
-runtime error or automatic countdown. Tap Start or press the simulator's upper
-hardware button (Enter) to start; tap Pause/Resume or press Enter to toggle.
-Stop resets from RUNNING or PAUSED. The lower hardware button (Back) exits;
-completion also exits automatically. Taps outside the visible controls do nothing.
-Relaunch always starts a fresh READY session. See
-[regression checklists](doc/testing.md) for full coverage.
+Confirm READY shows the toothbrush, `2:00`, and Start without automatic countdown
+or runtime errors. Simulator Enter performs Start/Pause/Resume; Back exits.
+Use the [regression checklists](doc/testing.md) for further checks.
 
 For launch or connection errors, see [simulator troubleshooting](doc/development.md#simulator-troubleshooting).
 
 ## Physical-device installation and acceptance
 
-Use the release artifact for Vivoactive 6 hardware checks. From the repository
-root, with the [setup](#setup) prerequisites configured:
-
-```bash
-bash scripts/build.sh release
-sha256sum build/ToothbrushTimer-release.prg
-```
-
-Connect the watch with a USB data cable and open it in Ubuntu Files. Use
-`Internal Storage/GARMIN/Apps` on the watch; do not assume a local mount path.
-Copy `build/ToothbrushTimer-release.prg` into that folder, following Garmin's
-[sideloading procedure](https://developer.garmin.com/connect-iq/connect-iq-basics/your-first-app/).
-The watch's [USB Mode setting](https://www8.garmin.com/manuals/webhelp/GUID-8C2C402F-55AC-431F-9CF2-1442B89CE149/EN-US/GUID-67C130E2-B01F-4253-8810-4762AB9DEB1D.html)
-supports MTP for file transfer.
-
-For command-line installation, use the [MTP transfer procedure](doc/development.md#command-line-mtp-transfer).
-For updates through Files, confirm replacement of only this app’s PRG.
-
-Wait for transfer completion, read the copied file back to compare its SHA-256
-with the local artifact, and eject/unmount the watch in Files before unplugging.
-Open Toothbrush Timer from the watch's apps list. First verify a readable
-toothbrush icon, `2:00`, and Start, with no automatic countdown.
-
-Work through the [manual acceptance matrix](doc/testing.md#manual-acceptance-matrix)
-and record the artifact hash, watch firmware, relevant display/haptic/power
-settings, observations, and outstanding checks in [verification](doc/verification.md).
-Copying a PRG does not establish successful on-watch launch or physical acceptance.
-
-On tested firmware 18.32, **Alert vibration** controls app cues; System vibration
-alone does not disable them. DND suppresses cues, while countdown and exit
-continue. Sleep/power settings can limit display visibility and gesture wake.
-See the [physical results and limits](doc/verification.md#physical-acceptance-2026-11-03)
-for tested combinations; other firmware/settings require verification.
+Build/install the release using the [watch installation procedure](doc/development.md#watch-installation-and-acceptance),
+then run the applicable [manual checks](doc/testing.md#manual-acceptance-matrix).
+Record results and limits for that artifact; a successful transfer alone does
+not establish physical acceptance.

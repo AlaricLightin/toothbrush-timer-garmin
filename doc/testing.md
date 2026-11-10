@@ -5,13 +5,10 @@ remain defined by [product requirements](product-requirements.md) and
 [technical design](technical-design.md); [AGENTS.md](../AGENTS.md) defines the
 verification policy. Build and run commands are in [README](../README.md).
 
-See [README](../README.md) for implementation status. These checklists include
-pending design changes; historical passes do not establish their acceptance.
-
 Select cases affected by a change, run the full suite when integration scope
 warrants it, and build for Vivoactive 6 after production-code changes. Include
 applicable simulator and physical checks; record unavailable checks explicitly.
-Review product acceptance criteria alongside the matrices, including resource
+Review product requirements alongside the matrices, including resource
 strings and the absence of sound, settings, persistence, and background timing.
 
 Use the Monkey C test framework and a fake clock for deterministic timing tests.
@@ -40,7 +37,7 @@ Use fresh model/fake-clock instances per test. Time values below are test inputs
 | Terminal handling | Repeat synchronization/callback/primary input after completion | No second completion effect; terminal state retained until discarded/new session |
 | Signed rollover | Start near `2147483647`, advance across signed wrap | Small positive elapsed difference; normal boundaries/cues |
 | Wrap and pause | Cross −1 → 0 and wrap during a paused interval | Correct running delta; paused time still excluded |
-| Alternate configuration | Test-only positive equal-stage durations/count different from MVP | Derived stage count, boundaries, and completion work without literal four |
+| Alternate configuration | Test-only positive equal-stage durations/count different from the default configuration | Derived stage count, boundaries, and completion work without literal four |
 | Presentation | Remaining ms: 120000, 119999, 119000, 1000, 1; dynamic stage resource | `2:00`, `2:00`, `1:59`, `0:01`, `0:01`; configured stage denominator. COMPLETED replaces countdown/stage with the completion message |
 | Segment fractions | Zero, tiny/partial progress within stages, exact boundaries, completion; alternate stage counts including fractional slot angles | Fractions follow UI design §4, independent of rounded countdown text; paused fractions remain frozen. Integer sweeps skip sub-degree fills, full fills match track endpoints, and gaps survive completion. Test arithmetic, not pixels |
 | Shared layout geometry | Representative square and rectangular display bounds; control extents and pill ends | Ring stroke stays inside display bounds; controls fit inside the ring with circular clearance. Hit testing includes pill centers/ends and excludes rounded-off corners and outside points. No pixel assertions |
@@ -89,16 +86,22 @@ Record **pass**, **fail**, or **not run**, with evidence and reason. Simulator r
 - Settings: test DND and the System/Alert vibration switches independently,
   including restoration, sleep, and power modes. Record actual settings instead
   of assuming which physical switch maps to an API flag. Baseline observations
-  are in [verification](verification.md#physical-acceptance-2026-11-03).
+  are in [verification](verification.md#platform-observations).
 - Ownership/lifecycle: check release of timer callbacks and object references.
   Distinguish display-off operation, view hiding, and interruption overlays from
   actual app suspension/termination.
 
 ## Recording results
 
-Add dated results to [verification.md](verification.md), identifying the change,
+Maintain a compact, dated baseline in [verification.md](verification.md), identifying the change,
 source revision/working-tree changes, artifact hash, SDK/device/firmware/settings,
 checks actually rerun, results, and remaining limits. Separate automated,
 simulator, and user-reported physical evidence. Link reusable commands instead
 of duplicating them. Historical acceptance applies only to its tested revision
 and environment; do not carry a previous pass forward as a new test result.
+
+Retain earlier results only where needed to explain still-applicable evidence or
+coverage limits, with their original revision/date. Remove superseded narratives
+after moving durable findings into the appropriate design, testing, or development
+document; Git preserves committed history. Never replace broad prior coverage
+with a claim that a narrow follow-up rechecked everything.

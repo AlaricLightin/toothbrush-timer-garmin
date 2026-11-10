@@ -1,11 +1,9 @@
 # Development Setup and Troubleshooting
 
-Use the [README setup](../README.md#setup) prerequisites and environment variables.
-All commands run from the repository root in **Bash on Ubuntu Linux**, using
-caller-supplied paths. The SDK, Vivoactive 6 device package, and fonts must be
-available to the user running the tools. Builds and `monkeydo` run on the host;
-simulator use needs a graphical desktop. Other operating systems need their
-SDK launchers and shell syntax. Versions below describe verified examples.
+Use the [README setup](../README.md#setup) prerequisites and caller-supplied environment variables.
+Commands run from the repository root in **Bash on Ubuntu Linux**. Build and
+`monkeydo` commands run on the host; simulator launch needs a graphical desktop.
+Versions below describe verified examples, not universal prerequisites.
 
 ## Signing key
 
@@ -77,10 +75,40 @@ distrobox enter --name "$CIQ_BOX" -- env \
     GDK_BACKEND=x11 "$CIQ_SDK/bin/connectiq"
 ```
 
+## Watch installation and acceptance
+
+Use the release artifact for Vivoactive 6 hardware checks. From the repository
+root, with the [README setup](../README.md#setup) prerequisites configured:
+
+```bash
+bash scripts/build.sh release
+sha256sum build/ToothbrushTimer-release.prg
+```
+
+Connect the watch with a USB data cable and open it in Ubuntu Files. Use
+`Internal Storage/GARMIN/Apps` on the watch; do not assume a local mount path.
+Copy `build/ToothbrushTimer-release.prg` into that folder, following Garmin's
+[sideloading procedure](https://developer.garmin.com/connect-iq/connect-iq-basics/your-first-app/).
+The watch's [USB Mode setting](https://www8.garmin.com/manuals/webhelp/GUID-8C2C402F-55AC-431F-9CF2-1442B89CE149/EN-US/GUID-67C130E2-B01F-4253-8810-4762AB9DEB1D.html)
+supports MTP for file transfer.
+
+For command-line installation, use the [MTP transfer procedure](#command-line-mtp-transfer).
+For updates through Files, confirm replacement of only this app’s PRG.
+
+Wait for transfer completion, read the copied file back to compare its SHA-256
+with the local artifact, and eject/unmount the watch in Files before unplugging.
+Open Toothbrush Timer from the watch's apps list. First verify a readable
+toothbrush icon, `2:00`, and Start, with no automatic countdown.
+
+Work through the [manual acceptance matrix](testing.md#manual-acceptance-matrix)
+and record the artifact hash, watch firmware, relevant display/haptic/power
+settings, observations, and outstanding checks in [verification](verification.md).
+Copying a PRG does not establish successful on-watch launch or physical acceptance.
+
 ## Command-line MTP transfer
 
 Build the release and record its hash using the
-[installation instructions](../README.md#physical-device-installation-and-acceptance).
+[installation instructions](#watch-installation-and-acceptance).
 Connect the watch with a USB data cable and open it in Ubuntu Files.
 
 For a first installation through the command line, Ubuntu's desktop session
@@ -108,5 +136,4 @@ command; an inherited Snap module path prevented MTP access during verification.
 Ordinary filesystem copying through the GVfs mount returned `Operation not
 supported`; the GIO MTP transfer succeeded.
 
-Finish by following the README's read-back hash, eject, launch, and acceptance
-checks. A successful transfer alone does not establish physical acceptance.
+Finish with the [read-back, eject, launch, and acceptance checks](#watch-installation-and-acceptance). A successful transfer alone does not establish physical acceptance.

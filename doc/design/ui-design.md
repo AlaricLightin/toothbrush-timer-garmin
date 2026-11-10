@@ -12,7 +12,7 @@ Approved references:
 - [PAUSED](reference/paused.png)
 - [COMPLETED](reference/completed.png)
 
-These images establish appearance, composition, and visual hierarchy, not pixel-perfect specifications. Generated gradients, shape inconsistencies, and approximate progress do not override this specification or functional requirements. See [README](../../README.md) for implementation status.
+These images establish appearance, composition, and visual hierarchy, not pixel-perfect specifications. Generated gradients, shape inconsistencies, and approximate progress do not override this specification or functional requirements.
 
 ## 2. Semantic Palette
 
@@ -45,7 +45,7 @@ Use a consistent static illustration: a slightly angled white handle and white b
 
 The countdown is the dominant element: large, white, centered, and formatted as `m:ss`. The stage label is smaller, muted gray, and centered below it. Keep typography legible with standard Connect IQ fonts where practical and allow for localized text widths without hardcoded mockup dimensions.
 
-Follow the requirements for [time](../product-requirements.md#61-remaining-time), [stage text](../product-requirements.md#63-stage-indicator), and [localization](../product-requirements.md#9-localization).
+Follow the requirements for [time and stage text](../product-requirements.md#presentation-and-controls) and [localization](../product-requirements.md#localization).
 
 ### Buttons
 
@@ -59,7 +59,7 @@ The active-state references use icon-only controls; visible labels are optional.
 
 ## 4. Dynamic Progress Ring
 
-Draw equal segments separated by small visible gaps, with rounded ends where practical. The MVP has four segments, one per 30-second stage. Derive the count and equal angular spacing from the configured stage count `N`, not a literal four.
+Draw equal segments separated by small visible gaps, with rounded ends where practical. The current configuration has four segments, one per 30-second stage. Derive the count and equal angular spacing from the configured stage count `N`, not a literal four.
 
 Progress advances clockwise from the top (12 o'clock). A narrow separator is centered on each stage boundary, including the top seam; the first drawable arc begins just clockwise of that seam. Each stage occupies an angular slot of `360° / N`, with a small gap deducted consistently from its drawable arc. Keep the gaps visible even at full completion.
 
@@ -84,10 +84,10 @@ All states use the shared components above and the corresponding reference in §
 | PAUSED | RUNNING layout and frozen values; only filled progress changes to paused yellow and Pause becomes Resume. Toothpaste, primary button, and unfilled track retain their colors |
 | COMPLETED | Full accent ring with gaps, toothbrush above centered white `Nice job!`, small static accent rays on either side; no countdown, stage label, buttons, or active control hit regions |
 
-Completion timing and exit priority follow [requirements §4](../product-requirements.md#4-primary-user-flow); display behavior follows [§7](../product-requirements.md#7-screen-behavior). No animation or complex effects are required.
+Completion timing and exit priority follow [session behavior](../product-requirements.md#session-behavior); display behavior follows [screen behavior](../product-requirements.md#screen-behavior). No animation or complex effects are required.
 
 ## 6. Launcher Icon
 
 Follow [app-icon.png](reference/app-icon.png): a dark background, white toothbrush and bristles, mint-green toothpaste outline, and a four-segment ring. Mint-green progress runs clockwise from the top to the toothbrush handle at the lower-left: the two right-hand segments are fully mint green, and the lower-left segment is mint green only from the bottom to the handle. The rest of the lower-left segment and the entire upper-left segment are dark gray. The toothbrush handle crosses the ring at the color transition, with a thin black outline separating it from the ring at the intersection.
 
-This static four-segment motif is independent of runtime stage geometry. The launcher and in-app toothbrush share a visual style but use separate resources. Rendering and asset preparation follow [technical design §8](../technical-design.md#8-ui) and [§13](../technical-design.md#13-resources-and-localization).
+This static four-segment motif is independent of runtime stage geometry. The launcher and in-app toothbrush share a visual style but use separate resources. Rendering and asset preparation follow [technical design](../technical-design.md#rendering-and-resources).

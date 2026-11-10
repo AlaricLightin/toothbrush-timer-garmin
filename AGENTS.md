@@ -1,74 +1,43 @@
 # AGENTS.md
 
-## Scope and authoritative documents
+## Authority and scope
 
-This is the single root instruction file for the Toothbrush Timer repository. It applies to the entire project: a Monkey C Garmin Connect IQ watch app, with Garmin Vivoactive 6 as the primary target.
+This is the single root instruction file for the entire Toothbrush Timer repository: a Monkey C Garmin Connect IQ watch app, primarily for Vivoactive 6.
 
-Before implementation, locate and read `doc/product-requirements.md` and `doc/technical-design.md`. Requirements define product behavior; the technical design defines architecture and implementation constraints. Use those documents as normative sources rather than duplicating their full contents here.
+Before implementation, read [product requirements](doc/product-requirements.md) and [technical design](doc/technical-design.md), the authoritative sources for behavior and implementation constraints. Use [development workflow](doc/development-workflow.md) to handle new tasks and active plans; consult [UI design](doc/design/ui-design.md) for visual changes.
 
-- Do not silently deviate from either document.
-- If a task conflicts with either document, identify the specific conflict, propose the necessary documentation change, and obtain explicit confirmation before changing the affected implementation or documentation. Continue independent work where possible.
-- Apply the same rule to conflicts between the documents or discoveries that would make them outdated. Do not automatically rewrite them to match an implementation decision.
-- An explicit confirmation already given for the specific change is sufficient; do not ask again.
+- Do not silently deviate from the authoritative documents. If a task, conflicting documents, or new findings require a change, identify the conflict, propose the documentation change, and obtain explicit confirmation before changing affected implementation or documentation. Continue independent work where possible. Existing explicit confirmation for that specific change is sufficient.
+- Make local, reversible implementation decisions independently. Ask before decisions materially affecting architecture, user behavior, device compatibility, or future extensibility.
+- Limit changes to the task. Small related refactorings and local fixes are appropriate when needed for correctness or reduced duplication; report unrelated issues unless they block the work. Preserve the technical design's exclusions; do not add speculative features or abstractions.
+- Make a short working plan for nontrivial tasks; a persistent planning file is not routinely required.
+- Read-only Git inspection is allowed. Do not commit, push, create/switch branches, rewrite history, or revert others' changes without explicit authorization. Preserve unrelated user changes.
 
-## Autonomy and change scope
+## Toolchain and portability
 
-- Make local, easily reversible implementation decisions independently. Ask before decisions that materially affect architecture, user behavior, device compatibility, or future extensibility.
-- Use the minimum changes needed for the task. Small related refactorings are appropriate when they directly improve correctness or reduce duplication.
-- Do not implement future features as incidental additions. Preserve the deliberately excluded complexity listed in the technical design.
-- Do not fix unrelated issues automatically unless they block the task. A very local issue directly affecting changed code may be fixed; otherwise report it separately.
-- For nontrivial tasks, make a short working plan. No separate `PLANS.md`, ExecPlan, or persistent planning file is required.
-- Read-only Git inspection, including `git status` and `git diff`, is allowed. Do not commit, push, create or switch branches, rewrite history, or revert someone else's changes without an explicit request authorizing that action. Preserve unrelated user changes.
+- Use the official Garmin SDK, Monkey C, standard APIs, and project-template conventions while preserving the design's component boundaries. Builds/tests must work without a particular IDE. Third-party dependencies require substantial justification and explicit approval.
+- Follow [README commands](README.md#setup) and [development procedures](doc/development.md). Confirm test success from the printed summary, not process exit status. Do not invent commands or report unexecuted checks.
+- Consult current official Garmin documentation for unclear behavior. Before using an unfamiliar API, verify availability at the selected minimum API level and on Vivoactive 6, especially haptics, display, input, and lifecycle APIs. Use the lowest API level supporting the target and actual usage; third-party sources may supplement official documentation.
+- Prioritize correctness, Vivoactive 6 compatibility, simplicity, portability, then micro-optimizations.
+- Keep code, configuration, and commands portable: repository-relative project paths; documented environment variables (`CIQ_SDK`, `CIQ_KEY`) or documented `PATH` lookup for tools/credentials. Never embed usernames, home/checkout/SDK/key paths or commit secrets/local configuration.
+- State command working directory, shell/OS, SDK/device prerequisites, and missing dependencies. Quote path variables, support spaces, and do not assume an IDE, SDK Manager layout, or existing simulator/display session. Preserve environment-variable references in recorded commands; tested versions are evidence, not universal prerequisites.
+- Add only tooling required for the authorized task; portability alone does not justify frameworks, CI, or wrappers.
 
-## Toolchain and platform verification
+## Code and documentation
 
-- Use the official Garmin Connect IQ SDK and Monkey C. Builds and tests must work through SDK tools without depending on a particular IDE.
-- Follow official Connect IQ project-template conventions for source and resource organization, while preserving the logical component boundaries in the design. Its example filenames and directory layout are not contractual.
-- Use the established commands and prerequisites in [README setup](README.md#setup), [build](README.md#build), [unit tests](README.md#unit-tests), and [simulator](README.md#simulator), with detailed environment and transfer procedures in [development.md](doc/development.md). Confirm test success from the printed summary as documented there, not the process exit status. Do not invent commands or report unexecuted commands as checks.
-- Use standard Connect IQ APIs and SDK facilities. Add third-party dependencies only for a substantial reason and after explicit approval.
-- For unclear Garmin behavior, consult current official Garmin documentation rather than guessing. Third-party material may supplement it.
-- Before using an unfamiliar Connect IQ API, verify availability at the selected minimum API level and on Vivoactive 6, especially for haptics, backlight, input, and lifecycle behavior. Select the lowest API level supporting the target and all APIs actually used.
-- When multiple approaches are available, prioritize correctness, Vivoactive 6 compatibility, simplicity, portability to other devices, then micro-optimizations, in that order.
+- Follow existing Monkey C style with descriptive names and familiar abbreviations only. Prefer simple helpers for concrete responsibilities, reuse, or testing; retain required components.
+- Generate project documentation in Markdown and all development text/comments/diagnostics in English. Product localization follows its locale. Comments explain reasons, platform constraints, or non-obvious decisions.
+- Follow the technical design for state ownership, timing/configuration, resource-based text, shared drawing/hit-test geometry, type safety, memory, haptics, and system-owned display power. Introduce device-specific code only for a verified requirement.
+- Do not add checks for states ruled out by invariants. Handle actual API, capability, and lifecycle failures; recoverable haptics failures must preserve timer state. Avoid unnecessary callback work and allocation, without speculative optimization.
+- Introduce no compiler/analyzer warnings; report unrelated existing warnings instead of fixing them automatically.
+- Keep documentation focused on current behavior, constraints, reusable procedures, and verification limits. Store each decision in its authoritative document and link to it. Completed plans and superseded narratives belong in Git history; retain durable findings in current documentation.
 
-## Development environment portability
+## Verification and handoff
 
-- Keep all development code, configuration, commands, and documentation portable across developer machines and future CI environments. Do not embed usernames, home directories, checkout locations, SDK installation paths, signing-key paths, or other machine-specific environment values in repository files.
-- Use repository-relative paths for project files. Resolve external tools and credentials through documented environment variables, such as `CIQ_SDK` for the SDK root and `CIQ_KEY` for the developer signing-key file, or explicitly documented `PATH` lookup. Supply their values through the developer environment or CI configuration; do not commit keys or local environment configuration.
-- State the working directory, shell/OS requirements, and SDK/device-package prerequisites for commands. Quote path variables, support paths containing spaces, and report missing prerequisites clearly. Do not assume an IDE, a particular SDK Manager installation layout, or a preconfigured simulator/display session.
-- Keep recorded commands reusable by retaining environment-variable references and repository-relative paths. Tool/firmware versions may be recorded as verification evidence, without treating one machine's installed versions or packages as universal prerequisites.
-- Add only the build tooling needed for the authorized task. Portability alone is not a reason to introduce build frameworks, CI configuration, or wrapper scripts before they are needed.
+- Use [testing.md](doc/testing.md) for reusable coverage and [verification.md](doc/verification.md) for dated, artifact-specific results and limits. Historical acceptance never certifies later changes.
+- After production changes, run relevant unit tests when possible and build for Vivoactive 6; run the full suite when scope warrants it. Add/update meaningful tests for nontrivial testable logic in any component, using the Monkey C framework and fake clocks.
+- Cover affected timing boundaries, pause/resume, reset, duplicate prevention, delayed callbacks, completion priority/exactly-once effects, and rollover. Use simulator checks for applicable input/rendering/navigation/lifecycle behavior, not pixel-level drawing or vibration-profile unit tests.
+- Physical Vivoactive 6 checks are required for vibration feel, touch ergonomics, readability, display restrictions, hardware controls, and real exit/lifecycle behavior. Identify checks still requiring hardware when unavailable.
+- For documentation-only changes, check consistency, references, and the Git diff; application builds/runtime tests are not required. If required checks cannot run, perform available static checks and explain the limitation without claiming full verification.
+- Handoff requires implemented scope, relevant tests, passing available required checks, and no unresolved specification contradiction. Distinguish implementation completion from pending simulator/hardware acceptance.
 
-## Code and resources
-
-- Prefer simple code over speculative abstractions. Introduce helpers, services, or interfaces when they serve a concrete responsibility, reuse, or testing need; retain the components already required by the design.
-- Follow established Monkey C conventions and the existing project's style. For new code, use consistent, descriptive names and avoid abbreviations except familiar ones such as `ms` or `UI`.
-- All project documentation and other text generated as part of development must be in English, including code comments, README files, design notes, diagnostics, and commit-message drafts. Product localization resources are the exception: their language follows the locale. Generated project documents must be Markdown.
-- Comments should explain reasons, platform constraints, or non-obvious decisions rather than restating obvious code.
-- Load user-visible text through standard Connect IQ string resources. MVP resources contain English only. Format the stage label using both the current stage and the configured stage count; do not embed a literal `4` in its resource string.
-- Centralize timing configuration and derive stage count. Do not duplicate duration or stage-count literals across timer, UI, and haptics code.
-- Keep domain timing logic independent of drawing, vibration, and application-exit APIs. Preserve the single authoritative source of session state and elapsed time defined in the design.
-- Prefer relative layout and standard APIs over model-specific branches. Add device-specific code only when a verified requirement makes it necessary. Rendering and touch hit testing must share layout geometry.
-- Do not add defensive checks for states ruled out by established invariants. Handle actual limitations and failures at Garmin API, hardware-capability, and lifecycle boundaries; recoverable haptics failures must not corrupt timer state.
-- Respect watch memory and performance limits. Avoid clearly unnecessary allocations or work in frequent callbacks, but do not micro-optimize without a measurable reason. Do not log every tick. Leave backlight, brightness, and display wake entirely to system mechanisms as specified in the technical design.
-- Changes must not introduce compiler or analyzer warnings. Report unrelated existing warnings rather than automatically fixing them.
-
-## Verification
-
-- Use [testing.md](doc/testing.md) for reusable regression checklists. Record dated results and limits in [verification.md](doc/verification.md); historical acceptance applies only to the tested revision and environment, not to subsequent changes.
-- After production-code changes, run relevant unit tests whenever the environment permits. Run the full unit-test suite when changes are broad enough to warrant it, and build for the primary target.
-- Add or update meaningful unit tests for nontrivial logic that can reasonably be tested automatically, especially timer/domain behavior. This rule applies to all such logic, not only a class named `BrushingTimer`.
-- Use the Connect IQ Monkey C test framework and a fake clock. For timer changes, cover the affected cases from the technical design: boundaries, pause/resume, reset, duplicate prevention, delayed callbacks, completion priority and exactly-once handling, and clock rollover.
-- Do not create artificial pixel-level drawing tests or vibration-profile unit tests. Use the simulator for applicable navigation, input, rendering, and lifecycle checks when available.
-- Physical Vivoactive 6 checks are required for vibration feel, touch ergonomics, readability, screen/backlight restrictions, hardware controls, and real exit/lifecycle behavior. If hardware is unavailable, explicitly identify the checks still needing manual verification.
-- If a build or test cannot run, state what was not checked and why, perform the available static checks, and do not claim the change is fully verified.
-
-## Completion and final response
-
-A task is ready for handoff when the requested change is implemented, relevant tests are added or updated, available required tests and builds pass, and no known unresolved contradiction with the authoritative documents remains. Clearly distinguish implementation completion from outstanding simulator or hardware acceptance checks.
-
-Keep the final response concise and include:
-
-- what changed, including the relevant files;
-- tests and build checks actually run, with their results;
-- manual verification still needed;
-- unresolved issues or verification limitations, if any.
+Keep the final response concise: changed files/behavior, checks actually run and results, manual verification still needed, and unresolved issues or limits.
