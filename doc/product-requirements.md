@@ -4,7 +4,7 @@
 
 Toothbrush Timer is a Garmin Connect IQ watch app for two-minute brushing sessions, with visual progress, 30-second haptic cues, and a distinct completion signal. Garmin Vivoactive 6 is the primary development and acceptance device. The app is for personal use, with future publication kept practical.
 
-These requirements define current behavior. [Technical design](technical-design.md) defines implementation constraints, [UI design](design/ui-design.md) defines appearance, and [testing](testing.md) defines regression coverage.
+These requirements define required behavior. [Technical design](technical-design.md) defines implementation constraints, [UI design](design/ui-design.md) defines appearance, and [testing](testing.md) defines regression coverage. [Verification](verification.md) records implementation gaps and acceptance status.
 
 The app requires no configuration and has English resources only. Current scope excludes user-configurable timing or vibration, sound, settings screens, history/statistics, persistence, accounts, networking/cloud synchronization, reminders, achievements/streaks/gamification, animated toothbrush graphics, and multiple themes.
 
@@ -16,11 +16,13 @@ The app requires no configuration and has English resources only. Current scope 
 | Start | Enter RUNNING; continuously update remaining time, progress, and stage; offer Pause and Stop. |
 | Pause | Freeze elapsed/remaining time, stage, and exact progress; replace Pause with Resume. |
 | Resume | Continue from the exact paused position; paused time never counts toward brushing time. |
-| Stop | Before completion is reached, cancel immediately without confirmation and reset to READY. |
+| Stop | Before completion is reached, cancel immediately without confirmation, suppress any newly detected interval cue, and reset to READY. |
 | Completion | Stop brushing time, emit one three-pulse cue, replace countdown and controls with COMPLETED, then exit automatically after approximately three seconds. |
 | Back/system exit | Exit immediately in every state without confirmation, a new cue, or a new completion presentation. |
 
-Priority is **Back/system exit, then completion, then Pause/Stop or overdue interval cues**. If completion has been reached when Pause or Stop is processed, completion wins.
+Back/system exit takes priority over completion; completion takes priority over Pause, Stop, and overdue interval cues. If completion has been reached when Pause or Stop is processed, completion wins.
+
+Before completion, Stop suppresses any interval cue first detected while processing that action, including multiple overdue boundaries. Pause delivers at most one newly detected interval cue, subject to system restrictions, and preserves the exact paused position; Resume does not replay processed cues. Stop's suppression applies to new vibration requests, not a vibration already submitted by an earlier callback; cancellation does not wait for that vibration to finish.
 
 Exit and actual suspension/termination cancel pending callbacks and discard the session. No timing continues in the background, and callbacks belonging to a discarded session must not affect a new launch. System exit never waits for a submitted vibration or completion presentation to finish.
 

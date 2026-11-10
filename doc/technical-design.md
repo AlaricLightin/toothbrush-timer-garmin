@@ -55,7 +55,7 @@ The delegate owns one `Timer.Timer`, repeating at 250 ms while RUNNING and rearm
 2. Synchronizes the model with the clock and processes at most one result: `NONE`, `INTERVAL`, or `COMPLETION`.
 3. Requests `WatchUi.requestUpdate()` if the app remains active.
 
-Process each intermediate boundary at most once. When a delayed callback crosses several, emit one interval cue and mark all crossed boundaries processed: 29.8 → 60.2 seconds produces one cue. At or beyond completion, emit only COMPLETION; never replay overdue interval cues. Repeated observations cannot repeat an event.
+Process each intermediate boundary at most once. When a delayed callback crosses several, emit one interval cue and mark all crossed boundaries processed: 29.8 → 60.2 seconds produces one cue. Input handling applies the Stop suppression rule below before returning a cue to the delegate. At or beyond completion, emit only COMPLETION; never replay overdue interval cues. Repeated observations cannot repeat an event.
 
 ## Input and lifecycle
 
@@ -63,7 +63,12 @@ The delegate extends `WatchUi.BehaviorDelegate`. Touch uses the view's shared la
 
 Select can originate from a tap or Enter. Consuming `onSelect()` can prevent raw coordinate/key delivery. The current delegate returns false there and routes `onTap()` and `KEY_ENTER` separately, ensuring one action per input and no action outside controls. Verify delivery when changing input support ([Garmin behavior delegate](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/BehaviorDelegate.html)).
 
-Pause and Stop synchronize first. If completion is reached, handle it without applying the requested action. Otherwise Stop stops periodic updates, resets the model to READY, and requests a redraw.
+Pause and Stop synchronize first. If completion is reached, return COMPLETION and handle it without applying the requested action. Before completion:
+
+- For Stop, `BrushingTimer.handleAction()` discards any newly detected INTERVAL result, resets the model and boundary bookkeeping to READY defaults, and returns NONE. The delegate stops periodic updates and requests a redraw without submitting a new cue. This also applies when synchronization crosses several overdue interval boundaries.
+- For Pause, preserve the synchronized position and return the detected cue, if any. The delegate attempts at most one interval cue and stops periodic updates. Crossed boundaries remain processed so Resume cannot replay them.
+
+An interval vibration already submitted by an earlier callback is outside Stop's suppression rule; Stop neither waits for it nor attempts to retract it. These rules implement the [session behavior](product-requirements.md#session-behavior).
 
 Back/system exit has priority in every state, including the completion boundary. Without synchronizing the model or starting any new cue/presentation, stop pending updates/exit callbacks, discard the session, and exit immediately through the normal Connect IQ mechanism (or allow system closure). Never wait for a submitted vibration or presentation delay.
 

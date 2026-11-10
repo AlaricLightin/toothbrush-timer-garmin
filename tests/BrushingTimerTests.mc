@@ -185,17 +185,51 @@ function timerStopAndRestart(logger as Test.Logger) as Boolean {
 }
 
 (:test)
-function timerStopReturnsCrossedCue(logger as Test.Logger) as Boolean {
-    var clock = new FakeClock(88);
-    var timer = new BrushingTimer(TimerConfig.createDefault(), clock);
-    Test.assertEqual(timer.handleAction(BrushingTimer.START), BrushingTimer.NONE);
-    clock.advance(60010);
-    Test.assertEqual(timer.handleAction(BrushingTimer.STOP), BrushingTimer.INTERVAL);
-    BrushingTimerAssertions.assertValues(timer, BrushingTimer.READY, 0, 120000, 0.0, 1);
-    Test.assertEqual(timer.synchronize(), BrushingTimer.NONE);
-    Test.assertEqual(timer.handleAction(BrushingTimer.START), BrushingTimer.NONE);
-    clock.advance(30000);
-    Test.assertEqual(timer.synchronize(), BrushingTimer.INTERVAL);
+function timerStopAroundIntervals(logger as Test.Logger) as Boolean {
+    var startTimes = [88, 2147483600, -1];
+    for (var i = 0; i < startTimes.size(); i += 1) {
+        for (var boundary = 30000; boundary <= 90000; boundary += 30000) {
+            for (var offset = -1; offset <= 1; offset += 1) {
+                for (var processed = 0; processed <= 1; processed += 1) {
+                    var clock = new FakeClock(startTimes[i]);
+                    var timer = new BrushingTimer(TimerConfig.createDefault(), clock);
+                    Test.assertEqual(timer.handleAction(BrushingTimer.START), BrushingTimer.NONE);
+                    clock.advance(boundary + offset);
+                    if (processed == 1) {
+                        Test.assertEqual(timer.synchronize(), boundary + offset >= 30000 ?
+                            BrushingTimer.INTERVAL : BrushingTimer.NONE);
+                    }
+                    Test.assertEqual(timer.handleAction(BrushingTimer.STOP), BrushingTimer.NONE);
+                    BrushingTimerAssertions.assertValues(timer, BrushingTimer.READY, 0, 120000, 0.0, 1);
+                    Test.assertEqual(timer.synchronize(), BrushingTimer.NONE);
+                }
+            }
+        }
+    }
+    return true;
+}
+
+(:test)
+function timerStopDiscardsOverdueCues(logger as Test.Logger) as Boolean {
+    var stopTimes = [60010, 60200, 95000, 119999];
+    for (var i = 0; i < stopTimes.size(); i += 1) {
+        var clock = new FakeClock(88);
+        var timer = new BrushingTimer(TimerConfig.createDefault(), clock);
+        Test.assertEqual(timer.handleAction(BrushingTimer.START), BrushingTimer.NONE);
+        clock.advance(29800);
+        Test.assertEqual(timer.synchronize(), BrushingTimer.NONE);
+        clock.advance(stopTimes[i] - 29800);
+        Test.assertEqual(timer.handleAction(BrushingTimer.STOP), BrushingTimer.NONE);
+        BrushingTimerAssertions.assertValues(timer, BrushingTimer.READY, 0, 120000, 0.0, 1);
+        clock.advance(35000);
+        Test.assertEqual(timer.synchronize(), BrushingTimer.NONE);
+        Test.assertEqual(timer.handleAction(BrushingTimer.START), BrushingTimer.NONE);
+        clock.advance(29999);
+        Test.assertEqual(timer.synchronize(), BrushingTimer.NONE);
+        clock.advance(1);
+        Test.assertEqual(timer.synchronize(), BrushingTimer.INTERVAL);
+        Test.assertEqual(timer.synchronize(), BrushingTimer.NONE);
+    }
     return true;
 }
 

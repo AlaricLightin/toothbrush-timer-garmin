@@ -284,6 +284,44 @@ function delegateCompletionWinsPauseAndStop(logger as Test.Logger) as Boolean {
 }
 
 (:test)
+function delegateStopSuppressesIntervalCues(logger as Test.Logger) as Boolean {
+    var stopTimes = [29999, 30000, 30001, 60000, 60001, 60200, 90000, 90001, 95000, 119999];
+    for (var i = 0; i < stopTimes.size(); i += 1) {
+        for (var processed = 0; processed <= 1; processed += 1) {
+            var f = new DelegateFixture();
+            Test.assert(f.tap(f.view.layout.start));
+            f.clock.advance(stopTimes[i]);
+            if (processed == 1) {
+                f.delegate.onTimer();
+            }
+            var previousEffects = f.effects.size();
+            Test.assert(f.tap(f.view.layout.stop));
+            Test.assertEqual(f.timer.getState(), BrushingTimer.READY);
+            Test.assertEqual(f.timer.getRemainingMs(), 120000);
+            Test.assertEqual(f.effects.size(), previousEffects + 1);
+            Test.assertEqual(f.effects[previousEffects], "stop");
+            Test.assert(!f.delegate.updating);
+            Test.assertEqual(f.delegate.exitSchedules, 0);
+            f.clock.advance(35000);
+            f.delegate.onTimer();
+            Test.assertEqual(f.effects.size(), previousEffects + 1);
+            Test.assert(f.tap(f.view.layout.start));
+            f.clock.advance(29999);
+            f.delegate.onTimer();
+            Test.assertEqual(f.effects.size(), previousEffects + 1);
+            f.clock.advance(1);
+            f.delegate.onTimer();
+            Test.assertEqual(f.effects.size(), previousEffects + 2);
+            Test.assertEqual(f.effects[previousEffects + 1], "interval");
+            f.delegate.onTimer();
+            Test.assertEqual(f.effects.size(), previousEffects + 2);
+            f.delegate.cleanup();
+        }
+    }
+    return true;
+}
+
+(:test)
 function delegateStopPausedAndRestart(logger as Test.Logger) as Boolean {
     var f = new DelegateFixture();
     f.tap(f.view.layout.start);

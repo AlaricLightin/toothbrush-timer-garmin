@@ -1,8 +1,29 @@
 # Verification Baseline
 
-This is a condensed record of application checks performed on **2026-11-08**, not a new runtime verification run or certification of later changes. Use [testing.md](testing.md) for coverage and recording rules. Earlier implementation sequences and superseded evidence are available in Git history.
+This records application checks for specific revisions and artifacts. Use [testing.md](testing.md) for coverage and recording rules. The 2026-11-08 baseline below remains historical evidence, not certification of later changes. Earlier implementation sequences and superseded evidence are available in Git history.
 
-## Artifact and environment
+## Stop interval-cue suppression (2026-11-10)
+
+Implemented the approved [session behavior](product-requirements.md#session-behavior) and [input design](technical-design.md#input-and-lifecycle): `BrushingTimer.handleAction(STOP)` returns NONE after resetting, discarding newly detected interval cues before completion. Pause cue delivery and completion priority are preserved. Source: working tree over `fcda7e9d83bd2a6b3841ec8999d7ef9d2652f166`, changing `source/BrushingTimer.mc`, `tests/BrushingTimerTests.mc`, and `tests/DelegateTests.mc` alongside the approved documentation update.
+
+Checks ran from the repository root in Bash on Ubuntu 24.04.5 LTS, with OpenJDK 21.0.12.1, official SDK/compiler 9.2.0, the Vivoactive 6 device package, caller-supplied `CIQ_SDK`/`CIQ_KEY`, and the existing Distrobox simulator using the documented X11 workaround. No minimum API or device target changed.
+
+| Check | Result |
+| --- | --- |
+| Builds | README debug, test, and release commands each printed `BUILD SUCCESSFUL`, with Strict checking and no compiler/analyzer warnings. |
+| Full unit suite | README `monkeydo` command printed `Ran 62 tests` and `PASSED (passed=62, failed=0, errors=0)`. Launcher status was 1, as documented. New coverage includes Stop before/at/after all interval boundaries, processed/unprocessed cues, both clock wrap edges, overdue intervals, no stale cue in READY, and normal restart cues. Existing Pause, completion priority, delay, cancellation, failure, and lifecycle tests passed. |
+| Simulator touch integration | Three isolated probes copied current production components, injected a clock held at 29800 ms, and advanced it only when the next RUNNING touch was dispatched. At 30000 ms, Stop reset to READY with no interval/completion/vibration request; Pause requested one interval cue and one single-entry vibration call. At 120000 ms, Stop yielded to completion, one five-entry vibration call, and one automatic exit after the 3000 ms delay. All probe builds passed without compiler/analyzer warnings; all three launches exited cleanly. READY rendering after Stop was visually inspected. |
+| Review and static checks | Production diff and affected tests reviewed against the approved policy; no unresolved implementation defects found. `git diff --check`, local Markdown links/anchors, and code-fence balance passed. |
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Debug | `c9625895a6267c3c5e23822aaa6c392836fb8f3b730e3936d82691e5d1511e7b` |
+| Test | `5591cc3665c549f42a7d9acf093300d2568b6ca1c97947ea5a65ed1669c668c9` |
+| Release | `674e7b292515011b518aab215b8d77c736d5e77affaf68706b4a2f711f20e32d` |
+
+Implementation and available automated/simulator verification are complete. Physical Vivoactive 6 acceptance for this release remains pending: check Stop near interval boundaries, normal cues after restart, retained Pause cue behavior, and completion priority. A previously submitted vibration may still be felt after Stop; this does not establish a new request from Stop. Historical physical results below apply to the older release only. Probe sources, driver, logs, and captures are local ignored artifacts under `build/verification/stop-cue-suppression/`, unavailable in a fresh checkout.
+
+## Artifact and environment (2026-11-08 baseline)
 
 - Integrated regression: unchanged production code over `5f6f639`. Physical preparation: clean source revision `8cd11fa04b5ce3f5d01eec5e4d7c12286ad378e0`, with the same release hash.
 - Official Connect IQ SDK/compiler 9.2.0 (`2026-06-09-92a1605b2`), Strict checking; Vivoactive 6 package `eddc2840754f6d29c6c9a3ede43befdaadd25a09`, simulator API 6.0.3. Manifest minimum API 3.2.0; no other device was built/run.
@@ -16,7 +37,7 @@ This is a condensed record of application checks performed on **2026-11-08**, no
 | Test | `d12b15d7404dbd9e7f1114b757215a33cc8d6a78113180423f214cf7a30d148f` |
 | Release (25,948 bytes) | `af116369bdf09147de8f46fc29478031682c284458a728aeafb228cac11081dd` |
 
-## Automated and simulator results
+## Automated and simulator results (2026-11-08 baseline)
 
 | Check | Recorded result |
 | --- | --- |
@@ -31,7 +52,7 @@ This is a condensed record of application checks performed on **2026-11-08**, no
 
 Initial stalled/premature launches were retried after simulator restart/readiness and are not passes. Exhaustive simulator touch-edge/swipe delivery and interactive DND/sleep toggles were not rerun; automated geometry and suppression tests passed.
 
-## Physical results
+## Physical results (2026-11-08 baseline)
 
 All results below are **user-reported** for the identified release and configurations. No defects or tuning needs were reported; acceptance is complete for this scope.
 

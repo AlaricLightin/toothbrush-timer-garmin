@@ -39,8 +39,8 @@ class BrushingTimer {
         return synchronizeAt(_clock.nowMs());
     }
 
-    // Synchronize and apply input with the same sample, returning any crossed cue
-    // rather than consuming it inside a pause/stop helper. Completion wins input.
+    // Synchronize and apply input with the same sample. Completion wins input;
+    // cancellation discards interval cues, while Pause preserves them.
     function handleAction(action as Action) as Cue {
         var nowMs = _clock.nowMs();
         var cue = synchronizeAt(nowMs);
@@ -63,6 +63,7 @@ class BrushingTimer {
             _runStartedAtMs = 0;
             _elapsedMs = 0;
             _processedBoundary = 0;
+            return NONE;
         }
         return cue;
     }
