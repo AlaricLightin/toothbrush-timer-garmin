@@ -2,6 +2,23 @@
 
 This records application checks for specific revisions and artifacts. Use [testing.md](testing.md) for coverage and recording rules. The 2026-11-08 baseline below remains historical evidence, not certification of later changes. Earlier implementation sequences and superseded evidence are available in Git history.
 
+## Timer screen spacing (2026-11-22)
+
+Completed steps 1 and 2 of the [timer screen spacing plan](implementation-plan.md). In READY, RUNNING, and PAUSED, the toothbrush moved up 14 px, the countdown 9 px, and the stage label 5 px where shown on the 390 × 390 display. The control row stays at y = 269. The working tree over `4bb42903b64d765df718ba68fcafc8b3375d9b68` changes `source/TimerLayout.mc` and adds a geometry test in `tests/PresentationTests.mc`.
+
+Checks ran from the repository root in Bash on Ubuntu 24.04.5 LTS with OpenJDK 21.0.13.1, Connect IQ SDK 9.2.0, the Vivoactive 6 device package `eddc2840754f6d29c6c9a3ede43befdaadd25a09`, and caller-supplied `CIQ_SDK` and `CIQ_KEY`. Unit tests used the Vivoactive 6 simulator (API 6.0.3) in Distrobox with the [X11 workaround](development.md#simulator-troubleshooting).
+
+| Check | Result |
+| --- | --- |
+| Debug and test builds | Both printed `BUILD SUCCESSFUL` with Strict checking and no compiler or analyzer warnings. |
+| Full unit suite | `Ran 63 tests` and `PASSED (passed=63, failed=0, errors=0)`, including the new spacing test and existing control bounds and hit tests. |
+| Manual layout acceptance | Pending simulator inspection through Start, Pause, and Stop, and on-watch readability and ring clearance checks. |
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Debug | `6a872771ea5d8471ffbe9425e0e5d8590e72ba3a976e356f5365771aacc7b940` |
+| Test | `6fdd0419193fe7f446d32650d13b035ca7bea11070f06c7da0e470462fe31a17` |
+
 ## Stop interval-cue suppression (2026-11-10)
 
 Implemented the approved [session behavior](product-requirements.md#session-behavior) and [input design](technical-design.md#input-and-lifecycle): `BrushingTimer.handleAction(STOP)` returns NONE after resetting, discarding newly detected interval cues before completion. Pause cue delivery and completion priority are preserved. Source: working tree over `fcda7e9d83bd2a6b3841ec8999d7ef9d2652f166`, changing `source/BrushingTimer.mc`, `tests/BrushingTimerTests.mc`, and `tests/DelegateTests.mc` alongside the approved documentation update.

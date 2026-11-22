@@ -50,9 +50,9 @@ class TimerLayout {
         ringRadius = (size * 0.46).toNumber();
         ringWidth = (size * 0.025).toNumber();
         var innerRadius = ringRadius - (ringWidth + 1) / 2;
-        iconY = ringY - (innerRadius * 0.60).toNumber();
-        timeY = ringY - (innerRadius * 0.08).toNumber();
-        stageY = ringY + (innerRadius * 0.24).toNumber();
+        iconY = ringY - (innerRadius * 0.68).toNumber();
+        timeY = ringY - (innerRadius * 0.13).toNumber();
+        stageY = ringY + (innerRadius * 0.21).toNumber();
         completedIconY = ringY - (innerRadius * 0.32).toNumber();
         completionY = ringY + (innerRadius * 0.28).toNumber();
         // The lower outer corners stay inside the ring on a circular display.

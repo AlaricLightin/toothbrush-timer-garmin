@@ -52,6 +52,18 @@ function presentationUsesConfiguredStages(logger as Test.Logger) as Boolean {
 }
 
 (:test)
+function vivoactive6TimerLayoutSpacing(logger as Test.Logger) as Boolean {
+    var layout = new TimerLayout(390, 390);
+    Test.assertEqual(layout.timeY - layout.iconY, 96);
+    Test.assertEqual(layout.stageY - layout.timeY, 58);
+    Test.assertEqual(layout.start.y - layout.stageY, 38);
+    Test.assertEqual(layout.start.y, 269);
+    Test.assertEqual(layout.primary.y, layout.start.y);
+    Test.assertEqual(layout.stop.y, layout.start.y);
+    return true;
+}
+
+(:test)
 function controlGeometryHitTesting(logger as Test.Logger) as Boolean {
     var sizes = [240, 390, 454];
     for (var i = 0; i < sizes.size(); i += 1) {
