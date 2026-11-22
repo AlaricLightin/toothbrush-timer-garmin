@@ -14,6 +14,8 @@ Approved references:
 
 These images establish appearance, composition, and visual hierarchy, not pixel-perfect specifications. Generated gradients, shape inconsistencies, and approximate progress do not override this specification or functional requirements.
 
+The [shared layout](#shared-layout) defines vertical spacing in READY, RUNNING, and PAUSED.
+
 ## 2. Semantic Palette
 
 Use flat colors and reuse these semantic values throughout the interface and static artwork. The values establish a consistent palette rather than sampling every shade in the generated references.
@@ -33,9 +35,11 @@ Avoid gradients, shadows, glows, and extra decorative colors. Use the same accen
 
 ### Shared layout
 
-Use a black canvas. Place the progress ring near the circular screen edge with a safe inset so its stroke is not clipped. Size its radius, stroke, and gaps relative to available display dimensions. The ring surrounds the entire interface, including the bottom controls; it is not a small ring around the toothbrush.
+The progress ring sits near the edge of the black canvas. Its radius, stroke, and gaps scale with the available display dimensions. The full stroke fits on screen, and the ring encloses the bottom controls and their touch targets.
 
-Center content inside the ring: toothbrush in the upper interior, countdown near the center, stage label immediately below when applicable, then controls. Reserve clearance for buttons and touch targets on the curved display. Tune relative stroke/gap sizes, typography, and button dimensions to actual display and touch constraints; no model-specific layout variant is required.
+In READY, RUNNING, and PAUSED, the toothbrush and countdown are horizontally centered. Each keeps its vertical position across all three states. The toothbrush sits high inside the ring, with clear space above the toothpaste and below the handle. The center of the countdown sits slightly above the center of the ring.
+
+In RUNNING and PAUSED, the stage label is centered below the countdown, with distinct gaps between the countdown, label, and bottom controls. In READY, the stage-label space stays open and Start occupies the same row as Pause/Resume and Stop.
 
 ### Toothbrush
 
