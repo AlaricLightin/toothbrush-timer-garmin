@@ -84,3 +84,7 @@ Integrated logs/captures/probes were local ignored artifacts under `build/verifi
 ## Documentation checks (2026-11-08)
 
 Documentation-only working-tree cleanup over `5789ce8`: consistency/diff review, `git diff --check`, all 82 local links/anchors, code-fence balance, and `bash -n` on 13 Bash examples passed. Commands were syntax-checked, not executed. No application source, tests, resources, or build configuration changed; builds, unit tests, simulator, and hardware checks were not rerun or needed for this cleanup. The runtime evidence and limits above remain scoped to their original artifacts.
+
+## Model observation contract documentation (2026-11-10)
+
+Added the getter and single-clock-sample contract to technical design. Consistency review against `BrushingTimer` and the existing `timerSamplesAndObservation` test, local link/anchor checks in technical design and this record, and `git diff --check` passed. Documentation only; no builds or runtime tests were run or required, and existing runtime acceptance limits remain unchanged.

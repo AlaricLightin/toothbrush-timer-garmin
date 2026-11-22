@@ -40,6 +40,8 @@ COMPLETED is terminal: remaining brushing time is zero and progress is one. Its 
 
 Elapsed time comes from the injected clock, never callback counts. Calculate durations from `System.getTimer()` differences so rollover remains correct. Store accumulated time from completed RUNNING periods, the current run's start clock value, and the highest interval boundary processed.
 
+Model getters are side-effect-free: they neither sample the clock nor change state or cue bookkeeping, and return values derived from the last synchronization or action. The view reads these values without synchronizing the model. Each `synchronize()` or `handleAction()` call samples the clock once; input synchronization, completion priority, and the action transition use that same sample. The delegate handles the returned cue once.
+
 ```text
 elapsedMs   = accumulatedElapsed + elapsedSince(runStartedAt)  // while RUNNING
 remainingMs = max(totalDurationMs - elapsedMs, 0)
