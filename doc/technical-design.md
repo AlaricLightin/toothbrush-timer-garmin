@@ -2,7 +2,7 @@
 
 ## Platform and boundaries
 
-This document defines architecture and implementation constraints for the [product requirements](product-requirements.md). Use official Connect IQ project conventions and Monkey C. The manifest targets `vivoactive6` with minimum API `3.2.0`; API or device changes require verification under [AGENTS.md](../AGENTS.md). Retain the lowest API level supporting the target and APIs actually used, and avoid unnecessary device-specific assumptions.
+This document defines architecture and implementation constraints for the [product requirements](product-requirements.md). Use official Connect IQ project conventions and Monkey C. The [manifest product list](../manifest.xml) supplies the device IDs for Store export and release verification. Single-device builds default to `vivoactive6`. All targets use the same source, resources, and minimum API `3.2.0`. Verify API or device changes under [AGENTS.md](../AGENTS.md) and retain the lowest API level supporting actual usage. Garmin lists device capabilities in its [device reference](https://developer.garmin.com/connect-iq/device-reference/) and [API-level table](https://developer.garmin.com/connect-iq/compatible-devices/).
 
 ## Components and ownership
 

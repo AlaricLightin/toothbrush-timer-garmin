@@ -35,6 +35,7 @@ Before implementation, read [product requirements](doc/product-requirements.md) 
 
 - Use [testing.md](doc/testing.md) for reusable coverage and [verification.md](doc/verification.md) for dated, artifact-specific results and limits. Historical acceptance never certifies later changes.
 - After production changes, run relevant unit tests when possible and build for Vivoactive 6; run the full suite when scope warrants it. Add/update meaningful tests for nontrivial testable logic in any component, using the Monkey C framework and fake clocks.
+- Use Vivoactive 6 for routine feature checks. Before each Store release, complete the [release checklist](doc/testing.md#store-release-checklist) for every manifest product.
 - Cover affected timing boundaries, pause/resume, reset, duplicate prevention, delayed callbacks, completion priority/exactly-once effects, and rollover. Use simulator checks for applicable input/rendering/navigation/lifecycle behavior, not pixel-level drawing or vibration-profile unit tests.
 - Physical Vivoactive 6 checks are required for vibration feel, touch ergonomics, readability, display restrictions, hardware controls, and real exit/lifecycle behavior. Identify checks still requiring hardware when unavailable.
 - For documentation-only changes, check consistency, references, and the Git diff; application builds/runtime tests are not required. If required checks cannot run, perform available static checks and explain the limitation without claiming full verification.

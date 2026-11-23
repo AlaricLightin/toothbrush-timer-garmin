@@ -1,6 +1,6 @@
 # Toothbrush Timer
 
-A Garmin Connect IQ app for Vivoactive 6 that times two minutes of brushing, gives short cues at 30, 60, and 90 seconds, and ends with three vibration pulses.
+A Garmin Connect IQ app that times two minutes of brushing, gives short cues at 30, 60, and 90 seconds, and ends with three vibration pulses. Vivoactive 6 is the primary development and physical acceptance device. See the [device support policy](doc/product-requirements.md#device-support).
 
 ## Setup
 
@@ -21,7 +21,7 @@ bash scripts/build.sh test     # build/ToothbrushTimer-test.prg
 bash scripts/build.sh release  # build/ToothbrushTimer-release.prg
 ```
 
-All modes target `vivoactive6` with Strict checking and warnings enabled. Use the output only after a successful build. A failed build can leave an older PRG in place.
+All modes build one device with Strict checking and warnings enabled. For a particular profile, install its device package and fonts, then supply the ID from [manifest.xml](manifest.xml) as the second argument. For example, `bash scripts/build.sh debug fr165m` writes `build/fr165m/ToothbrushTimer.prg`. Omitting the ID uses the Vivoactive 6 paths above. Use the output only after a successful build. A failed build can leave an older PRG in place.
 
 ## Simulator
 
@@ -48,6 +48,16 @@ With the simulator running, enable vibration and disable Do Not Disturb for the 
 ```
 
 Confirm the expected test count and a printed `PASSED` summary with zero failures and errors. The SDK 9.2.0 Unix launcher returned status 1 for both passing and failing runs.
+
+## Before a Store release
+
+From the repository root in Bash on Ubuntu, install the device packages and fonts for **every manifest product** in Garmin SDK Manager. The compiler reads the full manifest even for a single-device build and may warn about missing profiles. Set `CIQ_SDK` and `CIQ_KEY` as above, ensure Python 3 is available, and start the simulator with vibration enabled and Do Not Disturb off.
+
+```bash
+python3 scripts/check-release.py
+```
+
+This opt-in command builds debug and test PRGs in `build/<device>/`, runs the full test suite sequentially on each product, and prints a per-device summary. Complete the [release checklist](doc/testing.md#store-release-checklist) for manual simulator checks, Vivoactive 6 hardware acceptance, and Store export.
 
 ## Development
 

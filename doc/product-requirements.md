@@ -2,7 +2,7 @@
 
 ## Scope
 
-Toothbrush Timer is a Garmin Connect IQ watch app for two-minute brushing sessions, with visual progress, 30-second haptic cues, and a distinct completion signal. Garmin Vivoactive 6 is the primary development and acceptance device. The app is for personal use, with future publication kept practical.
+Toothbrush Timer is a Garmin Connect IQ watch app for two-minute brushing sessions, with visual progress, 30-second haptic cues, and a distinct completion signal. Garmin Vivoactive 6 is the primary development and physical acceptance device.
 
 These requirements define required behavior. [Technical design](technical-design.md) defines implementation constraints, [UI design](design/ui-design.md) defines appearance, and [testing](testing.md) defines regression coverage. [Verification](verification.md) records implementation gaps and acceptance status.
 
@@ -64,7 +64,7 @@ Load all user-visible text through standard Connect IQ string resources, current
 
 ## Device support
 
-Vivoactive 6 is mandatory. Additional devices may be supported when the required APIs, display geometry, and interaction model work without a dedicated redesign or significant complexity. Prefer a maintainable common implementation over device-specific views; supporting all legacy devices is not required.
+The [manifest](../manifest.xml) lists the Connect IQ Store targets. They share a round 390 × 390 touchscreen and use the same application and controls. Routine feature verification uses Vivoactive 6. Each Store release requires simulator acceptance for every listed product, including each Music edition. Physical acceptance uses Vivoactive 6 only. Record hardware coverage on the other models as untested. See the [release checklist](testing.md#store-release-checklist).
 
 ## Possible extensions
 

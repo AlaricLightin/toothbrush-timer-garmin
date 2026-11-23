@@ -6,16 +6,23 @@ fail() {
     exit 1
 }
 
-if [[ $# -gt 1 ]]; then
-    fail "Usage: bash scripts/build.sh [debug|release|test]"
+usage="Usage: bash scripts/build.sh [debug|release|test] [device]"
+if [[ $# -gt 2 ]]; then
+    fail "$usage"
 fi
 
 mode="${1:-debug}"
+device="${2-vivoactive6}"
+[[ "$device" =~ ^[a-z0-9_]+$ ]] || fail "Invalid device ID: $device"
+output_dir="build"
+if [[ $# -eq 2 ]]; then
+    output_dir="build/$device"
+fi
 case "$mode" in
-    debug) output="build/ToothbrushTimer.prg"; flags=() ;;
-    release) output="build/ToothbrushTimer-release.prg"; flags=(-r) ;;
-    test) output="build/ToothbrushTimer-test.prg"; flags=(-t) ;;
-    *) fail "Usage: bash scripts/build.sh [debug|release|test]" ;;
+    debug) output="$output_dir/ToothbrushTimer.prg"; flags=() ;;
+    release) output="$output_dir/ToothbrushTimer-release.prg"; flags=(-r) ;;
+    test) output="$output_dir/ToothbrushTimer-test.prg"; flags=(-t) ;;
+    *) fail "$usage" ;;
 esac
 
 [[ -f monkey.jungle && -f manifest.xml ]] || fail "Run from the repository root."
@@ -25,10 +32,10 @@ esac
 [[ -f "$CIQ_KEY" && -r "$CIQ_KEY" ]] || fail "CIQ_KEY must name a readable signing-key file."
 command -v java >/dev/null 2>&1 || fail "Install a compatible Java runtime and put java on PATH."
 
-mkdir -p build
+mkdir -p "$output_dir"
 
 # SVG resource compilation uses Java AWT, but does not need a desktop display.
 # Scope headless mode to the compiler so simulator launch remains graphical.
 JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:+$JAVA_TOOL_OPTIONS }-Djava.awt.headless=true" \
-    "$CIQ_SDK/bin/monkeyc" -f monkey.jungle -d vivoactive6 \
+    "$CIQ_SDK/bin/monkeyc" -f monkey.jungle -d "$device" \
     -o "$output" -y "$CIQ_KEY" -w "${flags[@]}"

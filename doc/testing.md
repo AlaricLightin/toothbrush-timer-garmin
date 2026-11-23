@@ -74,9 +74,33 @@ keep-awake requests, including Start/Resume and cleanup.
 
 Record **pass**, **fail**, or **not run**, with evidence and reason. Simulator request logs cannot certify motor feel, AMOLED behavior, touch ergonomics, or the real watch's exit destination.
 
+## Store release checklist
+
+Use this checklist for each Store release candidate. During feature development, run affected cases on Vivoactive 6 and use another profile on demand for a device-specific change.
+
+1. From the repository root in Bash on Ubuntu, follow the [release setup and command](../README.md#before-a-store-release). Run it against one revision with all manifest profiles installed. Require a successful build and a full passing test summary for each product. Review compiler warnings. A missing profile, failed build, incomplete suite, or unavailable simulator leaves the release check incomplete. Keep `EXPECTED_TESTS` in the release script in sync when adding or removing tests.
+2. For **each device ID in the manifest**, launch its debug PRG in the running simulator. For example:
+
+   ```bash
+   device=fr165m
+   "$CIQ_SDK/bin/monkeydo" "build/$device/ToothbrushTimer.prg" "$device"
+   ```
+
+   Check READY at `2:00`, artwork and text fit, and the shared control row. Exercise Start, Pause, Resume, Stop, and restart by touch. Check primary-button actions fire once, Back exits, and relaunch opens in READY. Run a session through all four stages and check the interval requests, full ring, completion message, one completion pattern, and automatic exit. Use the [manual matrix](#manual-acceptance-matrix) for expected behavior and additional cases affected by the release.
+3. Run the affected physical checks on Vivoactive 6 using the [release PRG and watch procedure](development.md#watch-installation-and-acceptance). For the additional products, simulator acceptance is sufficient for publication. Record physical checks as **not run**. Motor feel, touch ergonomics, on-wrist readability, display restrictions, hardware controls, and actual exit behavior are verified only on watches exercised.
+4. In [verification.md](verification.md), record the candidate revision, SDK, date, and one row per manifest ID with its artifact hashes, automated result, manual simulator result, and hardware result or limit. Give each Music variant its own row. Resolve failed or missing required checks before export.
+5. Export the Store package from the checked revision with the same SDK, device profiles, and signing key. Use the README environment from the repository root:
+
+   ```bash
+   JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:+$JAVA_TOOL_OPTIONS }-Djava.awt.headless=true" \
+       "$CIQ_SDK/bin/monkeyc" -e -r -f monkey.jungle -o build/ToothbrushTimer.iq -y "$CIQ_KEY" -w
+   ```
+
+   Confirm the compiler built every manifest product and printed `BUILD SUCCESSFUL`. Record the package hash with `sha256sum build/ToothbrushTimer.iq`. This signed multi-product package is the [Store submission artifact](https://developer.garmin.com/connect-iq/submit-an-app/).
+
 ## Platform regression notes
 
-- After resource or API changes, check drawable loading, the manifest API minimum, and support on each target device. See [rendering and resources](technical-design.md#rendering-and-resources).
+- After resource or API changes, check drawable loading, the manifest API minimum, and the documented capabilities of affected devices. Exercise all targets during the release checklist. See [rendering and resources](technical-design.md#rendering-and-resources).
 - Test DND, System and Alert vibration switches independently, including recovery. Record which switches were set. Firmware-specific results are in [platform observations](verification.md#platform-observations).
 - Check release of timer callbacks and object references. Exercise actual suspension or termination separately from display blanking, view hiding, or an interruption overlay.
 
