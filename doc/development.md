@@ -1,9 +1,7 @@
 # Development Setup and Troubleshooting
 
 Use the [README setup](../README.md#setup) prerequisites and caller-supplied environment variables.
-Commands run from the repository root in **Bash on Ubuntu Linux**. Build and
-`monkeydo` commands run on the host; simulator launch needs a graphical desktop.
-Versions below describe verified examples, not universal prerequisites.
+All commands use Bash on the Ubuntu host from the repository root.
 
 ## Signing key
 
@@ -62,7 +60,9 @@ After launch, follow [Run the app from the host](../README.md#run-the-app-from-t
 
 ## Simulator troubleshooting
 
-For connection/display failures, check simulator readiness, the shared SDK,
+For native launch failures, run `ldd "$CIQ_SDK/bin/simulator"` and resolve any
+`not found` libraries or use the [Distrobox setup](#distrobox-simulator).
+For connection or display failures, check simulator readiness, the shared SDK,
 host networking, and desktop integration. If GTK/GIO errors reference host-only
 module paths, relaunch with this scoped workaround in an X11/XWayland session:
 
@@ -103,17 +103,12 @@ toothbrush icon, `2:00`, and Start, with no automatic countdown.
 Work through the [manual acceptance matrix](testing.md#manual-acceptance-matrix)
 and record the artifact hash, watch firmware, relevant display/haptic/power
 settings, observations, and outstanding checks in [verification](verification.md).
-Copying a PRG does not establish successful on-watch launch or physical acceptance.
 
 ## Command-line MTP transfer
 
-Build the release and record its hash using the
-[installation instructions](#watch-installation-and-acceptance).
-Connect the watch with a USB data cable and open it in Ubuntu Files.
-
-For a first installation through the command line, Ubuntu's desktop session
-must have working GVfs MTP support and the watch must already be mounted in
-Files. Discover its actual `mtp://.../` URI:
+For a first install, build the release and connect the watch as
+[described above](#watch-installation-and-acceptance). With GVfs MTP support
+and the watch mounted in Files, discover its `mtp://.../` URI:
 
 ```bash
 env -u GIO_MODULE_DIR -u GIO_EXTRA_MODULES gio mount -l
@@ -129,11 +124,9 @@ env -u GIO_MODULE_DIR -u GIO_EXTRA_MODULES gio copy -i \
     < /dev/null
 ```
 
-This first-install command declines overwrite prompts; it does not update an
-existing copy. For later replacements, use Files and confirm replacement of
-only this app's PRG. Unsetting the two GIO module variables is scoped to each
-command; an inherited Snap module path prevented MTP access during verification.
-Ordinary filesystem copying through the GVfs mount returned `Operation not
-supported`; the GIO MTP transfer succeeded.
+The command declines overwrite prompts. Use Files for updates. If a GVfs copy
+reports `Operation not supported`, use the GIO transfer above. Clearing the
+two GIO variables for each command avoids inherited Snap module paths that
+can prevent MTP access.
 
-Finish with the [read-back, eject, launch, and acceptance checks](#watch-installation-and-acceptance). A successful transfer alone does not establish physical acceptance.
+Finish with the [read-back, eject, launch, and acceptance checks](#watch-installation-and-acceptance).

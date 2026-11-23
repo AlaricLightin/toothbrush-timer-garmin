@@ -76,35 +76,12 @@ Record **pass**, **fail**, or **not run**, with evidence and reason. Simulator r
 
 ## Platform regression notes
 
-- Clock: use time differences across rollover, not absolute deadlines
-  ([clock API](https://developer.garmin.com/connect-iq/api-docs/Toybox/System.html#getTimer-instance_function)).
-- Rendering: include zero/tiny arcs and near completion in previews.
-  Equal arc angles draw a full circle; check integer-angle
-  truncation and handle full progress separately ([arc API](https://developer.garmin.com/connect-iq/api-docs/Toybox/Graphics/Dc.html#drawArc-instance_function)).
-- Input: Select consumption can prevent raw input delivery
-  ([behavior delegate](https://developer.garmin.com/connect-iq/api-docs/Toybox/WatchUi/BehaviorDelegate.html)).
-- Resources/API changes: check drawable loading, actual API minimum, and target
-  support. The baseline uses `WatchUi.Bitmap` so the platform handles underlying
-  bitmap types. Compilation and an API 6.0.3 simulator do not certify older devices.
-- Settings: test DND and the System/Alert vibration switches independently,
-  including restoration, sleep, and power modes. Record actual settings instead
-  of assuming which physical switch maps to an API flag. Baseline observations
-  are in [verification](verification.md#platform-observations).
-- Ownership/lifecycle: check release of timer callbacks and object references.
-  Distinguish display-off operation, view hiding, and interruption overlays from
-  actual app suspension/termination.
+- After resource or API changes, check drawable loading, the manifest API minimum, and support on each target device. See [rendering and resources](technical-design.md#rendering-and-resources).
+- Test DND, System and Alert vibration switches independently, including recovery. Record which switches were set. Firmware-specific results are in [platform observations](verification.md#platform-observations).
+- Check release of timer callbacks and object references. Exercise actual suspension or termination separately from display blanking, view hiding, or an interruption overlay.
 
 ## Recording results
 
-Maintain a compact, dated baseline in [verification.md](verification.md), identifying the change,
-source revision/working-tree changes, artifact hash, SDK/device/firmware/settings,
-checks actually rerun, results, and remaining limits. Separate automated,
-simulator, and user-reported physical evidence. Link reusable commands instead
-of duplicating them. Historical acceptance applies only to its tested revision
-and environment; do not carry a previous pass forward as a new test result.
+Keep a compact, dated [verification baseline](verification.md). Identify the change, source revision or working-tree changes, artifact hash, SDK, device, firmware, and relevant settings. Record automated, simulator, and user-reported watch results separately, including which checks ran and what remains unverified. Link to reusable commands.
 
-Retain earlier results only where needed to explain still-applicable evidence or
-coverage limits, with their original revision/date. Remove superseded narratives
-after moving durable findings into the appropriate design, testing, or development
-document; Git preserves committed history. Never replace broad prior coverage
-with a claim that a narrow follow-up rechecked everything.
+Retain earlier evidence only for coverage or limits that still matter, with its original date and artifact. A focused follow-up establishes only the cases it exercised. Git preserves superseded records.

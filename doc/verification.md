@@ -1,123 +1,43 @@
-# Verification Baseline
+# Verification baseline
 
-This records application checks for specific revisions and artifacts. Use [testing.md](testing.md) for coverage and recording rules. The 2026-11-08 baseline below remains historical evidence, not certification of later changes. Earlier implementation sequences and superseded evidence are available in Git history.
+Each result applies to the identified Vivoactive 6 artifact and environment. Use the [regression checklists](testing.md) for future changes.
 
-## Timer screen spacing (2026-11-22)
+## Timer layout and Stop behavior, 2026-11-22 to 2026-11-23
 
-The [shared timer layout](design/ui-design.md#shared-layout) passed simulator and on-wrist acceptance. In READY, RUNNING, and PAUSED, the toothbrush moved up 14 px, the countdown 9 px, and the stage label 5 px where shown on the 390 × 390 display. The control row stays at y = 269. The layout change and geometry test were committed in `071df11c61a278905abd1528150acf0cc58de583`. The debug and test builds used those changes in the working tree over `4bb42903b64d765df718ba68fcafc8b3375d9b68`.
-
-Checks ran from the repository root in Bash on Ubuntu 24.04.5 LTS with OpenJDK 21.0.13.1, Connect IQ SDK 9.2.0, the Vivoactive 6 device package `eddc2840754f6d29c6c9a3ede43befdaadd25a09`, and caller-supplied `CIQ_SDK` and `CIQ_KEY`. Unit tests used the Vivoactive 6 simulator (API 6.0.3) in Distrobox with the [X11 workaround](development.md#simulator-troubleshooting).
+The debug and test builds used the layout and geometry-test changes later committed as `071df11`, built over `4bb4290`. The host ran Ubuntu 24.04.5, OpenJDK 21.0.13.1, and Connect IQ SDK 9.2.0. Unit tests ran in the Vivoactive 6 simulator (API 6.0.3) in Distrobox.
 
 | Check | Result |
 | --- | --- |
-| Debug and test builds | Both printed `BUILD SUCCESSFUL` with Strict checking and no compiler or analyzer warnings. |
-| Full unit suite | `Ran 63 tests` and `PASSED (passed=63, failed=0, errors=0)`, including the new spacing test and existing control bounds and hit tests. |
-| Simulator layout (2026-11-23) | Pass, user-reported. Through READY → RUNNING → PAUSED → READY, the toothbrush and countdown stayed in place, the controls stayed on the same row, and the stage label appeared with visible gaps in RUNNING and PAUSED and cleared on Stop. |
-| Physical Vivoactive 6 layout (2026-11-23) | Pass, user-reported on firmware 19.23 with always-on display and battery saver off. On the wrist in READY, RUNNING, and PAUSED, the toothbrush cleared the ring, gaps between elements were visible, and the countdown and stage label were readable at a glance where shown. |
+| Strict debug and test builds | Both printed `BUILD SUCCESSFUL` without warnings. The full suite printed `PASSED (passed=63, failed=0, errors=0)`, including layout geometry and hit tests. |
+| Simulator layout, user-reported | Across READY → RUNNING → PAUSED → READY, the toothbrush, time, and control row stayed in place. The stage label appeared with visible gaps and cleared on Stop. The local debug hash matched the record. The loaded PRG was not independently identified. |
+| On-wrist layout, user-reported | On firmware 19.23 with always-on display and battery saver off, the toothbrush cleared the ring and gaps between elements were visible in READY, RUNNING, and PAUSED. The countdown and stage label were readable at a glance wherever shown. Brightness and ambient lighting were unreported. |
+| On-wrist input, same release, user-reported | Stop near an interval reset immediately without an extra pulse. Restart delivered all three interval cues. Pause/Resume preserved the stage without replay. Stop at displayed `0:01` reset silently. Tapping the former Stop position once completion began allowed all three pulses and automatic exit. Exact callback order was unmeasured. |
 
 | Artifact | SHA-256 |
 | --- | --- |
 | Debug | `6a872771ea5d8471ffbe9425e0e5d8590e72ba3a976e356f5365771aacc7b940` |
 | Test | `6fdd0419193fe7f446d32650d13b035ca7bea11070f06c7da0e470462fe31a17` |
-| Release (physical layout check) | `fb546c61d25edc7ebb8528f09f9d77b70b107660fc848a22982844b78ea687cd` |
+| Release used for both watch checks | `fb546c61d25edc7ebb8528f09f9d77b70b107660fc848a22982844b78ea687cd` |
 
-The local debug file matched the recorded hash on 2026-11-23. The simulator walkthrough did not independently identify the loaded file.
+The reported release hash matched the local PRG. Watch-file read-back was unreported.
 
-The reported release hash matched the local `build/ToothbrushTimer-release.prg`. Watch-file read-back, brightness, and ambient lighting were unreported.
+## Exact Stop and Pause boundaries, 2026-11-10
 
-## Physical Stop interval-cue check (2026-11-23)
+SDK 9.2.0 debug, test, and release builds passed Strict checking without warnings for the changes over `fcda7e9` committed as `003d03b`. The full suite printed `PASSED (passed=62, failed=0, errors=0)` (test PRG SHA-256 `5591cc3665c549f42a7d9acf093300d2568b6ca1c97947ea5a65ed1669c668c9`).
 
-Pass for the observed behavior, user-reported on Vivoactive 6 firmware 19.23 with the same installed release as the [physical layout check](#timer-screen-spacing-2026-11-22).
+Three injected-clock simulator probes made touch the first handler to observe a boundary. At 30,000 ms, Stop reset without a vibration request and Pause requested one interval pulse. At 120,000 ms, Stop yielded to the five-entry completion vibration and one automatic exit after the three-second delay.
 
-- **Stop and restart.** Two taps at displayed `1:31` returned immediately to `2:00`, with no pulse around the tap or while READY. A tap as the second interval pulse began also reset immediately, with no separate pulse afterward. A restarted run delivered all three normal interval cues.
-- **Pause and Resume.** A Pause at `1:31` in Stage 1 held the timer without a pulse. After Resume, one pulse accompanied Stage 2. Pausing after that boundary held Stage 2, and Resume continued without replaying the pulse.
-- **Completion.** A tap at displayed `0:01` reset to `2:00` without vibration. A tap at the former Stop position as completion began left `Nice job!` visible until automatic exit, with all three completion pulses felt.
+## Full-session baseline, 2026-11-08
 
-The manual taps verified behavior around the boundaries. Exact input and timer callback ordering was unmeasured on the watch. The [earlier simulator probes](#stop-interval-cue-suppression-2026-11-10) cover input as the first handler to observe an exact boundary on their tested revision.
+SDK 9.2.0 Strict debug, test, and release builds passed without warnings on unchanged production code over `5f6f639`. The suite printed `PASSED (passed=60, failed=0, errors=0)`. The physical check used the matching release prepared at `8cd11fa` (SHA-256 `af116369bdf09147de8f46fc29478031682c284458a728aeafb228cac11081dd`, no watch-file read-back reported).
 
-## Stop interval-cue suppression (2026-11-10)
+- **Simulator (API 6.0.3).** Rendering, input, and a full timed session passed, with three interval requests, one completion pattern, and one exit. Injected-clock checks exercised Back, Pause, and Stop at the completion boundary. Kill App in RUNNING and COMPLETED cancelled pending work and relaunch opened in READY.
+- **Watch (firmware 18.32, user-reported).** Launcher, touch and button controls, pause/resume, Stop, three-pulse completion, automatic exit, Back, and fresh relaunch passed. Timing and cues continued through dimming, a black screen, and an alarm overlay. The watch had exited when checked at 2:08 in the black-screen session. Baseline settings were an eight-second timeout, always-on display off, low brightness, gesture wake and Alert vibration on, and DND, sleep, and battery saver off.
 
-Implemented the approved [session behavior](product-requirements.md#session-behavior) and [input design](technical-design.md#input-and-lifecycle): `BrushingTimer.handleAction(STOP)` returns NONE after resetting, discarding newly detected interval cues before completion. Pause cue delivery and completion priority are preserved. Source: working tree over `fcda7e9d83bd2a6b3841ec8999d7ef9d2652f166`, changing `source/BrushingTimer.mc`, `tests/BrushingTimerTests.mc`, and `tests/DelegateTests.mc` alongside the approved documentation update.
+### Platform observations
 
-Checks ran from the repository root in Bash on Ubuntu 24.04.5 LTS, with OpenJDK 21.0.12.1, official SDK/compiler 9.2.0, the Vivoactive 6 device package, caller-supplied `CIQ_SDK`/`CIQ_KEY`, and the existing Distrobox simulator using the documented X11 workaround. No minimum API or device target changed.
+- On firmware 18.32, System vibration off with Alert on allowed cues. System on with Alert off suppressed them. Both on restored them. DND suppressed cues while timing and exit continued. The both-off combination was not retested on this release, and the API's `vibrateOn` flag was not sampled.
+- The tested interval pulse was 250 ms at 100% duty. All three 170 ms completion pulses at 75% duty, separated by 120 ms pauses, were perceptible before automatic exit.
+- In both the sleep-mode and battery-saver checks, the timer continued, the watch delivered its cues, and the app exited automatically after completion. Sleep mode prevented gesture wake. The display stayed dimmed in battery saver, leaving saver gesture wake unverified. With the screen black, the upper button woke and started READY, a center touch woke RUNNING without activating a control, and the lower button exited RUNNING.
 
-| Check | Result |
-| --- | --- |
-| Builds | README debug, test, and release commands each printed `BUILD SUCCESSFUL`, with Strict checking and no compiler/analyzer warnings. |
-| Full unit suite | README `monkeydo` command printed `Ran 62 tests` and `PASSED (passed=62, failed=0, errors=0)`. Launcher status was 1, as documented. New coverage includes Stop before/at/after all interval boundaries, processed/unprocessed cues, both clock wrap edges, overdue intervals, no stale cue in READY, and normal restart cues. Existing Pause, completion priority, delay, cancellation, failure, and lifecycle tests passed. |
-| Simulator touch integration | Three isolated probes copied current production components, injected a clock held at 29800 ms, and advanced it only when the next RUNNING touch was dispatched. At 30000 ms, Stop reset to READY with no interval/completion/vibration request; Pause requested one interval cue and one single-entry vibration call. At 120000 ms, Stop yielded to completion, one five-entry vibration call, and one automatic exit after the 3000 ms delay. All probe builds passed without compiler/analyzer warnings; all three launches exited cleanly. READY rendering after Stop was visually inspected. |
-| Review and static checks | Production diff and affected tests reviewed against the approved policy; no unresolved implementation defects found. `git diff --check`, local Markdown links/anchors, and code-fence balance passed. |
-
-| Artifact | SHA-256 |
-| --- | --- |
-| Debug | `c9625895a6267c3c5e23822aaa6c392836fb8f3b730e3936d82691e5d1511e7b` |
-| Test | `5591cc3665c549f42a7d9acf093300d2568b6ca1c97947ea5a65ed1669c668c9` |
-| Release | `674e7b292515011b518aab215b8d77c736d5e77affaf68706b4a2f711f20e32d` |
-
-Implementation and available automated/simulator verification are complete. The [physical Stop check](#physical-stop-interval-cue-check-2026-11-23) used a later release. An already submitted vibration may still be felt after Stop. Historical physical results below apply to the older release only. Probe sources, driver, logs, and captures are local ignored artifacts under `build/verification/stop-cue-suppression/`, unavailable in a fresh checkout.
-
-## Artifact and environment (2026-11-08 baseline)
-
-- Integrated regression: unchanged production code over `5f6f639`. Physical preparation: clean source revision `8cd11fa04b5ce3f5d01eec5e4d7c12286ad378e0`, with the same release hash.
-- Official Connect IQ SDK/compiler 9.2.0 (`2026-06-09-92a1605b2`), Strict checking; Vivoactive 6 package `eddc2840754f6d29c6c9a3ede43befdaadd25a09`, simulator API 6.0.3. Manifest minimum API 3.2.0; no other device was built/run.
-- Ubuntu 24.04.5 LTS host, Bash, OpenJDK 21.0.12.1; Ubuntu 22.04 Distrobox simulator under X11/XWayland. These identify tested environments, not universal prerequisites.
-- Physical Vivoactive 6 firmware **18.32**. Baseline: Alert vibration on; DND, sleep, and battery saver off; timeout 8 seconds, always-on display off, gesture wake on, low brightness.
-- Physical installation and observations were user-reported from another PC. The supplied release hash matched; watch-file read-back was not reported.
-
-| Artifact | SHA-256 |
-| --- | --- |
-| Debug | `1c7afd91b5ec70b4ef0dc3853647623b4c09ffe0f6934832ade3a2bbbbc09166` |
-| Test | `d12b15d7404dbd9e7f1114b757215a33cc8d6a78113180423f214cf7a30d148f` |
-| Release (25,948 bytes) | `af116369bdf09147de8f46fc29478031682c284458a728aeafb228cac11081dd` |
-
-## Automated and simulator results (2026-11-08 baseline)
-
-| Check | Recorded result |
-| --- | --- |
-| Strict debug/test/release builds | All printed `BUILD SUCCESSFUL`, without compiler/analyzer warnings. Release build repeated during physical preparation; tests/simulator were not repeated then because source/artifact were unchanged. |
-| Unit tests | `Ran 60 tests`; `PASSED (passed=60, failed=0, errors=0)`. Includes boundaries/rollover, geometry/input, scheduling/failure/cancellation, lifecycle, and weak-reference release after 40 SDK timer cycles in each ownership mode. Launcher status was 1; the summary establishes the pass. |
-| Rendering and input | Production debug/release launch and control smoke checks passed; compiled launcher bitmap loaded/rendered. Full session showed correct states, segments, pause colors, completion message, and inactive completed controls. |
-| Full-duration diagnostic session | Unchanged production components with real SDK clock/timers/vibration/exit: interval requests at 30001/60198/90198 ms active time, completion about 198 ms late after a 6012 ms pause; exactly three interval calls and one five-entry completion call. One exit after a 3002 ms delay. |
-| Completion/input boundaries | Eight injected-clock simulator cases with real input passed at 119999/120000 ms. Pause/Stop/primary action yielded to completion when due; Back bypassed synchronization/cue/presentation. Back during COMPLETED cancelled the one-shot without a later exit callback. |
-| Lifecycle | Simulator Kill App in RUNNING and COMPLETED invoked cleanup and cancelled pending work; relaunch was fresh READY. Actual suspension/reported-resume delivery was not exercised; automated tests cover reported resume and repeated cleanup. |
-| Repeated use | Four observed control cycles returned to 17112 bytes at reset (active 17208–17216). Unexpected Back interrupted a longer automation attempt; subsequent cycles were not counted. |
-| Artifact/API audit | Test functions/helpers and probes excluded from debug/release; centralized timing/resources, one SDK timer, empty permissions/barrels, no excluded platform features. Used APIs fit the retained 3.2.0 minimum; other devices remain unverified. |
-
-Initial stalled/premature launches were retried after simulator restart/readiness and are not passes. Exhaustive simulator touch-edge/swipe delivery and interactive DND/sleep toggles were not rerun; automated geometry and suppression tests passed.
-
-## Physical results (2026-11-08 baseline)
-
-All results below are **user-reported** for the identified release and configurations. No defects or tuning needs were reported; acceptance is complete for this scope.
-
-| Check | Recorded result and scope |
-| --- | --- |
-| Launcher, states, controls | Readable/unclipped artwork and all four layouts; wrist touch targets comfortable; upper-button Start/Pause/Resume and lower-button exit worked once per press. Start-end and outside-control taps passed; exhaustive edges/corners were not tested. |
-| Timing, pause, Stop | Full sessions had correct stages/cues; a 60-second pause preserved values with no cues; Stop from RUNNING/PAUSED reset immediately, with no stale cues. Repeated completion/control cycles showed no reported instability. |
-| Completion | Three distinct final pulses finished; `Nice job!` with full segmented ring for about three seconds, then application-list exit. Primary input and former Stop-position touch did not restart or repeat effects. |
-| Immediate exit and relaunch | Back in READY/RUNNING/PAUSED, at displayed `0:01`, and during COMPLETED reported immediate exit. Fresh relaunch remained READY without stale exit/cues. During COMPLETED, checked assertions establish the reported Back result; an additional free-text certainty question was unanswered. |
-| Dimmed and black display | Separate sessions continued cues/completion without observed wake/brightness changes. Manual stopwatch cues at 0:29/0:59/1:29 and first completion pulse at 1:59 showed no accumulating offset at whole-second precision; app had exited when checked at 2:08. Exact black-screen exit time was not observed. |
-| DND/vibration | DND suppressed cues without stopping timing/presentation/exit; disabling it restored cues. Independent System/Alert switch checks and recovery passed as detailed below. |
-| Sleep and saver | Timing/cues/completion/exit continued in reported modes. Sleep gesture wake was unavailable; saver gesture wake could not be assessed because the display remained dimmed. Detailed options and numeric saver presentation duration were not established. |
-| Input while black | Upper button woke and started READY; center/countdown touch woke RUNNING without an unintended action; lower button exited RUNNING. |
-| Alarm overlay | Alarm at stopwatch 0:40 showed last countdown 1:20; after dismissal countdown was 1:10. Timing continued without reset/burst cues, then completed/exited normally. This establishes overlay continuity, not actual suspension. |
-
-## Platform observations
-
-- Firmware 18.32: with DND/sleep/saver off, **System vibration off / Alert on** allowed cues; **System on / Alert off** suppressed a full session's cues; both on restored them. Both off was not retested on this release (an older 2026-11-03 artifact had a passing suppression check). The actual `vibrateOn` flag was not sampled, so these observations do not locate suppression in a particular API layer.
-- DND suppression leaves timing and exit functional. Sleep/saver settings can restrict visibility and gesture wake; never infer suspension from a dark display or overlay.
-- Tested haptic values: interval 250 ms at 100% duty; completion three 170 ms pulses at 75% with two 120 ms zero-duty pauses. All final pulses were reported perceptible with the configured 3000 ms presentation. Future tuning needs physical checks.
-- SDK launcher exit-status handling is documented in [README](../README.md#unit-tests); reusable drawing/input/clock pitfalls are in [testing](testing.md#platform-regression-notes) and [technical design](technical-design.md).
-
-## Remaining limits and evidence
-
-Exact simultaneous completion/input and forced suspension/termination were not induced on hardware. Other unestablished checks include watch-file read-back, exhaustive touch corners, former Pause/Resume-position touch during COMPLETED, both vibration switches off together on this artifact, sleep-specific DND/options and touch wake, detailed saver options, and long-term endurance. Manual stopwatch readings are not calibrated latency measurements. Other devices, firmware, and settings need separate verification.
-
-Integrated logs/captures/probes were local ignored artifacts under `build/verification/integrated-regression/`, unavailable in a fresh checkout; Git retains committed descriptions, not those artifacts. Rerun affected checks for future changes rather than treating this baseline as current acceptance.
-
-## Documentation checks (2026-11-08)
-
-Documentation-only working-tree cleanup over `5789ce8`: consistency/diff review, `git diff --check`, all 82 local links/anchors, code-fence balance, and `bash -n` on 13 Bash examples passed. Commands were syntax-checked, not executed. No application source, tests, resources, or build configuration changed; builds, unit tests, simulator, and hardware checks were not rerun or needed for this cleanup. The runtime evidence and limits above remain scoped to their original artifacts.
-
-## Model observation contract documentation (2026-11-10)
-
-Added the getter and single-clock-sample contract to technical design. Consistency review against `BrushingTimer` and the existing `timerSamplesAndObservation` test, local link/anchor checks in technical design and this record, and `git diff --check` passed. Documentation only; no builds or runtime tests were run or required, and existing runtime acceptance limits remain unchanged.
+**Coverage limits.** Real suspension/resume and exact simultaneous hardware input at completion remain unverified. Other limits include exhaustive touch edges and former Pause/Resume taps during COMPLETED, exact black-screen exit timing, detailed sleep/saver settings and touch wake, and long-term endurance. The later layout and Stop checks covered only the cases listed above.
