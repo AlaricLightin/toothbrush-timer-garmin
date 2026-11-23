@@ -25,6 +25,16 @@ The local debug file matched the recorded hash on 2026-11-23. The simulator walk
 
 The reported release hash matched the local `build/ToothbrushTimer-release.prg`. Watch-file read-back, brightness, and ambient lighting were unreported.
 
+## Physical Stop interval-cue check (2026-11-23)
+
+Pass for the observed behavior, user-reported on Vivoactive 6 firmware 19.23 with the same installed release as the [physical layout check](#timer-screen-spacing-2026-11-22).
+
+- **Stop and restart.** Two taps at displayed `1:31` returned immediately to `2:00`, with no pulse around the tap or while READY. A tap as the second interval pulse began also reset immediately, with no separate pulse afterward. A restarted run delivered all three normal interval cues.
+- **Pause and Resume.** A Pause at `1:31` in Stage 1 held the timer without a pulse. After Resume, one pulse accompanied Stage 2. Pausing after that boundary held Stage 2, and Resume continued without replaying the pulse.
+- **Completion.** A tap at displayed `0:01` reset to `2:00` without vibration. A tap at the former Stop position as completion began left `Nice job!` visible until automatic exit, with all three completion pulses felt.
+
+The manual taps verified behavior around the boundaries. Exact input and timer callback ordering was unmeasured on the watch. The [earlier simulator probes](#stop-interval-cue-suppression-2026-11-10) cover input as the first handler to observe an exact boundary on their tested revision.
+
 ## Stop interval-cue suppression (2026-11-10)
 
 Implemented the approved [session behavior](product-requirements.md#session-behavior) and [input design](technical-design.md#input-and-lifecycle): `BrushingTimer.handleAction(STOP)` returns NONE after resetting, discarding newly detected interval cues before completion. Pause cue delivery and completion priority are preserved. Source: working tree over `fcda7e9d83bd2a6b3841ec8999d7ef9d2652f166`, changing `source/BrushingTimer.mc`, `tests/BrushingTimerTests.mc`, and `tests/DelegateTests.mc` alongside the approved documentation update.
@@ -44,7 +54,7 @@ Checks ran from the repository root in Bash on Ubuntu 24.04.5 LTS, with OpenJDK 
 | Test | `5591cc3665c549f42a7d9acf093300d2568b6ca1c97947ea5a65ed1669c668c9` |
 | Release | `674e7b292515011b518aab215b8d77c736d5e77affaf68706b4a2f711f20e32d` |
 
-Implementation and available automated/simulator verification are complete. Physical Vivoactive 6 acceptance for this release remains pending: check Stop near interval boundaries, normal cues after restart, retained Pause cue behavior, and completion priority. A previously submitted vibration may still be felt after Stop; this does not establish a new request from Stop. Historical physical results below apply to the older release only. Probe sources, driver, logs, and captures are local ignored artifacts under `build/verification/stop-cue-suppression/`, unavailable in a fresh checkout.
+Implementation and available automated/simulator verification are complete. The [physical Stop check](#physical-stop-interval-cue-check-2026-11-23) used a later release. An already submitted vibration may still be felt after Stop. Historical physical results below apply to the older release only. Probe sources, driver, logs, and captures are local ignored artifacts under `build/verification/stop-cue-suppression/`, unavailable in a fresh checkout.
 
 ## Artifact and environment (2026-11-08 baseline)
 
