@@ -12,12 +12,15 @@ Checks ran from the repository root in Bash on Ubuntu 24.04.5 LTS with OpenJDK 2
 | --- | --- |
 | Debug and test builds | Both printed `BUILD SUCCESSFUL` with Strict checking and no compiler or analyzer warnings. |
 | Full unit suite | `Ran 63 tests` and `PASSED (passed=63, failed=0, errors=0)`, including the new spacing test and existing control bounds and hit tests. |
-| Manual layout acceptance | Pending simulator inspection through Start, Pause, and Stop, and on-watch readability and ring clearance checks. |
+| Simulator layout (2026-11-23) | Pass, user-reported. Through READY → RUNNING → PAUSED → READY, the toothbrush and countdown stayed in place, the controls stayed on the same row, and the stage label appeared with visible gaps in RUNNING and PAUSED and cleared on Stop. |
+| Physical Vivoactive 6 layout | Pending. Check ring clearance, spacing, and at-a-glance readability on the wrist. |
 
 | Artifact | SHA-256 |
 | --- | --- |
 | Debug | `6a872771ea5d8471ffbe9425e0e5d8590e72ba3a976e356f5365771aacc7b940` |
 | Test | `6fdd0419193fe7f446d32650d13b035ca7bea11070f06c7da0e470462fe31a17` |
+
+The local debug file matched the recorded hash on 2026-11-23. The simulator walkthrough did not independently identify the loaded file.
 
 ## Stop interval-cue suppression (2026-11-10)
 
