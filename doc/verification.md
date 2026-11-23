@@ -4,7 +4,7 @@ This records application checks for specific revisions and artifacts. Use [testi
 
 ## Timer screen spacing (2026-11-22)
 
-Completed steps 1 and 2 of the [timer screen spacing plan](implementation-plan.md). In READY, RUNNING, and PAUSED, the toothbrush moved up 14 px, the countdown 9 px, and the stage label 5 px where shown on the 390 × 390 display. The control row stays at y = 269. The working tree over `4bb42903b64d765df718ba68fcafc8b3375d9b68` changes `source/TimerLayout.mc` and adds a geometry test in `tests/PresentationTests.mc`.
+The [shared timer layout](design/ui-design.md#shared-layout) passed simulator and on-wrist acceptance. In READY, RUNNING, and PAUSED, the toothbrush moved up 14 px, the countdown 9 px, and the stage label 5 px where shown on the 390 × 390 display. The control row stays at y = 269. The layout change and geometry test were committed in `071df11c61a278905abd1528150acf0cc58de583`. The debug and test builds used those changes in the working tree over `4bb42903b64d765df718ba68fcafc8b3375d9b68`.
 
 Checks ran from the repository root in Bash on Ubuntu 24.04.5 LTS with OpenJDK 21.0.13.1, Connect IQ SDK 9.2.0, the Vivoactive 6 device package `eddc2840754f6d29c6c9a3ede43befdaadd25a09`, and caller-supplied `CIQ_SDK` and `CIQ_KEY`. Unit tests used the Vivoactive 6 simulator (API 6.0.3) in Distrobox with the [X11 workaround](development.md#simulator-troubleshooting).
 
@@ -13,14 +13,17 @@ Checks ran from the repository root in Bash on Ubuntu 24.04.5 LTS with OpenJDK 2
 | Debug and test builds | Both printed `BUILD SUCCESSFUL` with Strict checking and no compiler or analyzer warnings. |
 | Full unit suite | `Ran 63 tests` and `PASSED (passed=63, failed=0, errors=0)`, including the new spacing test and existing control bounds and hit tests. |
 | Simulator layout (2026-11-23) | Pass, user-reported. Through READY → RUNNING → PAUSED → READY, the toothbrush and countdown stayed in place, the controls stayed on the same row, and the stage label appeared with visible gaps in RUNNING and PAUSED and cleared on Stop. |
-| Physical Vivoactive 6 layout | Pending. Check ring clearance, spacing, and at-a-glance readability on the wrist. |
+| Physical Vivoactive 6 layout (2026-11-23) | Pass, user-reported on firmware 19.23 with always-on display and battery saver off. On the wrist in READY, RUNNING, and PAUSED, the toothbrush cleared the ring, gaps between elements were visible, and the countdown and stage label were readable at a glance where shown. |
 
 | Artifact | SHA-256 |
 | --- | --- |
 | Debug | `6a872771ea5d8471ffbe9425e0e5d8590e72ba3a976e356f5365771aacc7b940` |
 | Test | `6fdd0419193fe7f446d32650d13b035ca7bea11070f06c7da0e470462fe31a17` |
+| Release (physical layout check) | `fb546c61d25edc7ebb8528f09f9d77b70b107660fc848a22982844b78ea687cd` |
 
 The local debug file matched the recorded hash on 2026-11-23. The simulator walkthrough did not independently identify the loaded file.
+
+The reported release hash matched the local `build/ToothbrushTimer-release.prg`. Watch-file read-back, brightness, and ambient lighting were unreported.
 
 ## Stop interval-cue suppression (2026-11-10)
 
