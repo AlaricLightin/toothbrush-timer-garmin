@@ -97,6 +97,7 @@ Use this checklist for each Store release candidate. During feature development,
    ```
 
    Confirm the compiler built every manifest product and printed `BUILD SUCCESSFUL`. Record the package hash with `sha256sum build/ToothbrushTimer.iq`. This signed multi-product package is the [Store submission artifact](https://developer.garmin.com/connect-iq/submit-an-app/).
+6. Before submission, inspect each device-specific launcher icon in the exported `.iq`. Use the package manifest to locate the device’s PRG and view its compiled launcher bitmap at the profile’s native icon size. Check that the toothbrush and bristles are recognizable, the mint and gray ring segments are distinct, and the artwork fits without clipping. Compare with the [launcher icon design](design/ui-design.md#6-launcher-icon). Record the device ID, bitmap dimensions, and result alongside the package SHA-256 in [verification.md](verification.md).
 
 ## Platform regression notes
 

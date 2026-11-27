@@ -22,6 +22,15 @@ The launcher overrides matched the installed profile dimensions of 56 × 56 for 
 
 Manual simulator acceptance and the release-candidate Vivoactive 6 hardware checks are pending. Physical checks on the eight additional models were not run.
 
+### Packaged launcher artwork, 2026-11-27
+
+The compiled launcher bitmaps from the November 23 package identified by the SHA-256 above passed visual inspection at native size for both overrides. The white toothbrush and bristles were recognizable, the mint and gray ring segments were distinct, and the artwork fit without clipping.
+
+| Product | Packaged launcher artwork | Physical launcher appearance |
+| --- | --- | --- |
+| `vivoactive5` | Pass at 56 × 56 px | Untested |
+| `venu3s` | Pass at 70 × 70 px | Untested |
+
 ## Launcher icon sizes, 2026-11-23
 
 With the Vivoactive 5 and Venu 3S launcher overrides in the working tree over `2ebb20d`, SDK 9.2.0 built the Vivoactive 6 debug PRG (SHA-256 `6a872771ea5d8471ffbe9425e0e5d8590e72ba3a976e356f5365771aacc7b940`). Its only warnings concerned the eight missing device profiles.
