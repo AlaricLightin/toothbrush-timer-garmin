@@ -2,6 +2,12 @@
 
 Each result applies to the identified product, artifact, and environment. Use the [regression checklists](testing.md) for future changes.
 
+## Release checker simulator timeout, 2026-11-27
+
+In the working tree over `86a089b`, a temporary Linux test harness used a one-second timeout with a launcher that printed a passing summary and then stalled while waiting on a child process. The checker stopped the child, retained the captured output, marked the stalled profile as failed, and included subsequent profiles in the final summary. An interrupt also stopped the child. Partial and failed suites returned failure. Complete suites passed with launcher status 0 or 1.
+
+With the 60-second timeout, the [release check](../README.md#before-a-store-release) built all 18 debug and test PRGs without warnings using Connect IQ SDK 9.2.0. The simulator in Ubuntu 22.04 Distrobox printed `PASSED (passed=63, failed=0, errors=0)` for every manifest product. All PRG hashes match the November 23 results below.
+
 ## Nine-device build, simulator tests, and export check, 2026-11-23
 
 The working tree over `2ebb20d` included the eight added manifest products and both launcher overrides. With all nine profiles and fonts installed, `python3 scripts/check-release.py` built every debug and test PRG without warnings using Connect IQ SDK 9.2.0. The simulator in Ubuntu 22.04 Distrobox printed `PASSED (passed=63, failed=0, errors=0)` for each product.

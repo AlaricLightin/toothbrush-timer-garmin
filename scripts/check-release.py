@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -9,6 +10,7 @@ import xml.etree.ElementTree as ET
 
 # Update when adding or removing Monkey C tests. A partial suite must fail.
 EXPECTED_TESTS = 63
+SIMULATOR_TIMEOUT_SECONDS = 60
 
 
 def check_device(device, monkeydo):
@@ -19,12 +21,28 @@ def check_device(device, monkeydo):
             return f"FAIL ({mode} build, simulator tests not run)"
 
     program = Path("build") / device / "ToothbrushTimer-test.prg"
-    tests = subprocess.run(
+    print(f"Running simulator tests for {device}", flush=True)
+    with subprocess.Popen(
         [monkeydo, program, device, "-t"],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-    )
-    print(tests.stdout, end="")
-    summaries = [line.strip() for line in tests.stdout.splitlines()
+        start_new_session=True,
+    ) as tests:
+        try:
+            output, _ = tests.communicate(timeout=SIMULATOR_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired as timeout:
+            if timeout.output:
+                print(timeout.output.decode(tests.stdout.encoding, errors="replace"), end="")
+            return f"FAIL (simulator tests timed out after {SIMULATOR_TIMEOUT_SECONDS} seconds)"
+        finally:
+            # monkeydo is a shell wrapper. Stop its child processes as well.
+            if tests.returncode is None:
+                try:
+                    os.killpg(tests.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+    print(output, end="")
+    summaries = [line.strip() for line in output.splitlines()
                  if line.strip().startswith(("PASSED (", "FAILED ("))]
     expected = f"PASSED (passed={EXPECTED_TESTS}, failed=0, errors=0)"
     # The SDK 9.2.0 Unix monkeydo launcher exits 1 even after a passing suite.

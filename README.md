@@ -57,7 +57,7 @@ From the repository root in Bash on Ubuntu, install the device packages and font
 python3 scripts/check-release.py
 ```
 
-This opt-in command builds debug and test PRGs in `build/<device>/`, runs the full test suite sequentially on each product, and prints a per-device summary. Complete the [release checklist](doc/testing.md#store-release-checklist) for manual simulator checks, Vivoactive 6 hardware acceptance, and Store export.
+This opt-in command builds debug and test PRGs in `build/<device>/`, runs the full test suite sequentially on each product, and prints a per-device summary. Each simulator test run has a 60-second timeout. On timeout, the command prints any output captured so far, marks the product as failed, and continues with the remaining products. Complete the [release checklist](doc/testing.md#store-release-checklist) for manual simulator checks, Vivoactive 6 hardware acceptance, and Store export.
 
 ## Development
 
