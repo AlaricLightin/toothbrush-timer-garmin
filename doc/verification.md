@@ -2,6 +2,30 @@
 
 Each result applies to the identified product, artifact, and environment. Use the [regression checklists](testing.md) for future changes.
 
+## Nine-device manual simulator acceptance, 2026-11-27
+
+The debug PRGs for `52959ef` were launched from the repository root with Bash and Connect IQ SDK 9.2.0. The simulator ran in Ubuntu 22.04 Distrobox with the nine installed device profiles and fonts. The debug and test PRG hashes match the [November 23 device matrix](#nine-device-build-simulator-tests-and-export-check-2026-11-23). The [November 27 release check](#release-checker-simulator-timeout-2026-11-27) recorded 63 passing tests per profile.
+
+Scripted touch and virtual watch-button input exercised the [manual simulator steps](testing.md#store-release-checklist). On each profile, READY stayed at `2:00` until Start. The artwork, text, and control row fit across READY, RUNNING, and PAUSED. Pause froze the time, stage, and yellow progress. Resume continued with mint progress. Stop from RUNNING or PAUSED reset the display, and restart worked. The primary button moved through Start, Pause, and Resume once per press. Back exited and a fresh launch opened in READY.
+
+Each full session showed all four stages, clockwise segmented progress, and `0:01` before the full ring and “Nice job!” screen. The former touch controls and primary button left completion in place. Automatic exit followed after about three seconds.
+
+Separate trace builds logged successful returns from `Attention.vibrate()`. Each profile recorded three single-entry interval requests approximately 30 seconds apart, one five-entry pulse/pause completion request, and one application stop.
+
+| Product | Simulator UI | Observed completion screen | Vibration trace | Physical watch |
+| --- | --- | --- | --- | --- |
+| `vivoactive6` | Pass | 3.02 s | Pass | Pending |
+| `vivoactive5` | Pass | 3.03 s | Pass | Not run |
+| `venu3s` | Pass | 3.08 s | Pass | Not run |
+| `venu441mm` | Pass | 3.05 s | Pass | Not run |
+| `fr165` | Pass | 3.09 s | Pass | Not run |
+| `fr165m` | Pass | 3.11 s | Pass | Not run |
+| `fr170` | Pass | 3.02 s | Pass | Not run |
+| `fr170m` | Pass | 3.11 s | Pass | Not run |
+| `fr57042mm` | Pass | 3.04 s | Pass | Not run |
+
+Relaunch after Back reached READY on every profile. The additional attempt to relaunch `fr57042mm` after automatic exit stalled at the Garmin splash screen. Exact input races, system haptic settings, and actual suspension were outside this pass. Vibration feel, touch ergonomics, on-wrist readability, display restrictions, physical controls, and the watch exit destination still require physical acceptance on Vivoactive 6.
+
 ## Release checker simulator timeout, 2026-11-27
 
 In the working tree over `86a089b`, a temporary Linux test harness used a one-second timeout with a launcher that printed a passing summary and then stalled while waiting on a child process. The checker stopped the child, retained the captured output, marked the stalled profile as failed, and included subsequent profiles in the final summary. An interrupt also stopped the child. Partial and failed suites returned failure. Complete suites passed with launcher status 0 or 1.
@@ -26,7 +50,7 @@ The working tree over `2ebb20d` included the eight added manifest products and b
 
 The launcher overrides matched the installed profile dimensions of 56 × 56 for Vivoactive 5 and 70 × 70 for Venu 3S. The signed export built all nine products without warnings. The archive manifest mapped one PRG to each installed profile, and the archive integrity check passed. The SHA-256 of `build/ToothbrushTimer.iq` was `da301edd1962e4b92dc7b8ca0c76c21ad62b3855ba2fdebc6a244ee7230c5b93`. The exported Vivoactive 6 PRG matched the standalone release build at `fb546c61d25edc7ebb8528f09f9d77b70b107660fc848a22982844b78ea687cd`.
 
-Manual simulator acceptance and the release-candidate Vivoactive 6 hardware checks are pending. Physical checks on the eight additional models were not run.
+See the [November 27 manual simulator results](#nine-device-manual-simulator-acceptance-2026-11-27) for these artifacts. Release-candidate Vivoactive 6 hardware acceptance is pending. The eight additional models have simulator coverage only.
 
 ### Packaged launcher artwork, 2026-11-27
 
